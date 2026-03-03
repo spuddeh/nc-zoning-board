@@ -1,0 +1,27 @@
+# Ignore everything in this workspace
+/*
+
+# Essential Repo Files
+!/.gitignore
+!/README.md
+!/index.html
+!/mods.json
+!/public/
+!/assets/
+!/.github/
+
+# But ignore everything inside assets/images/raw maps if it existed
+assets/images/raw maps/
+
+# Keep the readme
+!README.md
+
+# Ignore system and agent files
+.agent/
+.gemini/
+agent-instructions.md
+cp2077-location-mods-map.code-workspace
+raw maps/
+node_modules/
+.DS_Store
+Thumbs.db
