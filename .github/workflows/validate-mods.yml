@@ -16,8 +16,5 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Validate JSON Schema
-        uses: x86v/ajv-cli-action@v1.1.1
-        with:
-          schema: 'mods.schema.json'
-          data: 'mods.json'
+      - name: Validate JSON Schema against Data
+        run: npx -y ajv-cli validate -s mods.schema.json -d mods.json
