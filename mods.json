@@ -1,57 +1,68 @@
 [
-    {
-        "id": "mam-glen",
-        "name": "Modular Apartment Makeover - The Glen Apartment",
-        "author": "Spuddeh",
-        "coordinates": [
-            -1200,
-            500
-        ],
-        "nexus_link": "https://nexusmods.com/",
-        "description": "Custom synthwave aesthetic overhaul for the Glen apartment."
-    },
-    {
-        "id": "mam-corpo",
-        "name": "Modular Apartment Makeover - Corpo Plaza",
-        "author": "Spuddeh",
-        "coordinates": [
-            -800,
-            1200
-        ],
-        "nexus_link": "https://nexusmods.com/",
-        "description": "Corpo Plaza apartment overhaul."
-    },
-    {
-        "id": "mam-northside",
-        "name": "Modular Apartment Makeover - Northside",
-        "author": "Spuddeh",
-        "coordinates": [
-            1800,
-            -350
-        ],
-        "nexus_link": "https://nexusmods.com/",
-        "description": "Northside apartment overhaul."
-    },
-    {
-        "id": "mam-japantown",
-        "name": "Modular Apartment Makeover - Japantown",
-        "author": "Spuddeh",
-        "coordinates": [
-            400,
-            800
-        ],
-        "nexus_link": "https://nexusmods.com/",
-        "description": "Japantown apartment overhaul."
-    },
-    {
-        "id": "mam-h10",
-        "name": "Modular Apartment Makeover - H10",
-        "author": "Spuddeh",
-        "coordinates": [
-            150,
-            -400
-        ],
-        "nexus_link": "https://nexusmods.com/",
-        "description": "H10 apartment overhaul."
-    }
+  {
+    "id": "mam-glen",
+    "name": "Modular Apartment Makeover - The Glen Apartment",
+    "author": "Spuddeh",
+    "coordinates": [
+      -1200,
+      500
+    ],
+    "nexus_link": "https://nexusmods.com/",
+    "description": "Custom synthwave aesthetic overhaul for the Glen apartment."
+  },
+  {
+    "id": "mam-corpo",
+    "name": "Modular Apartment Makeover - Corpo Plaza",
+    "author": "Spuddeh",
+    "coordinates": [
+      -800,
+      1200
+    ],
+    "nexus_link": "https://nexusmods.com/",
+    "description": "Corpo Plaza apartment overhaul."
+  },
+  {
+    "id": "mam-northside",
+    "name": "Modular Apartment Makeover - Northside",
+    "author": "Spuddeh",
+    "coordinates": [
+      1800,
+      -350
+    ],
+    "nexus_link": "https://nexusmods.com/",
+    "description": "Northside apartment overhaul."
+  },
+  {
+    "id": "mam-japantown",
+    "name": "Modular Apartment Makeover - Japantown",
+    "author": "Spuddeh",
+    "coordinates": [
+      400,
+      800
+    ],
+    "nexus_link": "https://nexusmods.com/",
+    "description": "Japantown apartment overhaul."
+  },
+  {
+    "id": "mam-h10",
+    "name": "Modular Apartment Makeover - H10",
+    "author": "Spuddeh",
+    "coordinates": [
+      150,
+      -400
+    ],
+    "nexus_link": "https://nexusmods.com/",
+    "description": "H10 apartment overhaul."
+  },
+  {
+    "id": "workflow-test-pin",
+    "name": "Workflow Test Pin",
+    "author": "Spuddeh",
+    "coordinates": [
+      -1200,
+      500
+    ],
+    "nexus_link": "https://www.nexusmods.com/cyberpunk2077/mods/0000",
+    "description": "Automated test pin to verify the CI pipeline. Safe to delete."
+  }
 ]
