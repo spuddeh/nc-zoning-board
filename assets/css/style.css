@@ -1,0 +1,122 @@
+:root {
+    --cb-yellow: #fcee0a;
+    --cb-blue: #00f0ff;
+    --cb-pink: #ff003c;
+    --cb-dark: #050a0e;
+    --cb-dark-accent: #1a1a1a;
+    --cb-text: #ffffff;
+    
+    --font-heading: 'Orbitron', sans-serif;
+    --font-body: 'Rajdhani', sans-serif;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: var(--cb-dark);
+    color: var(--cb-text);
+    font-family: var(--font-body);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+header {
+    padding: 1rem 2rem;
+    background: linear-gradient(180deg, var(--cb-dark-accent) 0%, var(--cb-dark) 100%);
+    border-bottom: 2px solid var(--cb-yellow);
+    box-shadow: 0 0 15px rgba(252, 238, 10, 0.3);
+    z-index: 1000;
+}
+
+#map-title {
+    font-family: var(--font-heading);
+    color: var(--cb-yellow);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-size: 1.5rem;
+    text-shadow: 2px 2px 0px var(--cb-pink);
+}
+
+#map-subtitle {
+    font-size: 0.9rem;
+    color: var(--cb-blue);
+    margin-top: 0.2rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+#map-container {
+    flex: 1;
+    position: relative;
+    background-color: #000;
+}
+
+#map {
+    width: 100%;
+    height: 100%;
+}
+
+footer {
+    padding: 0.5rem 2rem;
+    background: var(--cb-dark-accent);
+    border-top: 1px solid var(--cb-dark-accent);
+    font-size: 0.8rem;
+    color: #666;
+    display: flex;
+    justify-content: center;
+}
+
+/* Custom Leaflet Styling */
+.leaflet-container {
+    background: #000 !important;
+}
+
+.leaflet-popup-content-wrapper {
+    background-color: var(--cb-dark-accent) !important;
+    color: var(--cb-text) !important;
+    border: 1px solid var(--cb-blue);
+    border-radius: 4px;
+    font-family: var(--font-body);
+}
+
+.leaflet-popup-tip {
+    background-color: var(--cb-blue) !important;
+}
+
+.custom-popup-title {
+    color: var(--cb-yellow);
+    font-family: var(--font-heading);
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+    border-bottom: 1px solid var(--cb-pink);
+    padding-bottom: 0.2rem;
+}
+
+.custom-popup-author {
+    color: var(--cb-blue);
+    font-weight: bold;
+    font-size: 0.8rem;
+    margin-bottom: 0.5rem;
+}
+
+.custom-popup-link {
+    display: inline-block;
+    margin-top: 0.8rem;
+    color: var(--cb-pink);
+    text-decoration: none;
+    font-weight: bold;
+    border: 1px solid var(--cb-pink);
+    padding: 2px 8px;
+    transition: all 0.2s ease;
+}
+
+.custom-popup-link:hover {
+    background: var(--cb-pink);
+    color: #fff;
+}
