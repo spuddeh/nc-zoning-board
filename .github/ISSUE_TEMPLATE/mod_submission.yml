@@ -1,0 +1,57 @@
+name: 📍 Submit a New Mod Location
+description: Register your mod's coordinates on the NC Zoning Board map to prevent overlaps.
+title: "[Mod Submission]: "
+labels: ["mod-submission"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for adding your mod to the NC Zoning Board! Please fill out the details below. Our bot will automatically verify your coordinates and generate a Pull Request to add your pin to the live map.
+  - type: input
+    id: mod_name
+    attributes:
+      label: Mod Name
+      description: The exact title of your location mod.
+      placeholder: "e.g., Modular Apartment Makeover - The Glen"
+    validations:
+      required: true
+  - type: input
+    id: author
+    attributes:
+      label: Author Alias
+      description: The name you want displayed on the map popup.
+      placeholder: "e.g., Spuddeh"
+    validations:
+      required: true
+  - type: input
+    id: coord_y
+    attributes:
+      label: Y Coordinate
+      description: The exact Y coordinate from Cyber Engine Tweaks output.
+      placeholder: "e.g., -1200"
+    validations:
+      required: true
+  - type: input
+    id: coord_x
+    attributes:
+      label: X Coordinate
+      description: The exact X coordinate from Cyber Engine Tweaks output.
+      placeholder: "e.g., 500"
+    validations:
+      required: true
+  - type: input
+    id: nexus_link
+    attributes:
+      label: Nexus Mods Link
+      description: The full URL to your published mod page.
+      placeholder: "https://www.nexusmods.com/cyberpunk2077/mods/..."
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Short Description
+      description: A brief, 1-2 sentence summary of what your mod adds to this location.
+      placeholder: "Custom synthwave aesthetic overhaul for the Glen apartment..."
+    validations:
+      required: true

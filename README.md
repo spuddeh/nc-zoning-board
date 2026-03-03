@@ -14,30 +14,16 @@ The live interactive map visually displays all registered mods to help authors f
 
 ## How to Submit Your Mod
 
-We use an automated Pull Request system to add new mods to the map.
+We use an automated Issue pipeline to add new mods to the map. You do **not** need to edit any code or JSON files!
 
-1. **Fork this repository** to your GitHub account.
-2. **Edit `mods.json`** located in the root directory.
-3. **Add your mod's data** to the bottom of the JSON array following this format:
+1. Go to the **Issues tab** of this repository.
+2. Click **New Issue** and select "📍 Submit a New Mod Location".
+3. Fill out the simple form with your Mod Name, Author Alias, and the exact `[Y, X]` coordinates from Cyber Engine Tweaks.
+4. Click **Submit new issue**.
 
-```json
-{
-  "id": "your-unique-mod-id",
-  "name": "The Name of Your Mod",
-  "author": "Your Alias",
-  "coordinates": [Y, X],
-  "nexus_link": "https://www.nexusmods.com/cyberpunk2077/mods/XXXX",
-  "description": "A short, one-sentence description of what your mod adds here."
-}
-```
+Our automated bot will instantly read your form, verify the coordinates format, and successfully generate a **Pull Request** on your behalf. Once a maintainer clicks approve, your mod will instantly appear on the live map!
 
-### Coordinate Rules
-
-The `coordinates` field must use the **exact `[Y, X]` output from Cyber Engine Tweaks (CET)**, ignoring the Z-axis (height).
-
-1. **Submit a Pull Request** against the `main` branch of this repository.
-
-Our automated GitHub Action will validate your JSON entry against our schema to ensure no formatting errors exist. Once approved and merged, your mod will instantly appear on the live map!
+_(Note: You can still log regular bug reports or feature ideas by opening a blank issue or selecting standard issues in the menu)._
 
 ## Local Development (Testing the Map)
 
