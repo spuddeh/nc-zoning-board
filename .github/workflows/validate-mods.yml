@@ -1,0 +1,23 @@
+name: Validate Mod Data
+
+on:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'mods.json'
+  push:
+    branches: [ main ]
+    paths:
+      - 'mods.json'
+
+jobs:
+  validate-json:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate JSON Schema
+        uses: x86v/ajv-cli-action@v1.1.1
+        with:
+          schema: 'mods.schema.json'
+          data: 'mods.json'
