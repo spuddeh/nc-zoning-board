@@ -22,37 +22,53 @@ jobs:
         with:
           script: |
             const body = context.payload.issue.body;
-            
+            console.log('--- Raw Issue Body ---');
+            console.log(body);
+            console.log('--- End Body ---');
+
             // Helper to extract markdown form values
             const extract = (field) => {
               const regex = new RegExp(`### ${field}\\s+([^#]+)`, 'i');
               const match = body.match(regex);
-              return match ? match[1].trim() : '';
+              const value = match ? match[1].trim() : '';
+              console.log(`Extracted "${field}": "${value}"`);
+              return value;
             };
-            
+
             const modName = extract('Mod Name');
             const author = extract('Author Alias');
             const coordYRaw = extract('Y Coordinate');
             const coordXRaw = extract('X Coordinate');
             const nexusLink = extract('Nexus Mods Link');
-            
-            // Handle description which might be multiline
+
+            // Handle description which might be multiline (last field, no next ###)
             let description = '';
             const descRegex = /### Short Description\s+([\s\S]+)/i;
             const descMatch = body.match(descRegex);
             if(descMatch) {
               description = descMatch[1].replace(/_No response_/, "").trim();
             }
+            console.log(`Extracted "Short Description": "${description}"`);
+
+            if (!modName) {
+              core.setFailed('Could not parse "Mod Name" from issue body.');
+              return;
+            }
 
             const coordY = parseFloat(coordYRaw);
             const coordX = parseFloat(coordXRaw);
-            
+
+            if (isNaN(coordY) || isNaN(coordX)) {
+              core.setFailed(`Invalid coordinates: Y="${coordYRaw}", X="${coordXRaw}"`);
+              return;
+            }
+
             // Generate URL-safe slug ID
             const id = modName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-            
+
             const fs = require('fs');
             const mods = JSON.parse(fs.readFileSync('mods.json', 'utf8'));
-            
+
             const newMod = {
               id,
               name: modName,
@@ -61,29 +77,35 @@ jobs:
               nexus_link: nexusLink,
               description
             };
-            
+
+            console.log('New mod entry:', JSON.stringify(newMod, null, 2));
+
             // Check if ID exists, update if true, otherwise push
             const existingIdx = mods.findIndex(m => m.id === id);
             if (existingIdx >= 0) {
               mods[existingIdx] = newMod;
+              console.log(`Updated existing mod at index ${existingIdx}`);
             } else {
               mods.push(newMod);
+              console.log(`Added new mod (total: ${mods.length})`);
             }
-            
+
             fs.writeFileSync('mods.json', JSON.stringify(mods, null, 2) + '\n');
-            
+            console.log('mods.json written successfully');
+
             // Pass the mod name to the next step
             core.setOutput('mod_name', modName);
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v6
         with:
+          token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "data: add new mod location - ${{ steps.parse.outputs.mod_name }}"
           title: "Add Mod Location: ${{ steps.parse.outputs.mod_name }}"
           body: "Automated PR created from issue #${{ github.event.issue.number }}."
           branch: "add-mod-${{ github.event.issue.number }}"
           delete-branch: true
-          
+
       - name: Comment on Issue
         uses: actions/github-script@v7
         with:
