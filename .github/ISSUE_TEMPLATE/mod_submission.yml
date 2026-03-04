@@ -24,19 +24,19 @@ body:
     validations:
       required: true
   - type: input
-    id: coord_y
-    attributes:
-      label: Y Coordinate
-      description: The exact Y coordinate from Cyber Engine Tweaks output.
-      placeholder: "e.g., -1200"
-    validations:
-      required: true
-  - type: input
     id: coord_x
     attributes:
       label: X Coordinate
-      description: The exact X coordinate from Cyber Engine Tweaks output.
+      description: The exact X coordinate from Cyber Engine Tweaks output (first value shown).
       placeholder: "e.g., 500"
+    validations:
+      required: true
+  - type: input
+    id: coord_y
+    attributes:
+      label: Y Coordinate
+      description: The exact Y coordinate from Cyber Engine Tweaks output (second value shown).
+      placeholder: "e.g., -1200"
     validations:
       required: true
   - type: input
