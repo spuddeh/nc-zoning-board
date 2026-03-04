@@ -1,0 +1,48 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "CP2077 Mod Map Data",
+    "type": "array",
+    "items": {
+        "type": "object",
+        "required": [
+            "id",
+            "name",
+            "author",
+            "coordinates",
+            "nexus_link",
+            "description"
+        ],
+        "properties": {
+            "id": {
+                "type": "string",
+                "description": "UUID v4 — auto-generated, do not set manually",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+            },
+            "name": {
+                "type": "string",
+                "minLength": 3
+            },
+            "author": {
+                "type": "string"
+            },
+            "coordinates": {
+                "type": "array",
+                "items": {
+                    "type": "number"
+                },
+                "minItems": 2,
+                "maxItems": 2,
+                "description": "[X, Y] — in-game coordinates from Cyber Engine Tweaks (X = east/west, Y = north/south)"
+            },
+            "nexus_link": {
+                "type": "string",
+                "format": "uri",
+                "pattern": "^https?://(www\\.)?nexusmods\\.com/.*$"
+            },
+            "description": {
+                "type": "string",
+                "maxLength": 500
+            }
+        }
+    }
+}

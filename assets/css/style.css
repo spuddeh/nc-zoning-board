@@ -5,7 +5,7 @@
     --cb-dark: #050a0e;
     --cb-dark-accent: #1a1a1a;
     --cb-text: #ffffff;
-    
+
     --font-heading: 'Orbitron', sans-serif;
     --font-body: 'Rajdhani', sans-serif;
 }
@@ -119,4 +119,20 @@ footer {
 .custom-popup-link:hover {
     background: var(--cb-pink);
     color: #fff;
+}
+
+/* District Tooltips */
+.district-tooltip {
+    background: rgba(5, 10, 14, 0.85) !important;
+    border: 1px solid var(--cb-blue) !important;
+    color: var(--cb-blue) !important;
+    font-family: var(--font-heading) !important;
+    font-size: 0.75rem !important;
+    letter-spacing: 1px !important;
+    padding: 4px 8px !important;
+    box-shadow: 0 0 10px rgba(0, 240, 255, 0.2) !important;
+}
+
+.district-tooltip:before {
+    border-right-color: var(--cb-blue) !important;
 }

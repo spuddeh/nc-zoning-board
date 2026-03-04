@@ -1,0 +1,24 @@
+{
+  "name": "cp2077-location-mods-map",
+  "version": "1.0.0",
+  "description": "**An interactive web map and coordinate registry for Cyberpunk 2077 location modders to claim spaces and prevent overlap.**",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/spuddeh/nc-zoning-board.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/spuddeh/nc-zoning-board/issues"
+  },
+  "homepage": "https://github.com/spuddeh/nc-zoning-board#readme",
+  "dependencies": {
+    "sharp": "^0.34.5"
+  }
+}

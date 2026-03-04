@@ -1,57 +1,68 @@
 [
     {
-        "id": "mam-glen",
-        "name": "Modular Apartment Makeover - The Glen Apartment",
+        "id": "7e846694-63b3-4c92-8c3f-beea64344457",
+        "name": "Glen - Tidy Your Trash - Modular Apartment Makeover",
         "author": "Spuddeh",
         "coordinates": [
-            -1200,
-            500
+            -1522.4445,
+            -975.9102
         ],
-        "nexus_link": "https://nexusmods.com/",
-        "description": "Custom synthwave aesthetic overhaul for the Glen apartment."
+        "nexus_link": "https://www.nexusmods.com/cyberpunk2077/mods/26011",
+        "description": "Another attempt to tidy up the Glen apartment. The aim of this one wasn't to remove all the trash, but instead to make it look like V can walk to a bin every once in a while.\n\nThe mod also includes options to redecorate certain areas."
     },
     {
-        "id": "mam-corpo",
-        "name": "Modular Apartment Makeover - Corpo Plaza",
+        "id": "0f3d60d4-dc81-40cf-9fdb-44c0f82bffa4",
+        "name": "Corpo Plaza - Tidy Your Trash - Modular Apartment Makeover",
         "author": "Spuddeh",
         "coordinates": [
-            -800,
-            1200
+            -1605.7515,
+            356.4753
         ],
-        "nexus_link": "https://nexusmods.com/",
-        "description": "Corpo Plaza apartment overhaul."
+        "nexus_link": "https://www.nexusmods.com/profile/Spuddeh/mods?gameId=3333",
+        "description": "Future site of the Corpo Plaza apartment overhaul. (When Spuddeh stops getting distracted by Kao)"
     },
     {
-        "id": "mam-northside",
-        "name": "Modular Apartment Makeover - Northside",
+        "id": "4fedfa6e-c021-4175-bbb0-18b01a26b657",
+        "name": "Northside - Tidy Your Trash - Modular Apartment Makeover",
         "author": "Spuddeh",
         "coordinates": [
-            1800,
-            -350
+            -1505.9731,
+            2230.9961
         ],
-        "nexus_link": "https://nexusmods.com/",
-        "description": "Northside apartment overhaul."
+        "nexus_link": "https://www.nexusmods.com/cyberpunk2077/mods/25251",
+        "description": "Another attempt to tidy up the Northside apartment. The aim of this one wasn't to remove all the trash, but instead to make it look like V can walk to a bin every once in a while. They've also gone out and bought some cleaning supplies and dusted the place.\n\nThe mod also includes options to redecorate."
     },
     {
-        "id": "mam-japantown",
-        "name": "Modular Apartment Makeover - Japantown",
+        "id": "d33c30bd-5203-4843-a8c5-7e9e2a1a7325",
+        "name": "Japantown - Tidy Your Trash - Modular Apartment Makeover",
         "author": "Spuddeh",
         "coordinates": [
-            400,
-            800
+            -787.1183,
+            980.1387
         ],
-        "nexus_link": "https://nexusmods.com/",
-        "description": "Japantown apartment overhaul."
+        "nexus_link": "https://www.nexusmods.com/cyberpunk2077/mods/25536",
+        "description": "Another attempt to tidy up the Japantown apartment. The aim of this one wasn't to remove all the trash, but instead to make it look like V can walk to a bin every once in a while.\n\nThe mod also includes options to redecorate certain areas."
     },
     {
-        "id": "mam-h10",
-        "name": "Modular Apartment Makeover - H10",
+        "id": "d52df530-4c85-4a80-a1f2-e73581e2c13f",
+        "name": "H10 - Tidy Your Trash - Modular Apartment Makeover",
         "author": "Spuddeh",
         "coordinates": [
-            150,
-            -400
+            -1382.3882,
+            1270.9840
         ],
-        "nexus_link": "https://nexusmods.com/",
-        "description": "H10 apartment overhaul."
+        "nexus_link": "https://www.nexusmods.com/cyberpunk2077/mods/25124",
+        "description": "Another attempt to tidy up the H10 apartment. The aim of this one wasn't to remove all the trash, but instead to make it look like V can walk to a bin every once in a while.\n\nThe mod also includes options to redecorate, allowing you to redecorate only the areas you wish."
+    },
+    {
+        "id": "c57b6b10-96ea-4983-842f-d0ef8d3b9292",
+        "name": "Dogtown - Tidy Your Trash - Modular Apartment Makeover",
+        "author": "Spuddeh",
+        "coordinates": [
+            -2230.8237,
+            -2560.5930
+        ],
+        "nexus_link": "https://www.nexusmods.com/profile/Spuddeh/mods?gameId=3333",
+        "description": "Don't really have plans for this but needed an easily verifyable Dogtown location"
     }
 ]

@@ -63,8 +63,9 @@ jobs:
               return;
             }
 
-            // Generate URL-safe slug ID
-            const id = modName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+            // Generate a unique ID (UUID v4)
+            const { randomUUID } = require('crypto');
+            const id = randomUUID();
 
             const fs = require('fs');
             const mods = JSON.parse(fs.readFileSync('mods.json', 'utf8'));
@@ -73,24 +74,17 @@ jobs:
               id,
               name: modName,
               author,
-              coordinates: [coordY, coordX],
+              coordinates: [coordX, coordY],
               nexus_link: nexusLink,
               description
             };
 
             console.log('New mod entry:', JSON.stringify(newMod, null, 2));
 
-            // Check if ID exists, update if true, otherwise push
-            const existingIdx = mods.findIndex(m => m.id === id);
-            if (existingIdx >= 0) {
-              mods[existingIdx] = newMod;
-              console.log(`Updated existing mod at index ${existingIdx}`);
-            } else {
-              mods.push(newMod);
-              console.log(`Added new mod (total: ${mods.length})`);
-            }
+            mods.push(newMod);
+            console.log(`Added new mod with UUID ${id} (total: ${mods.length})`);
 
-            fs.writeFileSync('mods.json', JSON.stringify(mods, null, 2) + '\n');
+            fs.writeFileSync('mods.json', JSON.stringify(mods, null, 4) + '\n');
             console.log('mods.json written successfully');
 
             // Pass the mod name to the next step

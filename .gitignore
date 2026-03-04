@@ -6,9 +6,14 @@
 !/README.md
 !/index.html
 !/mods.json
+!/mods.schema.json
 !/public/
 !/assets/
 !/.github/
+!/scripts/
+!/docs/
+!/package.json
+!/package-lock.json
 
 # But ignore everything inside assets/images/raw maps if it existed
 assets/images/raw maps/
