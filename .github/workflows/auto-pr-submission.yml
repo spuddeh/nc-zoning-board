@@ -116,3 +116,26 @@ jobs:
               repo: context.repo.repo,
               body: '🤖 Beep boop! I have automatically parsed your coordinates and created a Pull Request. Once a maintainer reviews and merges it, your pin will go live!'
             });
+
+      - name: Notify Discord
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          MOD_NAME: ${{ steps.parse.outputs.mod_name }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_URL: ${{ github.event.issue.html_url }}
+          PR_URL: https://github.com/${{ github.repository }}/pulls
+        run: |
+          curl -s -X POST "$DISCORD_WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"embeds\": [{
+                \"title\": \"📍 New Mod Submission: $MOD_NAME\",
+                \"description\": \"A new mod location has been submitted and a PR is ready for review.\",
+                \"color\": 16767242,
+                \"fields\": [
+                  { \"name\": \"Issue\", \"value\": \"[#$ISSUE_NUMBER]($ISSUE_URL)\", \"inline\": true },
+                  { \"name\": \"Pull Requests\", \"value\": \"[Review PRs]($PR_URL)\", \"inline\": true }
+                ],
+                \"footer\": { \"text\": \"NC Zoning Board\" }
+              }]
+            }"
