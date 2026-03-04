@@ -93,10 +93,10 @@ jobs:
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v6
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.ACTIONS_PAT }}
           commit-message: "data: add new mod location - ${{ steps.parse.outputs.mod_name }}"
           title: "Add Mod Location: ${{ steps.parse.outputs.mod_name }}"
-          body: "Automated PR created from issue #${{ github.event.issue.number }}."
+          body: "Automated PR created from issue #${{ github.event.issue.number }}.\n\nCloses #${{ github.event.issue.number }}"
           branch: "add-mod-${{ github.event.issue.number }}"
           delete-branch: true
 
