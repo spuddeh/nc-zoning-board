@@ -49,7 +49,7 @@
         "author": "Spuddeh",
         "coordinates": [
             -1382.3882,
-            1270.9840
+            1270.984
         ],
         "nexus_link": "https://www.nexusmods.com/cyberpunk2077/mods/25124",
         "description": "Another attempt to tidy up the H10 apartment. The aim of this one wasn't to remove all the trash, but instead to make it look like V can walk to a bin every once in a while.\n\nThe mod also includes options to redecorate, allowing you to redecorate only the areas you wish."
@@ -60,9 +60,20 @@
         "author": "Spuddeh",
         "coordinates": [
             -2230.8237,
-            -2560.5930
+            -2560.593
         ],
         "nexus_link": "https://www.nexusmods.com/profile/Spuddeh/mods?gameId=3333",
         "description": "Don't really have plans for this but needed an easily verifyable Dogtown location"
+    },
+    {
+        "id": "7e20d216-ad35-4347-aa1a-790f7b1165ec",
+        "name": "Outdoor V - Canyon Camp",
+        "author": "Kaoziun",
+        "coordinates": [
+            4512.355,
+            25.611
+        ],
+        "nexus_link": "https://www.nexusmods.com/cyberpunk2077/mods/25924",
+        "description": "Fully functional free outdoor apartment set inside a grotto. Shower under the waterfall and sleep in a bedroll. Includes Nibbles and Johnny integration. Packed with features and extensive in-game customization options, plus a pretty sweet secret area to discover."
     }
 ]
