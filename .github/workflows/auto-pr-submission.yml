@@ -118,6 +118,7 @@ jobs:
             });
 
       - name: Notify Discord
+        id: discord_notify
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           MOD_NAME: ${{ steps.parse.outputs.mod_name }}
@@ -125,7 +126,7 @@ jobs:
           ISSUE_URL: ${{ github.event.issue.html_url }}
           PR_URL: https://github.com/${{ github.repository }}/pulls
         run: |
-          curl -s -X POST "$DISCORD_WEBHOOK_URL" \
+          RESPONSE=$(curl -s -X POST "$DISCORD_WEBHOOK_URL?wait=true" \
             -H "Content-Type: application/json" \
             -d "{
               \"embeds\": [{
@@ -134,8 +135,25 @@ jobs:
                 \"color\": 16767242,
                 \"fields\": [
                   { \"name\": \"Issue\", \"value\": \"[#$ISSUE_NUMBER]($ISSUE_URL)\", \"inline\": true },
-                  { \"name\": \"Pull Requests\", \"value\": \"[Review PRs]($PR_URL)\", \"inline\": true }
+                  { \"name\": \"Pull Requests\", \"value\": \"[Review PRs]($PR_URL)\", \"inline\": true },
+                  { \"name\": \"Status\", \"value\": \"⏳ Awaiting review\", \"inline\": false }
                 ],
                 \"footer\": { \"text\": \"NC Zoning Board\" }
               }]
-            }"
+            }")
+          MESSAGE_ID=$(echo "$RESPONSE" | jq -r '.id')
+          echo "message_id=$MESSAGE_ID" >> $GITHUB_OUTPUT
+
+      - name: Store Discord Message ID on Issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const messageId = '${{ steps.discord_notify.outputs.message_id }}';
+            if (messageId && messageId !== 'null') {
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: `<!-- discord_message_id: ${messageId} -->`
+              });
+            }
