@@ -97,10 +97,18 @@ nc-zoning-board/
 
 ## Repo Setup (for new maintainers)
 
-The auto-PR pipeline requires one secret to be configured in **repo Settings → Secrets and variables → Actions**:
+The auto-PR pipeline and Discord notifications require two secrets configured in **repo Settings → Secrets and variables → Actions**:
 
 | Secret | Value |
 |--------|-------|
 | `ACTIONS_PAT` | A GitHub Personal Access Token (fine-grained) with `Contents: Read/Write` and `Pull requests: Read/Write` on this repo |
+| `DISCORD_WEBHOOK_URL` | A Discord channel webhook URL (channel Settings → Integrations → Webhooks) |
 
-> **Why?** GitHub's `GITHUB_TOKEN` cannot trigger other workflow runs (a security design). Using a PAT for `create-pull-request` allows the `validate-json` check to fire automatically on the generated PR.
+> **Why ACTIONS_PAT?** GitHub's `GITHUB_TOKEN` cannot trigger other workflow runs (a security design). Using a PAT for `create-pull-request` allows the `validate-json` check to fire automatically on the generated PR.
+
+### Discord Notifications
+
+Two workflows handle Discord messaging:
+
+- **`auto-pr-submission.yml`** — Posts a new embed when a submission PR is created (status: ⏳ Awaiting review). Stores the Discord message ID as a hidden comment on the issue.
+- **`notify-discord-pr-status.yml`** — When the PR is merged or closed, edits the original embed in-place to show the outcome (✅ Approved or ❌ Closed).
