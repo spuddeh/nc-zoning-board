@@ -36,7 +36,6 @@
             },
             "nexus_link": {
                 "type": "string",
-                "format": "uri",
                 "pattern": "^https?://(www\\.)?nexusmods\\.com/.*$"
             },
             "description": {
