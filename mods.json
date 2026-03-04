@@ -75,26 +75,5 @@
         ],
         "nexus_link": "https://www.nexusmods.com/cyberpunk2077/mods/25924",
         "description": "Fully functional free outdoor apartment set inside a grotto. Shower under the waterfall and sleep in a bedroll. Includes Nibbles and Johnny integration. Packed with features and extensive in-game customization options, plus a pretty sweet secret area to discover."
-    },
-    {
-        "id": "efa15c8f-8354-47ab-a319-871f720f12d6",
-        "name": "Casino Reforged - Phase 2 : Access Road and Entrance",
-        "author": "Oranje3, Kaoziun, CRF Team",
-        "coordinates": [
-            1062.8049,
-            1534.3431
-        ],
-        "nexus_link": "https://www.nexusmods.com/cyberpunk2077/mods/25556",
-        "description": "North Oaks Resort and Casino. All new interior, updated access road, car park and Casino entrance - Phase 2 of the Casino Reforged project"
-    },  
-        "id": "bb79e638-8481-4c0d-b662-53d002d24fb6",
-        "name": "Casino Reforged - Phase 1 : Access areas and fixes",
-        "author": "Kaoziun, Oranje3, CRF team",
-        "coordinates": [
-            834.0293,
-            1434.8807
-        ],
-        "nexus_link": "https://www.nexusmods.com/cyberpunk2077/mods/25430",
-        "description": "A collaborative project between multiple mods and authors to restore the North Oak Casino district. This mod grants physical access for V to the zone and introduces several area fixes and improvements."
     }
 ]
