@@ -67,6 +67,12 @@ jobs:
             const { randomUUID } = require('crypto');
             const id = randomUUID();
 
+            // Always read the latest mods.json from origin/main to avoid stale data
+            // when multiple issues are submitted in quick succession
+            const { execSync } = require('child_process');
+            execSync('git fetch origin main');
+            execSync('git checkout origin/main -- mods.json');
+
             const fs = require('fs');
             const mods = JSON.parse(fs.readFileSync('mods.json', 'utf8'));
 
