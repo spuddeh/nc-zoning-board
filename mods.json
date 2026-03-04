@@ -108,5 +108,16 @@
         ],
         "nexus_link": "https://www.nexusmods.com/cyberpunk2077/mods/25999",
         "description": "Militech Black Site: APEX. Features a lore friendly quest, player safehouse, garage, other smaller buildings and an overhaul of the surrounding area into 'Sonora Canyon'."
+    },
+    {
+        "id": "f6f5bb8e-8fd4-4b30-b86e-2b78796b086d",
+        "name": "H10 - Stacked Pins Test",
+        "author": "Spuddeh",
+        "coordinates": [
+            -1382.3882,
+            1270.984
+        ],
+        "nexus_link": "https://www.nexusmods.com/cyberpunk2077/mods/25124",
+        "description": "Just a quick test to see what stacked pins look like."
     }
 ]
