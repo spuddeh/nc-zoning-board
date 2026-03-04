@@ -57,8 +57,8 @@ Best for modders who don't use Git:
 1. Go to the [Issues tab](https://github.com/spuddeh/nc-zoning-board/issues)
 2. Click **New Issue** → **"📍 Submit a New Mod Location"**
 3. Fill in the form fields
-4. Submit — the automated bot creates a PR
-5. A maintainer reviews and merges
+4. Submit — the automated bot creates a PR (with `validate-json` running automatically)
+5. A maintainer reviews and merges → **the issue closes automatically**, pin appears on the map
 
 ### Method 2: Manual Pull Request
 
