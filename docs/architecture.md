@@ -94,3 +94,13 @@ nc-zoning-board/
 - Fonts: **Orbitron** (headings), **Rajdhani** (body) from Google Fonts
 - Colour palette: `--cb-yellow` (#fcee0a), `--cb-blue` (#00f0ff), `--cb-pink` (#ff003c)
 - Custom Leaflet popup and tooltip styling
+
+## Repo Setup (for new maintainers)
+
+The auto-PR pipeline requires one secret to be configured in **repo Settings → Secrets and variables → Actions**:
+
+| Secret | Value |
+|--------|-------|
+| `ACTIONS_PAT` | A GitHub Personal Access Token (fine-grained) with `Contents: Read/Write` and `Pull requests: Read/Write` on this repo |
+
+> **Why?** GitHub's `GITHUB_TOKEN` cannot trigger other workflow runs (a security design). Using a PAT for `create-pull-request` allows the `validate-json` check to fire automatically on the generated PR.

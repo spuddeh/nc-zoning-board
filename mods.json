@@ -86,5 +86,15 @@
         ],
         "nexus_link": "https://www.nexusmods.com/cyberpunk2077/mods/25556",
         "description": "North Oaks Resort and Casino. All new interior, updated access road, car park and Casino entrance - Phase 2 of the Casino Reforged project"
+    },  
+        "id": "bb79e638-8481-4c0d-b662-53d002d24fb6",
+        "name": "Casino Reforged - Phase 1 : Access areas and fixes",
+        "author": "Kaoziun, Oranje3, CRF team",
+        "coordinates": [
+            834.0293,
+            1434.8807
+        ],
+        "nexus_link": "https://www.nexusmods.com/cyberpunk2077/mods/25430",
+        "description": "A collaborative project between multiple mods and authors to restore the North Oak Casino district. This mod grants physical access for V to the zone and introduces several area fixes and improvements."
     }
 ]
