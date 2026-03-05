@@ -4,6 +4,7 @@
 # Essential Repo Files
 !/.gitignore
 !/README.md
+!/CONTRIBUTING.md
 !/index.html
 !/mods.json
 !/mods.schema.json
