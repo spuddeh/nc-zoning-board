@@ -40,6 +40,7 @@ jobs:
             const coordYRaw = extract('Y Coordinate');
             const coordXRaw = extract('X Coordinate');
             const nexusLink = extract('Nexus Mods Link');
+            const category = extract('Category') || 'other';
 
             // Handle description which might be multiline (last field, no next ###)
             let description = '';
@@ -49,6 +50,7 @@ jobs:
               description = descMatch[1].replace(/_No response_/, "").trim();
             }
             console.log(`Extracted "Short Description": "${description}"`);
+            console.log(`Extracted "Category": "${category}"`);
 
             if (!modName) {
               core.setFailed('Could not parse "Mod Name" from issue body.');
@@ -82,8 +84,10 @@ jobs:
               author,
               coordinates: [coordX, coordY],
               nexus_link: nexusLink,
-              description
+              description,
+              category
             };
+
 
             console.log('New mod entry:', JSON.stringify(newMod, null, 2));
 

@@ -29,13 +29,13 @@ The NC Zoning Board is a **proof of concept** interactive map for Cyberpunk 2077
 
 - [ ] **Custom pin icons** — colour-coded by mod category or author
 - [ ] **Sidebar/legend** — searchable list of all registered mods
-- [ ] **District overlays** — semi-transparent coloured district boundaries
+- [ ] **Conflict detection** — warn when two mods claim nearby coordinates
+- [ ] **Mod categories** — apartments, locations, overhauls, etc.
 
 ### Medium Priority
 
-- [ ] **Mod categories** — apartments, locations, overhauls, etc.
-- [ ] **Conflict detection** — warn when two mods claim nearby coordinates
 - [ ] **Pin clustering** — group nearby pins at low zoom levels
+- [ ] **District overlays** — semi-transparent coloured district boundaries
 
 ### Low Priority / Nice to Have
 

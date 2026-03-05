@@ -8,7 +8,8 @@
             -975.9102
         ],
         "nexus_link": "https://www.nexusmods.com/cyberpunk2077/mods/26011",
-        "description": "Another attempt to tidy up the Glen apartment. The aim of this one wasn't to remove all the trash, but instead to make it look like V can walk to a bin every once in a while.\n\nThe mod also includes options to redecorate certain areas."
+        "description": "Another attempt to tidy up the Glen apartment. The aim of this one wasn't to remove all the trash, but instead to make it look like V can walk to a bin every once in a while.\n\nThe mod also includes options to redecorate certain areas.",
+        "category": "apartment"
     },
     {
         "id": "0f3d60d4-dc81-40cf-9fdb-44c0f82bffa4",
@@ -19,7 +20,8 @@
             356.4753
         ],
         "nexus_link": "https://www.nexusmods.com/profile/Spuddeh/mods?gameId=3333",
-        "description": "Future site of the Corpo Plaza apartment overhaul. (When Spuddeh stops getting distracted by Kao)"
+        "description": "Future site of the Corpo Plaza apartment overhaul. (When Spuddeh stops getting distracted by Kao)",
+        "category": "apartment"
     },
     {
         "id": "4fedfa6e-c021-4175-bbb0-18b01a26b657",
@@ -30,7 +32,8 @@
             2230.9961
         ],
         "nexus_link": "https://www.nexusmods.com/cyberpunk2077/mods/25251",
-        "description": "Another attempt to tidy up the Northside apartment. The aim of this one wasn't to remove all the trash, but instead to make it look like V can walk to a bin every once in a while. They've also gone out and bought some cleaning supplies and dusted the place.\n\nThe mod also includes options to redecorate."
+        "description": "Another attempt to tidy up the Northside apartment. The aim of this one wasn't to remove all the trash, but instead to make it look like V can walk to a bin every once in a while. They've also gone out and bought some cleaning supplies and dusted the place.\n\nThe mod also includes options to redecorate.",
+        "category": "apartment"
     },
     {
         "id": "d33c30bd-5203-4843-a8c5-7e9e2a1a7325",
@@ -41,7 +44,8 @@
             980.1387
         ],
         "nexus_link": "https://www.nexusmods.com/cyberpunk2077/mods/25536",
-        "description": "Another attempt to tidy up the Japantown apartment. The aim of this one wasn't to remove all the trash, but instead to make it look like V can walk to a bin every once in a while.\n\nThe mod also includes options to redecorate certain areas."
+        "description": "Another attempt to tidy up the Japantown apartment. The aim of this one wasn't to remove all the trash, but instead to make it look like V can walk to a bin every once in a while.\n\nThe mod also includes options to redecorate certain areas.",
+        "category": "apartment"
     },
     {
         "id": "d52df530-4c85-4a80-a1f2-e73581e2c13f",
@@ -52,7 +56,8 @@
             1270.984
         ],
         "nexus_link": "https://www.nexusmods.com/cyberpunk2077/mods/25124",
-        "description": "Another attempt to tidy up the H10 apartment. The aim of this one wasn't to remove all the trash, but instead to make it look like V can walk to a bin every once in a while.\n\nThe mod also includes options to redecorate, allowing you to redecorate only the areas you wish."
+        "description": "Another attempt to tidy up the H10 apartment. The aim of this one wasn't to remove all the trash, but instead to make it look like V can walk to a bin every once in a while.\n\nThe mod also includes options to redecorate, allowing you to redecorate only the areas you wish.",
+        "category": "apartment"
     },
     {
         "id": "c57b6b10-96ea-4983-842f-d0ef8d3b9292",
@@ -63,7 +68,8 @@
             -2560.593
         ],
         "nexus_link": "https://www.nexusmods.com/profile/Spuddeh/mods?gameId=3333",
-        "description": "Don't really have plans for this but needed an easily verifyable Dogtown location"
+        "description": "Don't really have plans for this but needed an easily verifyable Dogtown location",
+        "category": "apartment"
     },
     {
         "id": "7e20d216-ad35-4347-aa1a-790f7b1165ec",
@@ -74,7 +80,8 @@
             25.611
         ],
         "nexus_link": "https://www.nexusmods.com/cyberpunk2077/mods/25924",
-        "description": "Fully functional free outdoor apartment set inside a grotto. Shower under the waterfall and sleep in a bedroll. Includes Nibbles and Johnny integration. Packed with features and extensive in-game customization options, plus a pretty sweet secret area to discover."
+        "description": "Fully functional free outdoor apartment set inside a grotto. Shower under the waterfall and sleep in a bedroll. Includes Nibbles and Johnny integration. Packed with features and extensive in-game customization options, plus a pretty sweet secret area to discover.",
+        "category": "apartment"
     },
     {
         "id": "efa15c8f-8354-47ab-a319-871f720f12d6",
@@ -85,7 +92,8 @@
             1534.3431
         ],
         "nexus_link": "https://www.nexusmods.com/cyberpunk2077/mods/25556",
-        "description": "North Oaks Resort and Casino. All new interior, updated access road, car park and Casino entrance - Phase 2 of the Casino Reforged project"
+        "description": "North Oaks Resort and Casino. All new interior, updated access road, car park and Casino entrance - Phase 2 of the Casino Reforged project",
+        "category": "location-overhaul"
     },
     {
         "id": "bb79e638-8481-4c0d-b662-53d002d24fb6",
@@ -96,7 +104,8 @@
             1434.8807
         ],
         "nexus_link": "https://www.nexusmods.com/cyberpunk2077/mods/25430",
-        "description": "A collaborative project between multiple mods and authors to restore the North Oak Casino district. This mod grants physical access for V to the zone and introduces several area fixes and improvements."
+        "description": "A collaborative project between multiple mods and authors to restore the North Oak Casino district. This mod grants physical access for V to the zone and introduces several area fixes and improvements.",
+        "category": "location-overhaul"
     },
     {
         "id": "8c3bcd49-dc88-41ac-8df7-410b37934624",
@@ -107,7 +116,8 @@
             -2359.75
         ],
         "nexus_link": "https://www.nexusmods.com/cyberpunk2077/mods/25999",
-        "description": "Militech Black Site: APEX. Features a lore friendly quest, player safehouse, garage, other smaller buildings and an overhaul of the surrounding area into 'Sonora Canyon'."
+        "description": "Militech Black Site: APEX. Features a lore friendly quest, player safehouse, garage, other smaller buildings and an overhaul of the surrounding area into 'Sonora Canyon'.",
+        "category": "new-location"
     },
     {
         "id": "f6f5bb8e-8fd4-4b30-b86e-2b78796b086d",
@@ -118,7 +128,8 @@
             1270.984
         ],
         "nexus_link": "https://www.nexusmods.com/cyberpunk2077/mods/25124",
-        "description": "Just a quick test to see what stacked pins look like."
+        "description": "Just a quick test to see what stacked pins look like.",
+        "category": "other"
     },
     {
         "id": "066b92cc-2b74-4e14-a71c-2a35737d67db",
@@ -129,6 +140,7 @@
             -226.151
         ],
         "nexus_link": "https://www.nexusmods.com/cyberpunk2077/mods/27131",
-        "description": "Extensive forest with multiple customization options and its custom fast travel point, get to the green !"
+        "description": "Extensive forest with multiple customization options and its custom fast travel point, get to the green !",
+        "category": "apartment"
     }
 ]

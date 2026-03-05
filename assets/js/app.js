@@ -2,31 +2,12 @@ document.addEventListener('DOMContentLoaded', () => {
     initMap();
 });
 
-const DISTRICT_COLORS = {
-    'watson':        { fill: '#0a1a3a', border: '#1a3a5c' }, // Navy Blue
-    'westbrook':     { fill: '#00ced1', border: '#46afc8' }, // Teal
-    'city-center':   { fill: '#00e676', border: '#69f0ae' }, // Green
-    'heywood':       { fill: '#fcee0a', border: '#fff44f' }, // Gold
-    'santo-domingo': { fill: '#ff8c00', border: '#ff6b35' }, // Orange
-    'pacifica':      { fill: '#ff003c', border: '#ff5252' }, // Red
-    'ocean':         { fill: '#0a1628', border: '#1a3a5c' },
-    'badlands':      { fill: '#4a4a4a', border: '#666666' }
+const CATEGORY_STYLES = {
+    'apartment': { color: '#fcee0a', label: 'Apartment', class: 'cat-apartment' },
+    'location-overhaul': { color: '#00f0ff', label: 'Overhaul', class: 'cat-location-overhaul' },
+    'new-location': { color: '#ff8c00', label: 'New Location', class: 'cat-new-location' },
+    'other': { color: '#888888', label: 'Other', class: 'cat-other' }
 };
-
-// ── Coordinate Transform (16-point grid calibration) ─────────────────
-// Simple linear mapping — axes are decoupled:
-//   Leaflet lat ←→ CET Y    (north-south)
-//   Leaflet lng ←→ CET X    (east-west)
-//
-// Derived from 16-point uniform grid survey, then scaled for CRS.Simple
-// tile bounds: lat [-256, 0], lng [0, 256] (8k image, maxZoom=5)
-//
-// Original calibration (old bounds [-4000,-4500]→[4000,4500]):
-//   lat_old = 0.65666703 * CET_y + 1072.3236
-//   lng_old = 0.73346813 * CET_x + 168.7723
-// Scaled to [-256,0] × [0,256]:
-//   new_lat = old_lat * (256/8000) - 128
-//   new_lng = old_lng * (256/9000) + 128
 
 // Forward: CET (x, y) → Leaflet [lat, lng]
 function cetToLeaflet(cetX, cetY) {
@@ -35,31 +16,25 @@ function cetToLeaflet(cetX, cetY) {
     return [lat, lng];
 }
 
-// Inverse: Leaflet (lat, lng) → CET [x, y]
-function leafletToCet(lat, lng) {
-    const cetY = (lat + 93.68566) / 0.02101335;
-    const cetX = (lng - 132.80160) / 0.02086230;
-    return [cetX, cetY];
-}
-// ──────────────────────────────────────────────────────────────────────
-
 async function initMap() {
     // 1. Setup Map
     const map = L.map('map', {
         crs: L.CRS.Simple,
         minZoom: 0,
         maxZoom: 8,
-        attributionControl: false
+        maxBoundsViscosity: 1.0,
+        attributionControl: false,
+        zoomControl: false // Disable default top-left zoom control
     });
 
-    // 2. Calculate bounds from image dimensions using CRS.Simple unproject
-    // At maxZoom=5, the 8192×8192px image maps to these coordinates:
+    // Add zoom control manually to the bottom right
+    L.control.zoom({ position: 'bottomright' }).addTo(map);
+
     const maxZoom = 5;
-    const southWest = map.unproject([0, 8192], maxZoom);    // bottom-left pixel
-    const northEast = map.unproject([8192, 0], maxZoom);    // top-right pixel
+    const southWest = map.unproject([0, 8192], maxZoom);
+    const northEast = map.unproject([8192, 0], maxZoom);
     const mapBounds = new L.LatLngBounds(southWest, northEast);
 
-    // 3. Add Tile Layer (8k source, pre-generated at zoom levels 0-5)
     L.tileLayer('assets/tiles/{z}/{x}/{y}.png', {
         minZoom: 0,
         maxNativeZoom: 5,
@@ -72,112 +47,51 @@ async function initMap() {
     map.fitBounds(mapBounds);
     map.setMaxBounds(mapBounds);
 
-    // ── CALIBRATION GRID (DISABLED — calibration complete) ──────
-    // To re-enable: uncomment the block below. Grid + click handler
-    // for matching Leaflet coords to CET in-game coords.
-    /*
-    const calibrationGrid = [
-        { id: 1,  lat: -500,  lng: -1500, label: '1' },
-        { id: 2,  lat: -500,  lng: -500,  label: '2' },
-        { id: 3,  lat: -500,  lng: 500,   label: '3' },
-        { id: 4,  lat: -500,  lng: 1500,  label: '4' },
-        { id: 5,  lat: 500,   lng: -1500, label: '5' },
-        { id: 6,  lat: 500,   lng: -500,  label: '6' },
-        { id: 7,  lat: 500,   lng: 500,   label: '7' },
-        { id: 8,  lat: 500,   lng: 1500,  label: '8' },
-        { id: 9,  lat: 1500,  lng: -1500, label: '9' },
-        { id: 10, lat: 1500,  lng: -500,  label: '10' },
-        { id: 11, lat: 1500,  lng: 500,   label: '11' },
-        { id: 12, lat: 1500,  lng: 1500,  label: '12' },
-        { id: 13, lat: 2500,  lng: -1500, label: '13' },
-        { id: 14, lat: 2500,  lng: -500,  label: '14' },
-        { id: 15, lat: 2500,  lng: 500,   label: '15' },
-        { id: 16, lat: 2500,  lng: 1500,  label: '16' },
-    ];
-    function calibIcon(label) {
-        return L.divIcon({
-            className: 'calib-marker',
-            html: `<div style="background:#ff0;color:#000;font-weight:900;font-family:monospace;width:28px;height:28px;border-radius:50%;border:2px solid #000;display:flex;align-items:center;justify-content:center;font-size:${label.length > 1 ? '11' : '14'}px;box-shadow:0 0 8px rgba(255,255,0,0.6);">${label}</div>`,
-            iconSize: [28, 28], iconAnchor: [14, 14]
-        });
-    }
-    calibrationGrid.forEach(pt => {
-        L.marker([pt.lat, pt.lng], { icon: calibIcon(pt.label) }).addTo(map)
-            .bindTooltip(`Ref #${pt.label}<br>Lat: ${pt.lat}, Lng: ${pt.lng}`, { direction: 'top', offset: [0, -16] });
+    // 2. State & UI Elements
+    const categoryLayers = {};
+    const modCountEl = document.getElementById('mod-count');
+    const modListEl = document.getElementById('mod-list');
+    const filterContainer = document.getElementById('category-filters');
+    const sidebar = document.getElementById('sidebar');
+    const sidebarToggle = document.getElementById('sidebar-toggle');
+
+    // Toggle Sidebar
+    sidebarToggle.addEventListener('click', () => {
+        sidebar.classList.toggle('collapsed');
+        sidebarToggle.textContent = sidebar.classList.contains('collapsed') ? '▶' : '◀';
     });
-    map.on('click', function(e) {
-        const lat = e.latlng.lat.toFixed(2), lng = e.latlng.lng.toFixed(2);
-        L.popup().setLatLng(e.latlng).setContent(`<div style="font-family:monospace;font-size:13px;color:#0ff;background:#1a1a2e;padding:10px;border-radius:4px;">📍 Lat: ${lat}<br>Lng: ${lng}</div>`).openOn(map);
-        console.log(`[Click] lat=${lat}, lng=${lng}`);
-    });
-    */
-    // ── END CALIBRATION GRID ─────────────────────────────────────
 
-    // 4. Load District Polygons (DISABLED — awaiting improved SVG source)
-    // TODO: Re-enable once new district SVG is ready and coords are calibrated
-    /*
-    try {
-        const res = await fetch('assets/data/districts_v2.json');
-        const data = await res.json();
-
-        // Calibration for SVG -> Game coordinates
-        const SVG_W = 7466.6665, SVG_H = 7093.3335;
-        const L_MIN_Y = -4000, L_MAX_Y = 4000;
-        const L_MIN_X = -4500, L_MAX_X = 4500;
-
-        L.geoJSON(data, {
-            coordsToLatLng: function(coords) {
-                // GeoJSON [x, y] mapped to Leaflet [Lat, Lng]
-                const y = coords[0], x = coords[1];
-                const lat = L_MAX_Y - (y / SVG_H) * (L_MAX_Y - L_MIN_Y);
-                const lng = L_MIN_X + (x / SVG_W) * (L_MAX_X - L_MIN_X);
-                return L.latLng(lat, lng);
-            },
-            style: function(feature) {
-                const id = feature.properties.id;
-                const colors = DISTRICT_COLORS[id] || { fill: '#ffffff', border: '#ffffff' };
-                return {
-                    fillColor: colors.fill,
-                    fillOpacity: 0.15,
-                    color: colors.border,
-                    weight: 2,
-                    opacity: 0.5,
-                    dashArray: '5, 5'
-                };
-            },
-            onEachFeature: function(feature, layer) {
-                const id = feature.properties.id;
-                if (id !== 'unknown' && id !== 'ocean' && id !== 'badlands') {
-                    layer.bindTooltip(id.replace('-', ' ').toUpperCase(), {
-                        sticky: true,
-                        className: 'district-tooltip'
-                    });
-                }
-                
-                layer.on({
-                    mouseover: (e) => {
-                        e.target.setStyle({ fillOpacity: 0.4, weight: 3, opacity: 1 });
-                    },
-                    mouseout: (e) => {
-                        e.target.setStyle({ fillOpacity: 0.15, weight: 2, opacity: 0.5 });
-                    }
-                });
-            }
-        }).addTo(map);
-    } catch (err) {
-        console.error('Error loading districts:', err);
+    // Auto-collapse sidebar on mobile screens
+    if (window.innerWidth < 768) {
+        sidebar.classList.add('collapsed');
+        sidebarToggle.textContent = '▶';
     }
-    */
 
-    // 5. Fetch and Plot Mod Pins
+    // 3. Fetch and Setup Data
     try {
         const response = await fetch('mods.json');
         const mods = await response.json();
+        
+        modCountEl.textContent = `(${mods.length})`;
 
-        mods.forEach(mod => {
-            // Convert CET coords [x, y] to Leaflet [lat, lng]
+        // Initialize LayerGroups for each category
+        Object.keys(CATEGORY_STYLES).forEach(cat => {
+            categoryLayers[cat] = L.layerGroup().addTo(map);
+        });
+
+        mods.sort((a, b) => a.name.localeCompare(b.name)).forEach(mod => {
             const [lat, lng] = cetToLeaflet(mod.coordinates[0], mod.coordinates[1]);
-            const marker = L.marker([lat, lng]).addTo(map);
+            const catStyle = CATEGORY_STYLES[mod.category] || CATEGORY_STYLES['other'];
+
+            // Custom Marker Icon
+            const icon = L.divIcon({
+                className: 'category-marker',
+                html: `<div class="marker-pin ${catStyle.class}"></div>`,
+                iconSize: [14, 14],
+                iconAnchor: [7, 7]
+            });
+
+            const marker = L.marker([lat, lng], { icon }).addTo(categoryLayers[mod.category] || categoryLayers['other']);
 
             const popupContent = `
                 <div class="custom-popup">
@@ -188,8 +102,81 @@ async function initMap() {
                 </div>
             `;
             marker.bindPopup(popupContent);
+
+            // Add to Sidebar
+            const li = document.createElement('li');
+            li.className = 'mod-item';
+            li.dataset.category = mod.category;
+            li.innerHTML = `
+                <span class="mod-item-name">${mod.name}</span>
+                <span class="mod-item-author">by ${mod.author}</span>
+                <span class="mod-item-category badge-${mod.category}">${catStyle.label}</span>
+            `;
+            li.addEventListener('click', () => {
+                map.flyTo([lat, lng], 5, { duration: 1.5 });
+                marker.openPopup();
+                if (window.innerWidth < 768) sidebar.classList.add('collapsed');
+            });
+            modListEl.appendChild(li);
         });
+
+        // 4. Fit map to plotted pins
+        const pinBounds = L.latLngBounds(mods.map(mod => cetToLeaflet(mod.coordinates[0], mod.coordinates[1])));
+        if (pinBounds.isValid()) {
+            map.fitBounds(pinBounds, { padding: [50, 50], maxZoom: 5 });
+        }
+
+        // 5. Setup Category Filters
+        const activeCategories = new Set(mods.map(m => m.category));
+        activeCategories.forEach(cat => {
+            const style = CATEGORY_STYLES[cat] || CATEGORY_STYLES['other'];
+            const btn = document.createElement('button');
+            btn.className = 'filter-btn active';
+            btn.textContent = style.label;
+            btn.dataset.category = cat;
+            btn.addEventListener('click', () => {
+                btn.classList.toggle('active');
+                applyFilters();
+            });
+            filterContainer.appendChild(btn);
+        });
+
+        // 6. Setup Text Search
+        const searchInput = document.getElementById('mod-search');
+        searchInput.addEventListener('input', () => {
+            applyFilters();
+        });
+
+        // Centralized Filter Logic
+        function applyFilters() {
+            const query = searchInput.value.toLowerCase();
+            const activeCats = Array.from(filterContainer.querySelectorAll('.filter-btn.active')).map(b => b.dataset.category);
+            
+            // Toggle layer groups based on category buttons
+            Object.keys(categoryLayers).forEach(cat => {
+                if (activeCats.includes(cat)) {
+                    if (!map.hasLayer(categoryLayers[cat])) map.addLayer(categoryLayers[cat]);
+                } else {
+                    if (map.hasLayer(categoryLayers[cat])) map.removeLayer(categoryLayers[cat]);
+                }
+            });
+
+            // Filter the sidebar list items
+            const listItems = modListEl.querySelectorAll('.mod-item');
+            listItems.forEach(li => {
+                const modName = li.querySelector('.mod-item-name').textContent.toLowerCase();
+                const modAuthor = li.querySelector('.mod-item-author').textContent.toLowerCase();
+                const modCat = li.dataset.category;
+
+                const matchesSearch = modName.includes(query) || modAuthor.includes(query);
+                const matchesCategory = activeCats.includes(modCat);
+
+                li.style.display = (matchesSearch && matchesCategory) ? 'block' : 'none';
+            });
+        }
+
     } catch (error) {
         console.error('Error loading mod data:', error);
     }
 }
+

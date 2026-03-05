@@ -47,6 +47,18 @@ body:
       placeholder: "https://www.nexusmods.com/cyberpunk2077/mods/..."
     validations:
       required: true
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      description: What type of location mod is this?
+      options:
+        - apartment
+        - location-overhaul
+        - new-location
+        - other
+    validations:
+      required: true
   - type: textarea
     id: description
     attributes:

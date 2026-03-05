@@ -72,6 +72,238 @@ footer {
     justify-content: center;
 }
 
+/* Sidebar Styling */
+#sidebar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 300px;
+    height: 100%;
+    background: rgba(5, 10, 14, 0.9);
+    border-right: 1px solid var(--cb-blue);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(8px);
+}
+
+#sidebar.collapsed {
+    width: 40px;
+}
+
+#sidebar.collapsed>*:not(#sidebar-header) {
+    display: none;
+}
+
+#sidebar-header {
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+    border-bottom: 1px solid var(--cb-dark-accent);
+}
+
+.sidebar-header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+#sidebar-title {
+    font-family: var(--font-heading);
+    color: var(--cb-yellow);
+    font-size: 1.1rem;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+#sidebar-toggle {
+    background: transparent;
+    border: none;
+    color: var(--cb-blue);
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 5px;
+    transition: transform 0.3s ease;
+}
+
+#sidebar.collapsed #sidebar-toggle {
+    transform: rotate(180deg);
+}
+
+.sidebar-search-container {
+    margin-top: 1rem;
+    width: 100%;
+}
+
+#mod-search {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid var(--cb-blue);
+    color: var(--cb-text);
+    padding: 8px 10px;
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+#mod-search:focus {
+    border-color: var(--cb-yellow);
+    box-shadow: 0 0 5px rgba(252, 238, 10, 0.4);
+}
+
+#sidebar.collapsed .sidebar-search-container {
+    display: none;
+}
+
+
+#category-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 1rem;
+    border-bottom: 1px solid var(--cb-dark-accent);
+}
+
+.filter-btn {
+    background: var(--cb-dark-accent);
+    border: 1px solid #333;
+    color: #888;
+    padding: 4px 8px;
+    font-family: var(--font-body);
+    font-size: 0.75rem;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.2s ease;
+}
+
+.filter-btn.active {
+    border-color: var(--cb-blue);
+    color: var(--cb-blue);
+    box-shadow: 0 0 5px rgba(0, 240, 255, 0.3);
+}
+
+#mod-list {
+    flex: 1;
+    overflow-y: auto;
+    list-style: none;
+    padding: 0;
+}
+
+.mod-item {
+    padding: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.mod-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.mod-item-name {
+    display: block;
+    color: var(--cb-text);
+    font-weight: bold;
+    font-size: 0.95rem;
+    margin-bottom: 0.2rem;
+}
+
+.mod-item-author {
+    color: #888;
+    font-size: 0.8rem;
+}
+
+.mod-item-category {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    padding: 1px 4px;
+    border-radius: 2px;
+    margin-left: 0.5rem;
+}
+
+#sidebar-footer {
+    padding: 1rem;
+    border-top: 1px solid var(--cb-dark-accent);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+#sidebar-footer a {
+    color: var(--cb-blue);
+    text-decoration: none;
+    font-size: 0.85rem;
+    transition: color 0.2s ease;
+}
+
+#sidebar-footer a:hover {
+    color: var(--cb-yellow);
+}
+
+/* Category Marker Styling */
+.category-marker {
+    background: none;
+    border: none;
+}
+
+.marker-pin {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
+    position: relative;
+    transition: transform 0.2s ease;
+}
+
+.marker-pin:hover {
+    transform: scale(1.3);
+}
+
+/* Category Colors */
+.cat-apartment {
+    background-color: var(--cb-yellow);
+    box-shadow: 0 0 10px var(--cb-yellow);
+}
+
+.cat-location-overhaul {
+    background-color: var(--cb-blue);
+    box-shadow: 0 0 10px var(--cb-blue);
+}
+
+.cat-new-location {
+    background-color: #ff8c00;
+    box-shadow: 0 0 10px #ff8c00;
+}
+
+.cat-other {
+    background-color: #888888;
+    box-shadow: 0 0 10px #888888;
+}
+
+.badge-apartment {
+    color: var(--cb-yellow);
+    border: 1px solid var(--cb-yellow);
+}
+
+.badge-location-overhaul {
+    color: var(--cb-blue);
+    border: 1px solid var(--cb-blue);
+}
+
+.badge-new-location {
+    color: #ff8c00;
+    border: 1px solid #ff8c00;
+}
+
+.badge-other {
+    color: #888888;
+    border: 1px solid #888888;
+}
+
 /* Custom Leaflet Styling */
 .leaflet-container {
     background: #000 !important;

@@ -33,6 +33,24 @@
     </header>
 
     <main id="map-container">
+        <div id="sidebar">
+            <div id="sidebar-header">
+                <div class="sidebar-header-top">
+                    <span id="sidebar-title">📍 Mods <span id="mod-count"></span></span>
+                    <button id="sidebar-toggle" aria-label="Toggle sidebar">◀</button>
+                </div>
+                <div class="sidebar-search-container">
+                    <input type="text" id="mod-search" placeholder="Search mods..." aria-label="Search mods">
+                </div>
+            </div>
+            <div id="category-filters"></div>
+            <ul id="mod-list"></ul>
+            <div id="sidebar-footer">
+                <a href="https://github.com/spuddeh/nc-zoning-board/issues/new/choose" target="_blank">+ Submit a
+                    Mod</a>
+                <a href="https://discord.gg/sc4yEx2fNf" target="_blank">💬 Discord</a>
+            </div>
+        </div>
         <div id="map"></div>
     </main>
 

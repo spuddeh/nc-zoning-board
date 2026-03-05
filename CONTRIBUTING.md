@@ -58,20 +58,18 @@ docs/                   # Architecture, coordinate system, roadmap
 
 ---
 
-## 🤝 Roles We're Looking For
+## 🤝 Ways to Help
 
-The project is growing and we're looking for regular contributors. See **[docs/skills-and-roles.md](docs/skills-and-roles.md)** for the full breakdown including recruiting priorities.
+This is a community passion project. If you've got skills and want to help out, we'd love the extra hands! Here are the main areas where we could use some help:
 
-| Role | Skills Needed | What You'd Do |
+| Area | Skills | Example Tasks |
 | --- | --- | --- |
-| 🗺️ **Map Engineer** | Leaflet.js, Node.js, SVG/GeoJSON, spatial maths | District overlays, pin clustering, conflict detection, tile upgrades |
-| 🖥️ **Frontend Developer** | HTML/CSS/JS, Leaflet, responsive design | Sidebar, search, custom pin icons, mobile layout |
-| 📋 **Data Curator** | JSON Schema, CP2077 / Nexus Mods knowledge | Reviewing mod submissions for accuracy and schema compliance |
-| 🤝 **Community Manager** | CP2077 modding community knowledge, communication | Issue triage, answering questions, promoting the map |
-| 🎨 **UX Designer** | Icon design, dark theme UI | Custom pin icon set, UI polish |
-| ✍️ **Technical Writer** | Markdown, Git basics | Keeping docs/ current, writing contributor guides |
+| 🖥️ **Frontend** | HTML/CSS/JS, Leaflet, SVG/GeoJSON, spatial maths | District overlays, pin clustering, sidebar, search, custom pin icons |
+| ⚙️ **DevOps & Tools** | GitHub Actions, Node.js | Submission workflows, tile generation, Discord webhooks |
+| 🎨 **Design** | Icon design, dark theme UI | Custom pin icon set, UI polish |
+| ✍️ **Documentation** | Markdown, Git basics | Keeping docs/ current, writing contributor guides |
 
-If you're interested in taking on a regular role, open an issue or reach out to a maintainer.
+If you're interested in helping out with any of these, just open an issue or ping a maintainer.
 
 ---
 
