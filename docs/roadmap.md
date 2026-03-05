@@ -21,7 +21,6 @@ The NC Zoning Board is a **proof of concept** interactive map for Cyberpunk 2077
 - No search or filter functionality
 - No legend/sidebar showing all registered mods
 - District overlay is disabled (SVG source needs rework)
-- Schema says coordinates are `[Y, X]` but actual data uses `[X, Y]` — needs fixing
 - No mobile-specific optimizations
 
 ## Planned Features
@@ -44,3 +43,4 @@ The NC Zoning Board is a **proof of concept** interactive map for Cyberpunk 2077
 - [ ] **Contributors page** — acknowledge mod authors
 - [ ] **Dark/light theme toggle**
 - [ ] **Mobile layout** — responsive sidebar and touch-friendly markers
+- [ ] **Add support for images** — allow mod authors to upload images for their mods
