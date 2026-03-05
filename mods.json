@@ -119,5 +119,16 @@
         ],
         "nexus_link": "https://www.nexusmods.com/cyberpunk2077/mods/25124",
         "description": "Just a quick test to see what stacked pins look like."
+    },
+    {
+        "id": "066b92cc-2b74-4e14-a71c-2a35737d67db",
+        "name": "Outdoor V - Canyon Forest",
+        "author": "Kaoziun",
+        "coordinates": [
+            5321.252,
+            -226.151
+        ],
+        "nexus_link": "https://www.nexusmods.com/cyberpunk2077/mods/27131",
+        "description": "Extensive forest with multiple customization options and its custom fast travel point, get to the green !"
     }
 ]
