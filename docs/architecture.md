@@ -2,7 +2,7 @@
 
 ## File Structure
 
-```
+```text
 nc-zoning-board/
 ├── index.html              # Single-page app entry point
 ├── mods.json               # Registry of all mod locations (CET coordinates)
@@ -38,7 +38,9 @@ nc-zoning-board/
 
 ## Data Flow
 
-```
+> For a full breakdown of the bot implementation, see the [Submission Pipeline](submission-pipeline.md) documentation.
+
+```text
 ┌─────────────┐     ┌──────────────┐     ┌───────────────┐
 │ Mod Author  │────▶│ GitHub Issue  │────▶│  Auto-PR Bot  │
 │ submits CET │     │   Form       │     │  (Actions)    │
@@ -60,9 +62,9 @@ nc-zoning-board/
                                                  ▼
                                     ┌────────────────────────┐
                                     │    Leaflet Map         │
-                                    │  L.tileLayer (8k)      │
+                                    │  Sidebar GUI           │
+                                    │  Category Filtering    │
                                     │  L.marker (pins)       │
-                                    │  CRS.Simple            │
                                     └────────────────────────┘
 ```
 
@@ -79,12 +81,12 @@ nc-zoning-board/
 
 - `cetToLeaflet(x, y)` — converts CET game coordinates to Leaflet `[lat, lng]`
 - `leafletToCet(lat, lng)` — reverse transform
-- Simple linear mapping derived from a 16-point grid calibration
+- Simple linear mapping derived from a grid calibration
 - See [Coordinate System](coordinate-system.md) for full details
 
 ### Mod Data (`mods.json`)
 
-- Array of mod objects with `id`, `name`, `author`, `coordinates`, `nexus_link`, `description`
+- Array of mod objects with `id`, `name`, `author`, `coordinates`, `nexus_link`, `category`, and `description`
 - Coordinates are CET in-game `[X, Y]` — the app transforms them for display
 - Validated against `mods.schema.json` in CI
 
@@ -100,7 +102,7 @@ nc-zoning-board/
 The auto-PR pipeline and Discord notifications require two secrets configured in **repo Settings → Secrets and variables → Actions**:
 
 | Secret | Value |
-|--------|-------|
+| --- | --- |
 | `ACTIONS_PAT` | A GitHub Personal Access Token (fine-grained) with `Contents: Read/Write` and `Pull requests: Read/Write` on this repo |
 | `DISCORD_WEBHOOK_URL` | A Discord channel webhook URL (channel Settings → Integrations → Webhooks) |
 

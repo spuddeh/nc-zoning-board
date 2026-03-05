@@ -11,17 +11,19 @@ Each mod entry in `mods.json` has the following fields:
     "author": "AuthorName",
     "coordinates": [CET_X, CET_Y],
     "nexus_link": "https://www.nexusmods.com/cyberpunk2077/mods/12345",
+    "category": "apartment",
     "description": "Brief description of what the mod does (max 500 chars)."
 }
 ```
 
 | Field | Type | Rules |
-|-------|------|-------|
+| --- | --- | --- |
 | `id` | string | UUID v4 — **auto-generated**, do not set manually |
 | `name` | string | Min 3 characters |
 | `author` | string | Your modding alias |
 | `coordinates` | [number, number] | `[CET_X, CET_Y]` — in-game coordinates from CET |
 | `nexus_link` | string | Must be a valid `nexusmods.com` URL |
+| `category` | string | `apartment`, `location-overhaul`, `new-location`, or `other` |
 | `description` | string | Max 500 characters |
 
 ### Important: Coordinate Order
