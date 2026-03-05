@@ -142,5 +142,17 @@
         "nexus_link": "https://www.nexusmods.com/cyberpunk2077/mods/27131",
         "description": "Extensive forest with multiple customization options and its custom fast travel point, get to the green !",
         "category": "apartment"
+    },
+    {
+        "id": "c04110d2-ee63-4381-887e-3fef980f8d85",
+        "name": "Improved Aldecaldos Camp",
+        "author": "Akiway",
+        "coordinates": [
+            1802.2341,
+            2248.4915
+        ],
+        "nexus_link": "https://www.nexusmods.com/cyberpunk2077/mods/13821",
+        "description": "Improves the realism of the new Aldecaldos camp (once they moved after the quest Queen of the Highway) with new content and QoL stuff.",
+        "category": "location-overhaul"
     }
 ]
