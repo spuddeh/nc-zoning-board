@@ -154,5 +154,17 @@
         "nexus_link": "https://www.nexusmods.com/cyberpunk2077/mods/13821",
         "description": "Improves the realism of the new Aldecaldos camp (once they moved after the quest Queen of the Highway) with new content and QoL stuff.",
         "category": "location-overhaul"
+    },
+    {
+        "id": "806697a1-e49a-4e83-a366-a671b092bc5f",
+        "name": "V's Edgerunners Mansion Reloaded",
+        "author": "Kaoziun",
+        "coordinates": [
+            -2410.2422,
+            109.02734
+        ],
+        "nexus_link": "https://www.nexusmods.com/cyberpunk2077/mods/26023",
+        "description": "V's Edgerunners mansion relocated and edited.",
+        "category": "new-location"
     }
 ]
