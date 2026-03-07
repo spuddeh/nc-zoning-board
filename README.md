@@ -10,11 +10,20 @@ As the CP2077 modding community grows, so does the number of custom locations, a
 
 The live interactive map displays all registered mods on an 8k Night City map, allowing authors to find empty spaces or coordinate with adjacent builds.
 
+> [!NOTE]
+> The NC Zoning Board was originally envisioned and spearheaded by **[Kaoziun](https://www.nexusmods.com/profile/Kaoziun/mods?gameId=3333)**.
+
 ## Quick Start
 
 ### Viewing the Map
 
 Just visit the [Live Map](https://spuddeh.github.io/nc-zoning-board/) — no setup needed.
+
+### Join the Community
+
+Join the **[Locations Hub Discord](https://discord.gg/sc4yEx2fNf)** — a community dedicated to Cyberpunk 2077 location mods and collaborative projects. Players and authors are welcome!
+
+The NC Zoning Board is a side project of the Locations Hub. Visit the **#nc-zoning-board** channels to discuss mapping, get help with submissions, and coordinate with other modders.
 
 ### Running Locally
 
@@ -74,6 +83,15 @@ Create a new JSON file in `data/locations/` named with a UUID. See the [Adding M
 - **[Sharp](https://sharp.pixelplumbing.com/)** — 8k map tile generation (dev dependency)
 - **GitHub Actions** — Automated JSON validation and PR pipeline
 - **GitHub Pages** — Static hosting
+
+## Contributors
+
+A huge thanks to the people helping build and maintain the board:
+
+- **[Kaoziun](https://www.nexusmods.com/profile/Kaoziun/mods?gameId=3333)** — Original idea & project lead
+- **[manavortex](https://www.nexusmods.com/profile/manavortex/mods?gameId=3333)** — Data structure & dev support
+- **[Spuddeh](https://www.nexusmods.com/profile/Spuddeh/mods?gameId=3333)** — Lead developer
+- **The rest of the Locations Hub Council** — Testing, support, and ideas
 
 ## License
 

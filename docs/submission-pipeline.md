@@ -13,7 +13,7 @@ This document explains what happens under the hood when a user submits that form
 3. **PR Creation (Bot):** The bot creates a pull request on behalf of the user containing only the new mod file.
 4. **Discord Notification (Bot):** A webhook sends an "Awaiting Review" embed to the Discord server.
 5. **Validation (CI):** The PR is automatically validated against `mods.schema.json` and `data/tags.json`.
-6. **Maintainer Review:** A human reviews the data, ensures it isn't malicious, and clicks Merge.
+6. **Maintainer Review:** A human reviews the data (using the [Reviewer Guide](reviewer-guide.md)), ensures it isn't malicious, and clicks Merge.
 7. **Resolution (Bot):** The issue automatically closes, and the Discord embed updates to ✅ Approved.
 
 ---

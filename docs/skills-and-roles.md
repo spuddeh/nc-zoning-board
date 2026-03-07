@@ -83,4 +83,4 @@ If you're looking for something to do right now, these are our biggest bottlenec
 
 - **District overlays and pin clustering:** This is the most complex outstanding mapping work.
 - **Custom CSS map markers:** We need visually distinct Cyberpunk-style pins for different mod categories.
-- **Reviewing submissions:** Double-checking coords against Nexus mods before we merge them.
+- **Reviewing submissions:** Double-checking coords against Nexus mods before we merge them. See the **[Reviewer Guide](reviewer-guide.md)** for the step-by-step process.
