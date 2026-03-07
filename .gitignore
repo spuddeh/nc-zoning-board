@@ -3,6 +3,7 @@
 
 # Essential Repo Files
 !/.gitignore
+!/CHANGELOG.md
 !/README.md
 !/CONTRIBUTING.md
 !/index.html
