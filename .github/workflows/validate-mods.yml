@@ -4,18 +4,25 @@ on:
   pull_request:
     branches: [ main ]
     paths:
-      - 'mods.json'
+      - 'data/locations/**.json'
+      - 'data/tags.json'
+      - 'mods.schema.json'
   push:
     branches: [ main ]
     paths:
-      - 'mods.json'
+      - 'data/locations/**.json'
+      - 'data/tags.json'
+      - 'mods.schema.json'
 
 jobs:
   validate-json:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
+      - name: Build mods.json
+        run: node scripts/build_mods.js
 
       - name: Validate JSON Schema against Data
         run: npx -y ajv-cli validate -s mods.schema.json -d mods.json
