@@ -20,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Data Corrections**:
+  - Corrected author alias for "APEX - Sonora Canyon and Safehouse" (`Nox` -> `Nox2182`) and added TPMG credits.
 - **Data Architecture Refactor**:
   - Migrated monolithic `mods.json` into individual granular JSON files in `data/locations/`.
   - Implemented a build step (`scripts/build_mods.js`) to compile individual files into a single `mods.json` for frontend consumption.
