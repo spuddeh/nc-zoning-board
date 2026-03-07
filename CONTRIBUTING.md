@@ -40,9 +40,14 @@ index.html              # Entry point
 assets/
   js/app.js             # Map logic (Leaflet, pins, popups)
   css/style.css         # Cyberpunk-themed styles
-mods.json               # Mod registry
-mods.schema.json        # JSON Schema for validation
+data/
+  locations/            # Individual mod JSON files
+  tags.json             # Global tag registry
+mods.json               # Compiled mod registry (Git ignored)
+mods.schema.json        # JSON Schema for validation (Array version)
 scripts/
+  build_mods.js         # Compiles data/locations/*.json -> mods.json
+  validate_tags.js      # Validates used tags against tags.json
   generate_tiles.js     # Map tile generator (Node.js + sharp)
 docs/                   # Architecture, coordinate system, roadmap
 .github/
@@ -52,7 +57,8 @@ docs/                   # Architecture, coordinate system, roadmap
 
 ### Before You Open a PR
 
-- **JSON changes:** run `npx ajv validate -s mods.schema.json -d mods.json` locally
+- **Data Integrity:** run `node scripts/build_mods.js` and ensure it passes.
+- **Validation:** run `node scripts/validate_tags.js` and `npx ajv validate -s mods.schema.json -d mods.json`.
 - **Map/coordinate changes:** verify pins still appear in the correct locations
 - **Keep PRs focused** — one feature or fix per PR
 

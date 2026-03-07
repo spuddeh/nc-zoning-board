@@ -18,11 +18,19 @@ body:
   - type: input
     id: author
     attributes:
-      label: Author Alias
-      description: The name you want displayed on the map popup.
-      placeholder: "e.g., Spuddeh"
+      label: Author Alias(es)
+      description: |
+        The name(s) you want displayed. Multiple authors should be separated by commas.
+        IMPORTANT: These must EXACTLY match your Nexus Mods username for profile linking to work.
+      placeholder: "e.g., Spuddeh, Kaoziun"
     validations:
       required: true
+  - type: input
+    id: credits
+    attributes:
+      label: Credits
+      description: Additional credits for teams, contributors, or assets (optional).
+      placeholder: "e.g., CRF Team"
   - type: input
     id: coord_x
     attributes:
@@ -43,8 +51,10 @@ body:
     id: nexus_link
     attributes:
       label: Nexus Mods Link
-      description: The full URL to your published mod page.
-      placeholder: "https://www.nexusmods.com/cyberpunk2077/mods/..."
+      description: |
+        The full URL to your published mod page.
+        If the mod isn't published yet, type 'WIP'. If submitting a test location, type 'Dummy'.
+      placeholder: "https://www.nexusmods.com/cyberpunk2077/mods/... or WIP"
     validations:
       required: true
   - type: dropdown
@@ -53,10 +63,17 @@ body:
       label: Category
       description: What type of location mod is this?
       options:
-        - apartment
         - location-overhaul
         - new-location
         - other
+    validations:
+      required: true
+  - type: input
+    id: tags
+    attributes:
+      label: Tags
+      description: "Comma-separated tags (styles, life-paths, or utilities). Refer to data/tags.json for valid tags."
+      placeholder: "e.g., apartment, neokitsch, corpo"
     validations:
       required: true
   - type: textarea

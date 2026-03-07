@@ -6,11 +6,11 @@
 !/README.md
 !/CONTRIBUTING.md
 !/index.html
-!/mods.json
 !/mods.schema.json
 !/public/
 !/assets/
 !/.github/
+!/data/
 !/scripts/
 !/docs/
 !/package.json

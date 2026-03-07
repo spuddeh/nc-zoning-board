@@ -36,21 +36,21 @@ jobs:
             };
 
             const modName = extract('Mod Name');
-            const author = extract('Author Alias');
+            const authorsRaw = extract('Author Alias');
             const coordYRaw = extract('Y Coordinate');
             const coordXRaw = extract('X Coordinate');
             const nexusLink = extract('Nexus Mods Link');
             const category = extract('Category') || 'other';
+            const credits = extract('Credits');
+            const tagsRaw = extract('Tags');
 
-            // Handle description which might be multiline (last field, no next ###)
+            // Handle description which might be multiline
             let description = '';
             const descRegex = /### Short Description\s+([\s\S]+)/i;
             const descMatch = body.match(descRegex);
             if(descMatch) {
               description = descMatch[1].replace(/_No response_/, "").trim();
             }
-            console.log(`Extracted "Short Description": "${description}"`);
-            console.log(`Extracted "Category": "${category}"`);
 
             if (!modName) {
               core.setFailed('Could not parse "Mod Name" from issue body.');
@@ -65,39 +65,50 @@ jobs:
               return;
             }
 
+            // Extract Nexus ID
+            let nexusId = 'WIP';
+            if (nexusLink.toLowerCase().includes('nexusmods.com/cyberpunk2077/mods/')) {
+              const nexusMatch = nexusLink.match(/\/mods\/(\d+)/);
+              if (nexusMatch) nexusId = nexusMatch[1];
+            } else if (nexusLink.toLowerCase().includes('dummy')) {
+              nexusId = 'Dummy';
+            }
+
+            const authors = authorsRaw.split(',').map(a => a.trim()).filter(a => a);
+            const tags = tagsRaw.split(',').map(t => t.trim().toLowerCase()).filter(t => t);
+
             // Generate a unique ID (UUID v4)
             const { randomUUID } = require('crypto');
             const id = randomUUID();
 
-            // Always read the latest mods.json from origin/main to avoid stale data
-            // when multiple issues are submitted in quick succession
-            const { execSync } = require('child_process');
-            execSync('git fetch origin main');
-            execSync('git checkout origin/main -- mods.json');
-
-            const fs = require('fs');
-            const mods = JSON.parse(fs.readFileSync('mods.json', 'utf8'));
-
             const newMod = {
               id,
               name: modName,
-              author,
+              authors,
+              credits,
               coordinates: [coordX, coordY],
-              nexus_link: nexusLink,
+              nexus_id: nexusId,
               description,
-              category
+              category,
+              tags
             };
-
 
             console.log('New mod entry:', JSON.stringify(newMod, null, 2));
 
-            mods.push(newMod);
-            console.log(`Added new mod with UUID ${id} (total: ${mods.length})`);
+            const fs = require('fs');
+            const dir = 'data/locations';
+            if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+            
+            fs.writeFileSync(`${dir}/${id}.json`, JSON.stringify(newMod, null, 4) + '\n');
+            console.log(`Mod data written to ${dir}/${id}.json`);
 
-            fs.writeFileSync('mods.json', JSON.stringify(mods, null, 4) + '\n');
-            console.log('mods.json written successfully');
+            // Build mods.json for validation/PR preview (though only the new file is strictly needed)
+            const scriptsDir = path.join(process.cwd(), 'scripts');
+            const buildScript = path.join(scriptsDir, 'build_mods.js');
+            if (fs.existsSync(buildScript)) {
+               require(buildScript);
+            }
 
-            // Pass the mod name to the next step
             core.setOutput('mod_name', modName);
 
       - name: Create Pull Request

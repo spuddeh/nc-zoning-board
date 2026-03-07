@@ -9,10 +9,10 @@ This document explains what happens under the hood when a user submits that form
 ## 🏗️ High-Level Flow
 
 1. **User Submission:** Mod author fills out the "Submit a New Mod Location" Issue form.
-2. **Issue Parsing (Bot):** GitHub Actions extracts the data from the issue and merges it into `mods.json`.
-3. **PR Creation (Bot):** The bot creates a pull request on behalf of the user.
+2. **Issue Parsing (Bot):** GitHub Actions extracts the data from the issue and creates a new `.json` file in `data/locations/`.
+3. **PR Creation (Bot):** The bot creates a pull request on behalf of the user containing only the new mod file.
 4. **Discord Notification (Bot):** A webhook sends an "Awaiting Review" embed to the Discord server.
-5. **Validation (CI):** The PR is automatically validated against `mods.schema.json`.
+5. **Validation (CI):** The PR is automatically validated against `mods.schema.json` and `data/tags.json`.
 6. **Maintainer Review:** A human reviews the data, ensures it isn't malicious, and clicks Merge.
 7. **Resolution (Bot):** The issue automatically closes, and the Discord embed updates to ✅ Approved.
 
@@ -32,11 +32,11 @@ This workflow triggers whenever an issue labeled `mod-submission` is opened. It 
 
 **Step-by-step logic:**
 
-1. **Regex Extraction:** The script reads the raw Markdown body of the issue and uses Regex to locate the `###` headers and extract the values for Name, Author, Coordinates, Link, Category, and Description.
-2. **Data Type Casting:** Validates that X and Y coordinates are floats (numbers).
-3. **Latest State Check:** It runs `git fetch origin main` and checks out the absolute latest `mods.json`. This prevents merge conflicts and data loss if multiple people submit issues at the exact same time.
-4. **Append Data:** Generates a random completely unique `UUID v4` for the mod's ID, builds a JSON object with the user's data, and appends it to the `mods.json` array.
-5. **Create PR:** Uses a Personal Access Token (`ACTIONS_PAT`) to open a Pull Request. *(A PAT is used instead of default permissions so that the PR automatically triggers the validation workflow. See Architecture docs for details.)*
+1. **Regex Extraction:** The script reads the raw Markdown body of the issue and uses Regex to locate the `###` headers and extract the values for Name, Authors, Coordinates, Link, Category, Tags, and Description.
+2. **Data Type Casting:** Validates that X and Y coordinates are floats (numbers) and splits comma-separated Authors and Tags into arrays.
+3. **Append Data:** Generates a random completely unique `UUID v4` for the mod's ID and builds a JSON object with the user's data.
+4. **Create File:** Writes the data to a new file: `data/locations/<UUID>.json`. This design prevents merge conflicts when multiple submissions occur simultaneously.
+5. **Create PR:** Uses a Personal Access Token (`ACTIONS_PAT`) to open a Pull Request.
 6. **Comment:** The bot replies to the issue confirming it has created the PR.
 
 ## 💬 Stage 3: Discord Webhook Integration
@@ -50,9 +50,10 @@ To allow the bot to update this exact discord message later on, the webhook retu
 
 [**.github/workflows/validate-mods.yml**](../.github/workflows/validate-mods.yml)
 
-When the PR is opened, GitHub Actions launches this workflow. It uses the `ajv-cli` (A Node.js JSON validator) to compare the newly updated `mods.json` against the strict rules established in `mods.schema.json`.
+When the PR is opened, GitHub Actions launches this workflow. It performs two checks:
 
-If the user typed a string instead of a number for a coordinate, or left out a required field, this pipeline will fail (❌ red cross on the PR), alerting the maintainer to manually fix it before merging.
+1. **Schema Validation**: Uses `ajv-cli` to compare the compiled `mods.json` (after a test build) against `mods.schema.json`.
+2. **Tag Validation**: Runs `node scripts/validate_tags.js` to ensure all tags used in the PR exist in the `data/tags.json` registry.
 
 ## 🎉 Stage 5: Finalization & Merge
 

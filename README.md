@@ -50,12 +50,12 @@ See [Tile Generation Guide](docs/tile-generation.md) for details.
 ### Quick Method (GitHub Issue)
 
 1. Go to the **Issues** tab → **New Issue** → **"📍 Submit a New Mod Location"**
-2. Fill in your mod name, author, CET coordinates, and Nexus link
-3. An automated bot creates a PR — a maintainer approves and your mod appears on the live map
+2. Fill in the form (Author list, Category, Tags, and CET coordinates).
+3. An automated bot creates a PR with your own dedicated `.json` file — a maintainer approves and your mod appears on the live map.
 
 ### Manual Method
 
-Edit `mods.json` directly and submit a PR. See the [Adding Mods Guide](docs/adding-mods.md) for the full schema and how to get your CET coordinates.
+Create a new JSON file in `data/locations/` named with a UUID. See the [Adding Mods Guide](docs/adding-mods.md) for the full schema and how to get your CET coordinates. Do **not** edit the root `mods.json` directly.
 
 ## Documentation
 

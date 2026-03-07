@@ -69,8 +69,14 @@ async function initMap() {
 
     // 3. Fetch and Setup Data
     try {
-        const response = await fetch('mods.json');
-        const mods = await response.json();
+        // Fetch both mods and tags in parallel
+        const [modsRes, tagsRes] = await Promise.all([
+            fetch('mods.json'),
+            fetch('data/tags.json')
+        ]);
+        
+        const mods = await modsRes.json();
+        const tagsDict = await tagsRes.json();
         
         modCountEl.textContent = `(${mods.length})`;
 
@@ -93,12 +99,38 @@ async function initMap() {
 
             const marker = L.marker([lat, lng], { icon }).addTo(categoryLayers[mod.category] || categoryLayers['other']);
 
+            // Build Link based on nexus_id
+            const nexus_id_lower = String(mod.nexus_id).toLowerCase();
+            let nexusUrl = `https://www.nexusmods.com/cyberpunk2077/mods/${mod.nexus_id}`;
+            let nexusLabel = 'View on Nexus';
+
+            if (nexus_id_lower === 'wip') {
+                nexusUrl = 'https://www.nexusmods.com/games/cyberpunk2077';
+                nexusLabel = 'Status: WIP';
+            } else if (nexus_id_lower === 'dummy') {
+                nexusUrl = 'https://www.nexusmods.com/games/cyberpunk2077';
+                nexusLabel = 'Status: Dummy/Test';
+            }
+
+            // Build Authors HTML
+            const authorsHtml = mod.authors.map(author => `
+                <a href="https://www.nexusmods.com/profile/${author}/mods?gameId=3333" target="_blank" class="author-link">👤 ${author}</a>
+            `).join(' ');
+
+            // Build Tags HTML
+            const tagsHtml = (mod.tags || []).map(tag => {
+                const def = tagsDict[tag] || '';
+                return `<span class="tag-badge" title="${def}">${tag}</span>`;
+            }).join('');
+
             const popupContent = `
                 <div class="custom-popup">
                     <div class="custom-popup-title">${mod.name}</div>
-                    <div class="custom-popup-author">by ${mod.author}</div>
+                    <div class="custom-popup-authors">${authorsHtml}</div>
+                    ${mod.credits ? `<div class="custom-popup-credits">Credits: ${mod.credits}</div>` : ''}
                     <div class="custom-popup-desc">${mod.description}</div>
-                    <a href="${mod.nexus_link}" target="_blank" class="custom-popup-link">View on Nexus</a>
+                    <div class="custom-popup-tags">${tagsHtml}</div>
+                    <a href="${nexusUrl}" target="_blank" class="custom-popup-link">${nexusLabel}</a>
                 </div>
             `;
             marker.bindPopup(popupContent);
@@ -107,10 +139,13 @@ async function initMap() {
             const li = document.createElement('li');
             li.className = 'mod-item';
             li.dataset.category = mod.category;
+            li.dataset.tags = (mod.tags || []).join(',');
             li.innerHTML = `
                 <span class="mod-item-name">${mod.name}</span>
-                <span class="mod-item-author">by ${mod.author}</span>
-                <span class="mod-item-category badge-${mod.category}">${catStyle.label}</span>
+                <span class="mod-item-author">by ${mod.authors.join(', ')}</span>
+                <div class="mod-item-meta">
+                    <span class="mod-item-category badge-${mod.category}">${catStyle.label}</span>
+                </div>
             `;
             li.addEventListener('click', () => {
                 map.flyTo([lat, lng], 5, { duration: 1.5 });
@@ -141,6 +176,32 @@ async function initMap() {
             filterContainer.appendChild(btn);
         });
 
+        // Add Tags filter UI
+        const tagsHeader = document.createElement('div');
+        tagsHeader.className = 'sidebar-section-header';
+        tagsHeader.textContent = 'Filter by Tags';
+        filterContainer.appendChild(tagsHeader);
+
+        const tagsFilterContainer = document.createElement('div');
+        tagsFilterContainer.id = 'tag-filters';
+        const usedTags = new Set();
+        mods.forEach(mod => (mod.tags || []).forEach(t => usedTags.add(t)));
+        
+        Array.from(usedTags).sort().forEach(tag => {
+            const def = tagsDict[tag] || '';
+            const btn = document.createElement('button');
+            btn.className = 'tag-filter-btn';
+            btn.textContent = tag;
+            btn.title = def;
+            btn.dataset.tag = tag;
+            btn.addEventListener('click', () => {
+                btn.classList.toggle('active');
+                applyFilters();
+            });
+            tagsFilterContainer.appendChild(btn);
+        });
+        filterContainer.appendChild(tagsFilterContainer);
+
         // 6. Setup Text Search
         const searchInput = document.getElementById('mod-search');
         searchInput.addEventListener('input', () => {
@@ -151,10 +212,12 @@ async function initMap() {
         function applyFilters() {
             const query = searchInput.value.toLowerCase();
             const activeCats = Array.from(filterContainer.querySelectorAll('.filter-btn.active')).map(b => b.dataset.category);
+            const activeTags = Array.from(filterContainer.querySelectorAll('.tag-filter-btn.active')).map(b => b.dataset.tag);
             
             // Toggle layer groups based on category buttons
             Object.keys(categoryLayers).forEach(cat => {
-                if (activeCats.includes(cat)) {
+                const shouldShow = activeCats.includes(cat);
+                if (shouldShow) {
                     if (!map.hasLayer(categoryLayers[cat])) map.addLayer(categoryLayers[cat]);
                 } else {
                     if (map.hasLayer(categoryLayers[cat])) map.removeLayer(categoryLayers[cat]);
@@ -167,11 +230,17 @@ async function initMap() {
                 const modName = li.querySelector('.mod-item-name').textContent.toLowerCase();
                 const modAuthor = li.querySelector('.mod-item-author').textContent.toLowerCase();
                 const modCat = li.dataset.category;
+                const modTags = (li.dataset.tags || '').split(',');
 
                 const matchesSearch = modName.includes(query) || modAuthor.includes(query);
                 const matchesCategory = activeCats.includes(modCat);
+                const matchesTags = activeTags.length === 0 || activeTags.some(t => modTags.includes(t));
 
-                li.style.display = (matchesSearch && matchesCategory) ? 'block' : 'none';
+                li.style.display = (matchesSearch && matchesCategory && matchesTags) ? 'block' : 'none';
+                
+                // Also need to filter markers individually if we want tag filtering to affect the map
+                // (Currently, category layers toggle whole groups. If we want per-marker tag filtering, 
+                // we'd need a more granular approach than LayerGroups).
             });
         }
 

@@ -1,17 +1,18 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "title": "CP2077 Mod Map Data",
+    "title": "CP2077 Mod Map Registry",
     "type": "array",
     "items": {
         "type": "object",
         "required": [
             "id",
             "name",
-            "author",
+            "authors",
             "coordinates",
-            "nexus_link",
+            "nexus_id",
             "description",
-            "category"
+            "category",
+            "tags"
         ],
         "properties": {
             "id": {
@@ -23,8 +24,16 @@
                 "type": "string",
                 "minLength": 3
             },
-            "author": {
-                "type": "string"
+            "authors": {
+                "type": "array",
+                "items": {
+                    "type": "string"
+                },
+                "minItems": 1
+            },
+            "credits": {
+                "type": "string",
+                "description": "Additional credits for teams or contributors without specific Nexus profiles"
             },
             "coordinates": {
                 "type": "array",
@@ -35,9 +44,9 @@
                 "maxItems": 2,
                 "description": "[X, Y] — in-game coordinates from Cyber Engine Tweaks (X = east/west, Y = north/south)"
             },
-            "nexus_link": {
+            "nexus_id": {
                 "type": "string",
-                "pattern": "^https?://(www\\.)?nexusmods\\.com/.*$"
+                "description": "The Nexus Mods ID (number), or 'WIP' / 'Dummy' for unpublished content"
             },
             "description": {
                 "type": "string",
@@ -46,12 +55,18 @@
             "category": {
                 "type": "string",
                 "enum": [
-                    "apartment",
                     "location-overhaul",
                     "new-location",
                     "other"
                 ],
-                "description": "Category of the mod: apartment, location-overhaul, new-location, or other"
+                "description": "Category of the mod: location-overhaul, new-location, or other"
+            },
+            "tags": {
+                "type": "array",
+                "items": {
+                    "type": "string"
+                },
+                "description": "Tags for filtering and additional info (styles, lifepaths, etc.)"
             }
         }
     }

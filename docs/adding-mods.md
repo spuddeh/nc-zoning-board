@@ -2,16 +2,17 @@
 
 ## mods.json Schema
 
-Each mod entry in `mods.json` has the following fields:
+Each mod entry is stored in its own file in `data/locations/<UUID>.json`. The schema for a mod object is:
 
 ```json
 {
     "id": "7e846694-63b3-4c92-8c3f-beea64344457",
     "name": "Human Readable Mod Name",
-    "author": "AuthorName",
+    "authors": ["AuthorName", "CoAuthor"],
     "coordinates": [CET_X, CET_Y],
-    "nexus_link": "https://www.nexusmods.com/cyberpunk2077/mods/12345",
+    "nexus_id": "12345",
     "category": "apartment",
+    "tags": ["apartment", "neokitsch"],
     "description": "Brief description of what the mod does (max 500 chars)."
 }
 ```
@@ -20,11 +21,13 @@ Each mod entry in `mods.json` has the following fields:
 | --- | --- | --- |
 | `id` | string | UUID v4 — **auto-generated**, do not set manually |
 | `name` | string | Min 3 characters |
-| `author` | string | Your modding alias |
+| `authors` | array[string] | Array of modding aliases |
 | `coordinates` | [number, number] | `[CET_X, CET_Y]` — in-game coordinates from CET |
-| `nexus_link` | string | Must be a valid `nexusmods.com` URL |
-| `category` | string | `apartment`, `location-overhaul`, `new-location`, or `other` |
+| `nexus_id` | string | Numeric Nexus ID, or "WIP" / "Dummy" |
+| `category` | string | `location-overhaul`, `new-location`, or `other` |
+| `tags` | array[string] | Tags from `data/tags.json` |
 | `description` | string | Max 500 characters |
+| `credits` | string | (Optional) Team name or secondary acknowledgments |
 
 ### Important: Coordinate Order
 
@@ -67,9 +70,10 @@ Best for modders who don't use Git:
 Best for modders comfortable with Git:
 
 1. Fork the repository
-2. Edit `mods.json` — add your entry to the array
-3. Run validation locally: `npx ajv validate -s mods.schema.json -d mods.json`
-4. Commit and open a PR
+2. Create a new `<UUID>.json` file in `data/locations/`.
+3. Fill in your data following the schema rules above.
+4. Run validation locally: `node scripts/build_mods.js` then `npx ajv validate -s mods.schema.json -d mods.json`
+5. Commit and open a PR
 
 ### Validation
 

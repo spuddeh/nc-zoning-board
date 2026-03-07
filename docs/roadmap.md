@@ -8,18 +8,21 @@ The NC Zoning Board is a **proof of concept** interactive map for Cyberpunk 2077
 
 - ✅ 8k tiled map with zoom levels 0–8 (native to 5, upscaled to 8)
 - ✅ CET coordinate transform (16-point calibrated, linear, accurate)
-- ✅ Mod pins with clickable popups (name, author, description, Nexus link)
+- ✅ Mod pins with clickable popups (name, autores, description, Nexus link)
 - ✅ Cyberpunk-themed UI (Orbitron/Rajdhani fonts, dark theme)
 - ✅ mods.json schema validation (CI via GitHub Actions)
-- ✅ Automated mod submission via GitHub Issue form → PR pipeline
+- ✅ Automated mod submission via GitHub Issue form -> PR pipeline
 - ✅ GitHub Pages deployment
 - ✅ Tile generation script (`scripts/generate_tiles.js`)
+- ✅ **Data refactor**: Split `mods.json` into individual JSON files for cleaner management.
+- ✅ **Persistent Changelog**: Following SemVer and Keep a Changelog.
+- ✅ **Tagging System**: Dynamic filters with hover tooltips and definitions.
+- ✅ **Multi-Author & Credits**: Support for authorship arrays and team credits.
+- ✅ **URL optimization**: Store only the Nexus mod ID and generate links dynamically.
 
 ### Known Limitations
 
 - Mod pins use default Leaflet markers — no custom icons yet
-- No search or filter functionality
-- No legend/sidebar showing all registered mods
 - District overlay is disabled (SVG source needs rework)
 - No mobile-specific optimizations
 
@@ -28,9 +31,7 @@ The NC Zoning Board is a **proof of concept** interactive map for Cyberpunk 2077
 ### High Priority
 
 - [ ] **Custom pin icons** — colour-coded by mod category or author
-- [ ] **Sidebar/legend** — searchable list of all registered mods
 - [ ] **Conflict detection** — warn when two mods claim nearby coordinates
-- [ ] **Mod categories** — apartments, locations, overhauls, etc.
 
 ### Medium Priority
 

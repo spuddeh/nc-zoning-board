@@ -16,5 +16,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+
       - name: Validate JSON Schema against Data
         run: npx -y ajv-cli validate -s mods.schema.json -d mods.json
+
+      - name: Validate Tags consistency
+        run: node scripts/validate_tags.js

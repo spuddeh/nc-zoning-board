@@ -5,9 +5,12 @@
 ```text
 nc-zoning-board/
 ├── index.html              # Single-page app entry point
-├── mods.json               # Registry of all mod locations (CET coordinates)
-├── mods.schema.json        # JSON Schema for mods.json validation
-├── package.json            # Node.js deps (sharp for tile generation)
+├── data/
+│   ├── locations/          # Individual mod JSON files (tracked by Git)
+│   └── tags.json           # Registry of all valid tags and definitions
+├── mods.json               # Compiled registry (Git-ignored, built in CI)
+├── mods.schema.json        # JSON Schema for compiled data
+├── package.json            # Node.js deps (sharp, build scripts)
 │
 ├── assets/
 │   ├── css/style.css       # Cyberpunk-themed styles (Orbitron + Rajdhani fonts)
@@ -17,6 +20,8 @@ nc-zoning-board/
 │       └── {z}/{x}/{y}.png
 │
 ├── scripts/
+│   ├── build_mods.js       # Compiles data/locations/*.json -> mods.json
+│   ├── validate_tags.js    # Validates tags in data/ against tags.json
 │   └── generate_tiles.js   # Slices 8k source image into 256×256 tiles
 │
 ├── raw maps/               # Source map images (not committed — too large)
@@ -48,8 +53,14 @@ nc-zoning-board/
 └─────────────┘                                  │
                                                  ▼
                                          ┌──────────────┐
-                                         │  mods.json   │
-                                         │  [x, y] CET  │
+                                         │ data/locations│
+                                         │ <UUID>.json  │
+                                         └──────┬───────┘
+                                                │
+                                                ▼
+                                         ┌──────────────┐
+                                         │  build_mods  │
+                                         │  → mods.json │
                                          └──────┬───────┘
                                                 │
                                                 ▼
@@ -84,11 +95,12 @@ nc-zoning-board/
 - Simple linear mapping derived from a grid calibration
 - See [Coordinate System](coordinate-system.md) for full details
 
-### Mod Data (`mods.json`)
+### Mod Data (`data/locations/*.json`)
 
-- Array of mod objects with `id`, `name`, `author`, `coordinates`, `nexus_link`, `category`, and `description`
-- Coordinates are CET in-game `[X, Y]` — the app transforms them for display
-- Validated against `mods.schema.json` in CI
+- Individual JSON files per mod to prevent merge conflicts.
+- **Attributes**: `id` (UUID), `name`, `authors` (array), `coordinates` ([X, Y]), `nexus_id` (ID string, "WIP", or "Dummy"), `category`, `tags` (array), and `description`.
+- **Credits**: Optional field for team-based acknowledgments.
+- **Validation**: Individual tags are checked against `data/tags.json` and the final compiled `mods.json` is validated against `mods.schema.json` in CI.
 
 ### Styling (`style.css`)
 

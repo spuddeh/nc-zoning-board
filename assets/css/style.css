@@ -368,3 +368,109 @@ footer {
 .district-tooltip:before {
     border-right-color: var(--cb-blue) !important;
 }
+
+/* Author Profile Link */
+.custom-popup-authors {
+    margin-bottom: 0.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.author-link {
+    color: var(--cb-blue);
+    text-decoration: none;
+    font-size: 0.8rem;
+    font-weight: bold;
+    border: 1px solid rgba(0, 240, 255, 0.3);
+    padding: 2px 6px;
+    background: rgba(0, 240, 255, 0.05);
+    transition: all 0.2s ease;
+}
+
+.author-link:hover {
+    background: var(--cb-blue);
+    color: var(--cb-dark);
+}
+
+.custom-popup-credits {
+    font-size: 0.75rem;
+    color: #888;
+    font-style: italic;
+    margin-bottom: 0.5rem;
+}
+
+/* Tag Badges */
+.custom-popup-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 0.5rem;
+}
+
+.tag-badge {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ccc;
+    font-size: 0.65rem;
+    padding: 1px 6px;
+    border-radius: 10px;
+    text-transform: uppercase;
+    cursor: help;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.tag-badge:hover {
+    border-color: var(--cb-blue);
+    color: var(--cb-blue);
+}
+
+/* Sidebar Section Header */
+.sidebar-section-header {
+    width: 100%;
+    padding: 0.5rem 1rem;
+    font-family: var(--font-heading);
+    color: var(--cb-blue);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-top: 1px solid var(--cb-dark-accent);
+    background: rgba(0, 240, 255, 0.05);
+    margin-top: 1rem;
+}
+
+/* Tag Filters Section */
+#tag-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    padding: 0.8rem 1rem;
+}
+
+.tag-filter-btn {
+    background: transparent;
+    border: 1px solid #444;
+    color: #666;
+    padding: 2px 6px;
+    font-family: var(--font-body);
+    font-size: 0.7rem;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.tag-filter-btn:hover {
+    border-color: #888;
+    color: #888;
+}
+
+.tag-filter-btn.active {
+    border-color: var(--cb-pink);
+    color: var(--cb-pink);
+    box-shadow: 0 0 5px rgba(255, 0, 60, 0.3);
+}
+
+.mod-item-meta {
+    margin-top: 0.3rem;
+    display: flex;
+    align-items: center;
+}
