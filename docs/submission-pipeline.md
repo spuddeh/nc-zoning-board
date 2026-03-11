@@ -62,3 +62,14 @@ When a maintainer reviews the PR and hits Merge, the newly added mod goes live o
 Because the PR body contains the text `Closes #XXX` (referencing the original issue), merging the PR automatically closes the user's opened Issue.
 
 This Issue closure triggers [**`notify-discord-pr-status.yml`**](../.github/workflows/notify-discord-pr-status.yml), which reads the hidden `discord_message_id`, makes a `PATCH` request to the Discord API, and switches the embed to a green checkmark indicating the mod is now live!
+
+---
+
+## 📝 Stage 6: The Modification / Edit Pipeline
+
+If a user wants to update their mod's coordinates, tags, or authors (or request removal), they use the **Suggest Edit** feature.
+
+1. **Issue Form**: They click "Suggest Edit" on the map popup, which pre-fills the `suggest_edit.yml` GitHub Issue template with the mod's UUID.
+2. **Bot Processing**: The [**`modify-location-submission.yml`**](../.github/workflows/modify-location-submission.yml) workflow fires. It parses the new values.
+3. **PR Creation**: The bot modifies the existing `data/locations/<UUID>.json` file and creates a Pull Request reflecting the diff.
+4. **Validation & Merge**: Functions identically to the standard submission pipeline. Once merged, the map updates.
