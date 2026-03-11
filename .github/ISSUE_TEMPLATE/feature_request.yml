@@ -1,0 +1,34 @@
+name: 💡 Suggest a New Feature
+description: Propose a new feature or enhancement for the map interface.
+title: "[Feature Request]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Have an idea to improve the NC Zoning Board? We'd love to hear it!
+  - type: input
+    id: feature_summary
+    attributes:
+      label: Feature Summary
+      description: A concise description of the feature you're requesting.
+      placeholder: "e.g., Add a dark/light mode toggle to the sidebar."
+    validations:
+      required: true
+  - type: textarea
+    id: detailed_description
+    attributes:
+      label: Detailed Description
+      description: Explain how the feature should work, what it looks like, and why it's beneficial.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Have you thought of any alternative solutions or features?
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Mockups / Visuals
+      description: Drop any sketches or screenshots of similar features here.

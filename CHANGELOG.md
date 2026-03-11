@@ -7,33 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
+### 2026-03-09
 
-- Two new mod locations from upstream sync:
-  - **Improved Aldecaldos Camp** (Mod ID: 13821)
-  - **V's Edgerunners Mansion Reloaded** (Mod ID: 26023)
-- Support for "WIP" and "Dummy" status in `nexus_id` field.
-- Support for multiple authors per mod with direct Nexus profile links.
-- Credits field for development teams (e.g., "CRF Team").
-- Dynamic Tagging system with hover definitions and sidebar filtering.
-- Automated tag validation script (`scripts/validate_tags.js`).
+- **Automated Modification System**:
+  - Implemented "Suggest Edit" system on all map popups using pre-filled GitHub issue templates.
+  - Created `modify-location-submission.yml` workflow for automated location updates and removals.
+  - Integrated Discord webhooks for real-time submission alerts.
+- **Night Corp Modernization**:
+  - Thematic branding applied to headers, modals, and list items.
+  - Unified SVG icon system for sidebar navigation.
+  - Category-colored active filter buttons for improved UX.
+  - Cyberpunk-styled scrollbars and Leaflet map controls.
+- **Frontend Enhancements**:
+  - Integrated `Leaflet.markercluster` with custom Night Corp Cyan aesthetic.
+  - Added automated Nexus profile link generation for mod authors.
+  - Unified Author and Tag filter layouts for visual consistency.
+  - Updated Welcome Modal copy to align with "Dream On" quest lore.
+- **Maintenance**:
+  - Migrated agent instructions to `AGENT.md`.
+  - Created Round 2 Implementation Plan for future features.
 
-### Changed
+### 2026-03-07
 
-- **Data Corrections**:
-  - Corrected author alias for "APEX - Sonora Canyon and Safehouse" (`Nox` -> `Nox2182`) and added TPMG credits.
 - **Data Architecture Refactor**:
   - Migrated monolithic `mods.json` into individual granular JSON files in `data/locations/`.
-  - Implemented a build step (`scripts/build_mods.js`) to compile individual files into a single `mods.json` for frontend consumption.
-  - Updated `mods.schema.json` to support arrays for authors and new metadata.
-- **Frontend Logic**:
-  - Overhauled popup generation to handle new schema and dynamic tag badges.
-  - Revamped sidebar to include tag-based filtering and custom tooltips.
+  - Implemented a build step (`scripts/build_mods.js`) to compile individual files.
+  - Updated `mods.schema.json` to support multi-author arrays and team credits.
+- **Mod Locations**:
+  - Added **Improved Aldecaldos Camp** (Mod ID: 13821) and **V's Edgerunners Mansion Reloaded** (Mod ID: 26023).
+  - Corrected author alias for "APEX - Sonora Canyon and Safehouse".
+- **Dynamic Tagging**:
+  - Implemented `tags.json` registry and automated validation script.
+  - Added tag badges and filtering sidebar.
 - **CI/CD Workflows**:
-  - `auto-pr-submission.yml`: Overhauled to handle the new granular JSON structure and multi-author/tag inputs.
-  - `deploy.yml`: Added build step for `mods.json`.
-  - `validate-mods.yml`: Integrated tag consistency checks, updated trigger paths for `data/locations/`, and added the required build step prior to validation.
-
-### Security
-
-- Updated `.gitignore` to ensure compiled artifacts like `mods.json` are not tracked, preventing merge conflicts and keeping the repository clean.
+  - Overhauled `auto-pr-submission.yml` for granular JSON structure.
+  - Integrated validation and build steps into `deploy.yml` and `validate-mods.yml`.
+- **Security**:
+  - Updated `.gitignore` to prevent tracking of compiled `mods.json`.

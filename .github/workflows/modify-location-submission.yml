@@ -1,0 +1,158 @@
+name: Auto-Process Mod Modification
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  process-modification:
+    if: contains(github.event.issue.labels.*.name, 'mod-modification')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.ACTIONS_PAT }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Process Issue
+        id: process
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const body = context.payload.issue.body;
+
+            const extract = (field) => {
+              const regex = new RegExp(`### ${field}\\s+([^#]+)`, 'i');
+              const match = body.match(regex);
+              return match ? match[1].trim() : '';
+            };
+
+            const locationId = extract('Location ID');
+            const actionType = extract('Action Requested');
+            const modName = extract('Mod Name');
+            const authorsRaw = extract('Author\\(s\\)');
+            const coordXRaw = extract('X Coordinate');
+            const coordYRaw = extract('Y Coordinate');
+            const nexusLink = extract('Nexus Mods Link');
+            const credits = extract('Credits');
+            const tagsRaw = extract('Tags');
+
+            // Extraction for description (textarea)
+            const descRegex = /### Description\s+([\s\S]+?)(?=###|$)/i;
+            const descMatch = body.match(descRegex);
+            let description = descMatch ? descMatch[1].trim() : '';
+            if (description.toLowerCase().includes('_no response_')) description = '';
+
+            if (!locationId) {
+              core.setFailed('Missing Location ID.');
+              return;
+            }
+
+            const filePath = `data/locations/${locationId}.json`;
+            const isRemoval = actionType.toLowerCase().includes('removal');
+
+            if (isRemoval) {
+              if (fs.existsSync(filePath)) {
+                fs.unlinkSync(filePath);
+                console.log(`Deleted ${filePath}`);
+                core.setOutput('action', 'removal');
+                core.setOutput('mod_name', modName || locationId);
+              } else {
+                core.setFailed(`File ${filePath} not found for removal.`);
+                return;
+              }
+            } else {
+              // Edit/Update Logic
+              if (!fs.existsSync(filePath)) {
+                 core.setFailed(`File ${filePath} not found for update.`);
+                 return;
+              }
+
+              const existingData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+              
+              // Prepare new data
+              const coordX = parseFloat(coordXRaw);
+              const coordY = parseFloat(coordYRaw);
+              if (isNaN(coordX) || isNaN(coordY)) {
+                core.setFailed(`Invalid coordinates: X=${coordXRaw}, Y=${coordYRaw}`);
+                return;
+              }
+
+              let nexusId = existingData.nexus_id;
+              if (nexusLink) {
+                if (nexusLink.toLowerCase().includes('nexusmods.com/cyberpunk2077/mods/')) {
+                  const nexusMatch = nexusLink.match(/\/mods\/(\d+)/);
+                  if (nexusMatch) nexusId = nexusMatch[1];
+                } else if (nexusLink.toLowerCase().includes('wip')) {
+                  nexusId = 'WIP';
+                } else if (nexusLink.toLowerCase().includes('dummy')) {
+                  nexusId = 'Dummy';
+                }
+              }
+
+              const authors = authorsRaw ? authorsRaw.split(',').map(a => a.trim()).filter(a => a) : existingData.authors;
+              const tags = tagsRaw ? tagsRaw.split(',').map(t => t.trim().toLowerCase()).filter(t => t) : existingData.tags;
+              
+              const updatedMod = {
+                id: locationId,
+                name: modName || existingData.name,
+                authors: authors,
+                credits: credits || existingData.credits || '',
+                coordinates: [coordX, coordY],
+                nexus_id: nexusId,
+                description: description || existingData.description,
+                category: existingData.category, // Category not provided in mod template for now to avoid complexity
+                tags: tags
+              };
+
+              // Basic Validation against schema logic could go here
+              // For now we write it back
+              fs.writeFileSync(filePath, JSON.stringify(updatedMod, null, 4) + '\n');
+              console.log(`Updated ${filePath}`);
+              core.setOutput('action', 'update');
+              core.setOutput('mod_name', updatedMod.name);
+            }
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.ACTIONS_PAT }}
+          commit-message: "data: ${{ steps.process.outputs.action }} mod - ${{ steps.process.outputs.mod_name }}"
+          title: "${{ steps.process.outputs.action == 'removal' && 'Remove' || 'Update' }} Mod: ${{ steps.process.outputs.mod_name }}"
+          body: "Automated PR created from issue #${{ github.event.issue.number }}.\n\nCloses #${{ github.event.issue.number }}"
+          branch: "mod-mod-${{ github.event.issue.number }}"
+          delete-branch: true
+
+      - name: Notify Discord
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          MOD_NAME: ${{ steps.process.outputs.mod_name }}
+          ISSUE_URL: ${{ github.event.issue.html_url }}
+          ACTION: ${{ steps.process.outputs.action }}
+        run: |
+          COLOR=$([[ "$ACTION" == "removal" ]] && echo "16711680" || echo "65535")
+          ACTION_DESC=$([[ "$ACTION" == "removal" ]] && echo "Removal requested" || echo "Modification suggested")
+          curl -X POST "$DISCORD_WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"embeds\": [{
+                \"title\": \"🔄 Mod Modification: $MOD_NAME\",
+                \"description\": \"$ACTION_DESC for this map entry.\",
+                \"color\": $COLOR,
+                \"fields\": [
+                  { \"name\": \"Issue\", \"value\": \"[View Issue]($ISSUE_URL)\", \"inline\": true },
+                  { \"name\": \"Action\", \"value\": \"$ACTION\", \"inline\": true }
+                ],
+                \"footer\": { \"text\": \"NC Zoning Board\" }
+              }]
+            }"

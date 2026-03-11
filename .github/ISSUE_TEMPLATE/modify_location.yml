@@ -1,0 +1,75 @@
+name: 🔄 Suggest a Modification or Removal
+description: Request an update, edit, or removal of an existing map pin.
+title: "[Mod Modification]: "
+labels: ["mod-modification"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form to suggest changes to an existing map entry. 
+        **Location ID is read-only — do not modify it.**
+  - type: input
+    id: location_id
+    attributes:
+      label: Location ID
+      description: The unique UUID for this location file. DO NOT EDIT.
+    validations:
+      required: true
+  - type: dropdown
+    id: action_type
+    attributes:
+      label: Action Requested
+      description: Are you suggesting an update to existing data, or requesting the pin be removed?
+      options:
+        - Edit / Update
+        - Removal
+    validations:
+      required: true
+  - type: input
+    id: mod_name
+    attributes:
+      label: Mod Name
+      description: The exact title of the mod.
+    validations:
+      required: true
+  - type: input
+    id: authors
+    attributes:
+      label: Author(s)
+      description: Comma-separated list of authors.
+    validations:
+      required: true
+  - type: input
+    id: coord_x
+    attributes:
+      label: X Coordinate
+    validations:
+      required: true
+  - type: input
+    id: coord_y
+    attributes:
+      label: Y Coordinate
+    validations:
+      required: true
+  - type: input
+    id: credits
+    attributes:
+      label: Credits
+      description: Additional credits (optional).
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: |
+        Leave this blank to keep the existing description.
+        Only fill this out if you are suggesting a rewritten description.
+  - type: input
+    id: tags
+    attributes:
+      label: Tags
+      description: Comma-separated tags.
+  - type: input
+    id: nexus_link
+    attributes:
+      label: Nexus Mods Link
+      description: The URL to the mod page (or 'WIP'/'Dummy').

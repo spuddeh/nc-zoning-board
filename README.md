@@ -1,12 +1,12 @@
 # NC Zoning Board
 
-**An interactive web map and coordinate registry for Cyberpunk 2077 location modders to claim spaces and prevent overlap.**
+**An interactive web map and coordinate registry for Cyberpunk 2077 location mods — helping mod authors find open spaces and avoid overlap.**
 
 🌍 **[View the Live Map](https://spuddeh.github.io/nc-zoning-board/)**
 
 ## What is This?
 
-As the CP2077 modding community grows, so does the number of custom locations, apartments, and overhauled zones. This repository is a centralized registry where mod authors can **"claim" their in-game coordinates** to ensure compatibility across location mods.
+As the CP2077 modding community grows, so does the number of custom locations, apartments, and overhauled zones. This repository is a centralized registry where mod authors can **register their in-game coordinates** to help the community track what's been built and where.
 
 The live interactive map displays all registered mods on an 8k Night City map, allowing authors to find empty spaces or coordinate with adjacent builds.
 

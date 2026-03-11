@@ -1,0 +1,16 @@
+name: 💬 General Feedback
+description: Send general feedback about your experience using the map.
+title: "[Feedback]: "
+labels: ["feedback"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Tell us what you think about the NC Zoning Board map! What works well, what doesn't, and how can we make it better?
+  - type: textarea
+    id: feedback
+    attributes:
+      label: Your Feedback
+      description: Share your thoughts, complaints, or compliments here.
+    validations:
+      required: true
