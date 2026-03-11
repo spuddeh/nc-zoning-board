@@ -32,11 +32,13 @@ nc-zoning-board/
 │
 ├── .github/
 │   ├── ISSUE_TEMPLATE/
-│   │   └── mod_submission.yml   # GitHub Issue form for mod submissions
+│   │   ├── mod_submission.yml      # GitHub Issue form for mod submissions
+│   │   └── suggest_edit.yml        # GitHub Issue form for suggesting edits
 │   └── workflows/
-│       ├── auto-pr-submission.yml  # Bot: issue → PR with mods.json update
-│       ├── validate-mods.yml       # CI: validates mods.json against schema
-│       └── deploy.yml              # CD: deploys to GitHub Pages
+│       ├── auto-pr-submission.yml       # Bot: submission issue → PR with new JSON
+│       ├── modify-location-submission.yml # Bot: edit issue → PR with modified JSON
+│       ├── validate-mods.yml            # CI: validates mods.json against schema
+│       └── deploy.yml                   # CD: deploys to GitHub Pages
 │
 └── docs/                   # You are here
 ```

@@ -8,7 +8,7 @@
 
 As the CP2077 modding community grows, so does the number of custom locations, apartments, and overhauled zones. This repository is a centralized registry where mod authors can **register their in-game coordinates** to help the community track what's been built and where.
 
-The live interactive map displays all registered mods on an 8k Night City map, allowing authors to find empty spaces or coordinate with adjacent builds.
+The live interactive map displays all registered mods on an 8k Night City map, allowing authors to find empty spaces or coordinate with adjacent builds. By registering a valid Nexus ID, the application will automatically fetch and display the mod's official thumbnail and promotional image using the free Nexus Mods GraphQL API.
 
 > [!NOTE]
 > The NC Zoning Board was originally envisioned and spearheaded by **[Kaoziun](https://www.nexusmods.com/profile/Kaoziun/mods?gameId=3333)**.
@@ -60,7 +60,7 @@ See [Tile Generation Guide](docs/tile-generation.md) for details.
 
 1. Go to the **Issues** tab → **New Issue** → **"📍 Submit a New Mod Location"**
 2. Fill in the form (Author list, Category, Tags, and CET coordinates).
-3. An automated bot creates a PR with your own dedicated `.json` file — a maintainer approves and your mod appears on the live map.
+3. An automated bot creates a PR with your own dedicated `.json` file — a maintainer approves and your mod appears on the live map. (Images are pulled automatically from Nexus Mods using your provided Nexus ID).
 
 ### Manual Method
 
