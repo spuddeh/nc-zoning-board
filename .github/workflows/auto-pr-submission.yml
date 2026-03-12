@@ -2,7 +2,7 @@ name: Auto-Generate Mod PR
 
 on:
   issues:
-    types: [opened]
+    types: [opened, labeled]
 
 permissions:
   contents: write
