@@ -94,6 +94,7 @@ If you're interested in helping out with any of these, just open an issue or pin
 - [Submission Pipeline](docs/submission-pipeline.md) — how GitHub Actions handles new mod entries
 - [Coordinate System](docs/coordinate-system.md) — CET ↔ Leaflet transform, calibration data
 - [Adding Mods](docs/adding-mods.md) — schema reference, getting coordinates, submission methods
+- [Tag Registry](docs/tags.md) — current tags, and how to add, modify, or remove tags
 - [Tile Generation](docs/tile-generation.md) — how the map tiles are generated and upgraded
 - [Skills & Roles](docs/skills-and-roles.md) — full role descriptions and recruiting priorities
 - [Roadmap](docs/roadmap.md) — what's planned

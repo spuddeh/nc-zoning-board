@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### 2026-03-12 (tags)
+
+- **Data**:
+  - Added new `photos` tag — scenic or atmospheric locations well-suited for virtual photography.
+- **Docs**:
+  - Created `docs/tags.md` — canonical reference for the tag registry, including the full tag list and step-by-step processes for adding, modifying, renaming, and removing tags.
+  - Updated `CONTRIBUTING.md` — added link to `docs/tags.md` in the Useful Docs section.
+  - Updated `docs/adding-mods.md` — tags field now links to the tag registry doc.
+
 ### 2026-03-12
 
 - **Bug Fixes**:

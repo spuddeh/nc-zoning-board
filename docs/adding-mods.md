@@ -25,7 +25,7 @@ Each mod entry is stored in its own file in `data/locations/<UUID>.json`. The sc
 | `coordinates` | [number, number] | `[CET_X, CET_Y]` — in-game coordinates from CET |
 | `nexus_id` | string | Numeric Nexus ID (Used to automatically fetch thumbnails/images via API), or "WIP" / "Dummy" |
 | `category` | string | `location-overhaul`, `new-location`, or `other` |
-| `tags` | array[string] | Tags from `data/tags.json` |
+| `tags` | array[string] | Tags from `data/tags.json` — see [Tag Registry](tags.md) for the full list |
 | `description` | string | Max 500 characters |
 | `credits` | string | (Optional) Team name or secondary acknowledgments |
 
