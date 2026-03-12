@@ -2,7 +2,7 @@ name: Auto-Generate Mod PR
 
 on:
   issues:
-    types: [opened, labeled]
+    types: [labeled]
 
 permissions:
   contents: write
@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   create-pr:
-    if: contains(github.event.issue.labels.*.name, 'mod-submission')
+    if: github.event.label.name == 'mod-submission'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
