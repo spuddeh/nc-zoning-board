@@ -1,0 +1,18 @@
+{
+    "id": "5308bb1c-769c-46dd-98f2-47a80a0d03a0",
+    "name": "Urmland Street Arcade",
+    "authors": [
+        "LiquidBronze"
+    ],
+    "credits": "",
+    "coordinates": [
+        1578.6,
+        1197.2
+    ],
+    "nexus_id": "23908",
+    "description": "This is a standalone version of the arcade on Urmland Street.",
+    "category": "new-location",
+    "tags": [
+        "entertainment"
+    ]
+}
