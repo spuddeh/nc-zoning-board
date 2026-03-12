@@ -313,6 +313,7 @@ async function initMap() {
     // Fetch Nexus thumbnails for all mods
     const nexusIds = mods.map((m) => String(m.nexus_id)).filter(Boolean);
     const nexusThumbs = await fetchNexusThumbnails(nexusIds);
+    console.log("[DEBUG] Nexus thumbs result:", nexusThumbs); // TODO: remove after debugging
 
     mods
       .sort((a, b) => a.name.localeCompare(b.name))
