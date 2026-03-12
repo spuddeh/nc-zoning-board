@@ -10,11 +10,10 @@
         -2091.798
     ],
     "nexus_id": "24408",
-    "description": "Secure player compound with several amenities",
-    "category": "location-overhaul",
+    "description": "Player compound in Rancho Coronado with several amenities.",
+    "category": "new-location",
     "tags": [
-        "house",
-        "neomilitarism",
-        "photos"
+        "apartment",
+        "neomilitarism"
     ]
 }
