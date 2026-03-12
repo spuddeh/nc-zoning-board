@@ -1,8 +1,10 @@
 {
     "id": "7c963e30-e470-4867-b0ae-8a6c9d514b00",
     "name": "Sheng Noods Ramenshop",
-    "authors": [],
-    "credits": "_No response_",
+    "authors": [
+        "Kaoziun"
+    ],
+    "credits": "",
     "coordinates": [
         -402.56494,
         1276.3997
