@@ -1,0 +1,20 @@
+{
+    "id": "1252c788-7d38-4359-95f7-fb83308bc2db",
+    "name": "Rocky Ridge Safe Haven",
+    "authors": [
+        "barbedvvire"
+    ],
+    "credits": "",
+    "coordinates": [
+        2746.1829,
+        173.27959
+    ],
+    "nexus_id": "26152",
+    "description": "This mod adds a Nomad themed house/Garage in Rocky Ridge, made completely from scratch and with native interactions.",
+    "category": "new-location",
+    "tags": [
+        "apartment",
+        "entropism",
+        "nomad"
+    ]
+}
