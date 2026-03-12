@@ -94,19 +94,53 @@ jobs:
               }]
             }"
 
-  # For modifications/removals: post a new Discord message with the final status
+  # For modifications/removals: edit the existing Discord message posted when the issue was processed
   notify-modification:
     if: startsWith(github.event.pull_request.head.ref, 'mod-mod-')
     runs-on: ubuntu-latest
     steps:
-      - name: Notify Discord - Merged
-        if: github.event.pull_request.merged == true
+      - name: Find Discord Message ID
+        id: find_message
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = context.payload.pull_request.body || '';
+            const issueMatch = body.match(/Closes #(\d+)/);
+            if (!issueMatch) {
+              console.log('No issue reference found in PR body');
+              return;
+            }
+            const issueNumber = parseInt(issueMatch[1]);
+            console.log(`Found issue #${issueNumber}`);
+
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              per_page: 100
+            });
+
+            for (const comment of comments.data) {
+              const idMatch = comment.body.match(/<!--\s*discord_message_id:\s*(\d+)\s*-->/);
+              if (idMatch) {
+                console.log(`Found Discord message ID: ${idMatch[1]}`);
+                core.setOutput('message_id', idMatch[1]);
+                return;
+              }
+            }
+            console.log('Discord message ID not found in issue comments');
+
+      - name: Edit Discord Message - Merged
+        if: github.event.pull_request.merged == true && steps.find_message.outputs.message_id != ''
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           PR_TITLE: ${{ github.event.pull_request.title }}
           PR_URL: ${{ github.event.pull_request.html_url }}
+          MESSAGE_ID: ${{ steps.find_message.outputs.message_id }}
         run: |
-          curl -s -X POST "$DISCORD_WEBHOOK_URL" \
+          WEBHOOK_ID=$(echo "$DISCORD_WEBHOOK_URL" | sed 's|.*/webhooks/||' | cut -d'/' -f1)
+          WEBHOOK_TOKEN=$(echo "$DISCORD_WEBHOOK_URL" | sed 's|.*/webhooks/[0-9]*/||')
+          curl -s -X PATCH "https://discord.com/api/webhooks/$WEBHOOK_ID/$WEBHOOK_TOKEN/messages/$MESSAGE_ID" \
             -H "Content-Type: application/json" \
             -d "{
               \"embeds\": [{
@@ -120,14 +154,17 @@ jobs:
               }]
             }"
 
-      - name: Notify Discord - Closed without merge
-        if: github.event.pull_request.merged == false
+      - name: Edit Discord Message - Closed without merge
+        if: github.event.pull_request.merged == false && steps.find_message.outputs.message_id != ''
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           PR_TITLE: ${{ github.event.pull_request.title }}
           PR_URL: ${{ github.event.pull_request.html_url }}
+          MESSAGE_ID: ${{ steps.find_message.outputs.message_id }}
         run: |
-          curl -s -X POST "$DISCORD_WEBHOOK_URL" \
+          WEBHOOK_ID=$(echo "$DISCORD_WEBHOOK_URL" | sed 's|.*/webhooks/||' | cut -d'/' -f1)
+          WEBHOOK_TOKEN=$(echo "$DISCORD_WEBHOOK_URL" | sed 's|.*/webhooks/[0-9]*/||')
+          curl -s -X PATCH "https://discord.com/api/webhooks/$WEBHOOK_ID/$WEBHOOK_TOKEN/messages/$MESSAGE_ID" \
             -H "Content-Type: application/json" \
             -d "{
               \"embeds\": [{

@@ -136,6 +136,7 @@ jobs:
             }
 
       - name: Create Pull Request
+        id: create_pr
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.ACTIONS_PAT }}
@@ -145,16 +146,30 @@ jobs:
           branch: "mod-mod-${{ github.event.issue.number }}"
           delete-branch: true
 
+      - name: Comment on Issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '🤖 Beep boop! I have automatically processed your request and created a Pull Request. Once a maintainer reviews and merges it, the change will go live!'
+            });
+
       - name: Notify Discord
+        id: discord_notify
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           MOD_NAME: ${{ steps.process.outputs.mod_name }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
           ISSUE_URL: ${{ github.event.issue.html_url }}
+          PR_URL: ${{ steps.create_pr.outputs.pull-request-url }}
           ACTION: ${{ steps.process.outputs.action }}
         run: |
-          COLOR=$([[ "$ACTION" == "removal" ]] && echo "16711680" || echo "65535")
+          COLOR=$([[ "$ACTION" == "removal" ]] && echo "16711680" || echo "16753920")
           ACTION_DESC=$([[ "$ACTION" == "removal" ]] && echo "Removal requested" || echo "Modification suggested")
-          curl -X POST "$DISCORD_WEBHOOK_URL" \
+          RESPONSE=$(curl -s -X POST "$DISCORD_WEBHOOK_URL?wait=true" \
             -H "Content-Type: application/json" \
             -d "{
               \"embeds\": [{
@@ -162,9 +177,26 @@ jobs:
                 \"description\": \"$ACTION_DESC for this map entry.\",
                 \"color\": $COLOR,
                 \"fields\": [
-                  { \"name\": \"Issue\", \"value\": \"[View Issue]($ISSUE_URL)\", \"inline\": true },
-                  { \"name\": \"Action\", \"value\": \"$ACTION\", \"inline\": true }
+                  { \"name\": \"Issue\", \"value\": \"[#$ISSUE_NUMBER]($ISSUE_URL)\", \"inline\": true },
+                  { \"name\": \"Pull Request\", \"value\": \"[Review PR]($PR_URL)\", \"inline\": true },
+                  { \"name\": \"Status\", \"value\": \"⏳ Awaiting review\", \"inline\": false }
                 ],
                 \"footer\": { \"text\": \"NC Zoning Board\" }
               }]
-            }"
+            }")
+          MESSAGE_ID=$(echo "$RESPONSE" | jq -r '.id')
+          echo "message_id=$MESSAGE_ID" >> $GITHUB_OUTPUT
+
+      - name: Store Discord Message ID on Issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const messageId = '${{ steps.discord_notify.outputs.message_id }}';
+            if (messageId && messageId !== 'null') {
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: `<!-- discord_message_id: ${messageId} -->`
+              });
+            }
