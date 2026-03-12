@@ -68,14 +68,30 @@ body:
         - other
     validations:
       required: true
-  - type: input
+  - type: markdown
+    attributes:
+      value: |
+        **Tags** — check all that apply. At least one tag is recommended.
+        > Style tags describe the aesthetic. Life-path tags describe who the mod suits. Utility tags describe the function.
+  - type: checkboxes
     id: tags
     attributes:
       label: Tags
-      description: "Comma-separated tags (styles, life-paths, or utilities). Refer to data/tags.json for valid tags."
-      placeholder: "e.g., apartment, neokitsch, corpo"
-    validations:
-      required: true
+      options:
+        - label: "apartment — A player housing unit within a megabuilding or high-rise"
+        - label: "corpo — High-end corporate architecture and security-focused areas"
+        - label: "entertainment — Bars, clubs, casinos, and nightlife venues"
+        - label: "entropism — The poverty aesthetic of struggling against technology"
+        - label: "house — A standalone player dwelling or safehouse"
+        - label: "infrastructure — Roads, bridges, parking structures, and public works"
+        - label: "kitsch — Flashy, bold, cheap — the look of a lost golden age"
+        - label: "neokitsch — Synonymous with luxury and infinite wealth"
+        - label: "neomilitarism — Cold, sharp, modern — ready for combat"
+        - label: "nomad — Off-the-grid, scrapyard, desert, or vehicular habitats"
+        - label: "quest — A location tied to custom gigs, missions, or storylines"
+        - label: "ripperdoc — A clinic for cyberware installation and medical services"
+        - label: "shop — A retail location for weapons, clothing, or items"
+        - label: "streetkid — Gang culture, neon lights, and urban survival"
   - type: textarea
     id: description
     attributes:

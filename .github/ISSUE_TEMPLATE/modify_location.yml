@@ -6,7 +6,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Use this form to suggest changes to an existing map entry. 
+        Use this form to suggest changes to an existing map entry.
         **Location ID is read-only — do not modify it.**
   - type: input
     id: location_id
@@ -43,12 +43,22 @@ body:
     id: coord_x
     attributes:
       label: X Coordinate
-    validations:
-      required: true
+      description: Required for updates. Leave blank if requesting removal.
   - type: input
     id: coord_y
     attributes:
       label: Y Coordinate
+      description: Required for updates. Leave blank if requesting removal.
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      description: Leave as "Keep existing" if the category is not changing.
+      options:
+        - Keep existing
+        - location-overhaul
+        - new-location
+        - other
     validations:
       required: true
   - type: input
@@ -56,6 +66,35 @@ body:
     attributes:
       label: Credits
       description: Additional credits (optional).
+  - type: markdown
+    attributes:
+      value: |
+        **Tags** — check all that apply. Leave all unchecked to keep the existing tags.
+        > Style tags describe the aesthetic. Life-path tags describe who the mod suits. Utility tags describe the function.
+  - type: checkboxes
+    id: tags
+    attributes:
+      label: Tags
+      options:
+        - label: "apartment — A player housing unit within a megabuilding or high-rise"
+        - label: "corpo — High-end corporate architecture and security-focused areas"
+        - label: "entertainment — Bars, clubs, casinos, and nightlife venues"
+        - label: "entropism — The poverty aesthetic of struggling against technology"
+        - label: "house — A standalone player dwelling or safehouse"
+        - label: "infrastructure — Roads, bridges, parking structures, and public works"
+        - label: "kitsch — Flashy, bold, cheap — the look of a lost golden age"
+        - label: "neokitsch — Synonymous with luxury and infinite wealth"
+        - label: "neomilitarism — Cold, sharp, modern — ready for combat"
+        - label: "nomad — Off-the-grid, scrapyard, desert, or vehicular habitats"
+        - label: "quest — A location tied to custom gigs, missions, or storylines"
+        - label: "ripperdoc — A clinic for cyberware installation and medical services"
+        - label: "shop — A retail location for weapons, clothing, or items"
+        - label: "streetkid — Gang culture, neon lights, and urban survival"
+  - type: input
+    id: nexus_link
+    attributes:
+      label: Nexus Mods Link
+      description: The URL to the mod page (or 'WIP'/'Dummy'). Leave blank to keep existing.
   - type: textarea
     id: description
     attributes:
@@ -63,13 +102,3 @@ body:
       description: |
         Leave this blank to keep the existing description.
         Only fill this out if you are suggesting a rewritten description.
-  - type: input
-    id: tags
-    attributes:
-      label: Tags
-      description: Comma-separated tags.
-  - type: input
-    id: nexus_link
-    attributes:
-      label: Nexus Mods Link
-      description: The URL to the mod page (or 'WIP'/'Dummy').

@@ -414,7 +414,7 @@ async function initMap() {
             const coords = cetToLeaflet(mod.coordinates[0], mod.coordinates[1]);
             map.flyTo(coords, 5);
             marker.openPopup();
-            if (window.innerWidth < 768) sidebar.classList.add("collapsed");
+            if (window.innerWidth < 768) sidebar.classList.add("hidden");
           }
         });
 

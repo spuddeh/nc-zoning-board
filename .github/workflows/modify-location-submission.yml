@@ -45,6 +45,7 @@ jobs:
             const coordYRaw = extract('Y Coordinate');
             const nexusLink = extract('Nexus Mods Link');
             const credits = extract('Credits');
+            const categoryRaw = extract('Category');
             const tagsRaw = extract('Tags');
 
             // Extraction for description (textarea)
@@ -101,8 +102,19 @@ jobs:
               }
 
               const authors = authorsRaw ? authorsRaw.split(',').map(a => a.trim()).filter(a => a) : existingData.authors;
-              const tags = tagsRaw ? tagsRaw.split(',').map(t => t.trim().toLowerCase()).filter(t => t) : existingData.tags;
-              
+
+              // Tags are submitted as checkboxes: extract tag name (before " — ") from checked lines
+              const checkedTags = (tagsRaw.match(/- \[x\] ([^\n—]+)/gi) || [])
+                .map(m => m.replace(/- \[x\] /i, '').split(' — ')[0].trim().toLowerCase())
+                .filter(t => t);
+              const tags = checkedTags.length > 0 ? checkedTags : existingData.tags;
+
+              // Only update category if the submitter chose a real value (not "Keep existing")
+              const VALID_CATEGORIES = ['location-overhaul', 'new-location', 'other'];
+              const category = (categoryRaw && VALID_CATEGORIES.includes(categoryRaw))
+                ? categoryRaw
+                : existingData.category;
+
               const updatedMod = {
                 id: locationId,
                 name: modName || existingData.name,
@@ -111,7 +123,7 @@ jobs:
                 coordinates: [coordX, coordY],
                 nexus_id: nexusId,
                 description: description || existingData.description,
-                category: existingData.category, // Category not provided in mod template for now to avoid complexity
+                category: category,
                 tags: tags
               };
 

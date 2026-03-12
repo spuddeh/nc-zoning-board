@@ -75,7 +75,10 @@ jobs:
             }
 
             const authors = authorsRaw.split(',').map(a => a.trim()).filter(a => a);
-            const tags = tagsRaw.split(',').map(t => t.trim().toLowerCase()).filter(t => t);
+            // Tags are submitted as checkboxes: extract the tag name (text before " — ") from checked lines
+            const tags = (tagsRaw.match(/- \[x\] ([^\n—]+)/gi) || [])
+              .map(m => m.replace(/- \[x\] /i, '').split(' — ')[0].trim().toLowerCase())
+              .filter(t => t);
 
             // Generate a unique ID (UUID v4)
             const { randomUUID } = require('crypto');
@@ -101,13 +104,6 @@ jobs:
             
             fs.writeFileSync(`${dir}/${id}.json`, JSON.stringify(newMod, null, 4) + '\n');
             console.log(`Mod data written to ${dir}/${id}.json`);
-
-            // Build mods.json for validation/PR preview (though only the new file is strictly needed)
-            const scriptsDir = path.join(process.cwd(), 'scripts');
-            const buildScript = path.join(scriptsDir, 'build_mods.js');
-            if (fs.existsSync(buildScript)) {
-               require(buildScript);
-            }
 
             core.setOutput('mod_name', modName);
 

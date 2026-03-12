@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### 2026-03-12
+
+- **Bug Fixes**:
+  - Fixed `ReferenceError: path is not defined` in `auto-pr-submission.yml` that was crashing the workflow before the PR title output was set, causing new mod submissions to fail silently.
+  - Fixed malformed SVG namespace (`http://www.w3.org/-2000/svg`) in sidebar footer icon.
+  - Fixed incorrect CSS class `"collapsed"` applied to the sidebar on mobile when clicking a location — corrected to `"hidden"` to match the existing style contract.
+- **GitHub Issue Form Improvements**:
+  - Added `Category` dropdown to the modify/removal form (with "Keep existing" option to leave it unchanged).
+  - Replaced the free-text `Tags` input on both the submission and modify forms with a `checkboxes` field listing all 14 valid tags with inline definitions — eliminates invalid tag submissions and removes the need to reference `tags.json`.
+  - Made X/Y coordinates optional on the modify/removal form (removal requests no longer need to provide coordinates).
+  - Moved the `Description` field to the last position on both forms.
+- **Workflow Updates**:
+  - Updated `auto-pr-submission.yml` and `modify-location-submission.yml` tag parsers to read the new checkbox format.
+  - `modify-location-submission.yml` now extracts and applies category changes; defaults to "Keep existing" if unchanged.
+  - `notify-discord-pr-status.yml` split into two jobs: `notify-submission` (edits the existing Discord message for `add-mod-*` PRs) and `notify-modification` (posts a new status message for `mod-mod-*` PRs, which were previously untracked).
+
 ### [0.1.0-pre.1] - 2026-03-11
 
 - **Nexus Mods API Integration**:
