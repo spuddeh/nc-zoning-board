@@ -103,8 +103,8 @@ async function fetchNexusThumbnails(nexusIds) {
   if (validIds.length === 0) return {};
 
   const uids = validIds.map((id) => toNexusUid(id));
-  const query = `query modsByUid($uids: [ID!]!) {
-        modsByUid(uids: $uids) {
+  const query = `query modsByUid($uids: [ID!]!, $count: Int!) {
+        modsByUid(uids: $uids, count: $count) {
             nodes {
                 modId
                 pictureUrl
@@ -117,7 +117,7 @@ async function fetchNexusThumbnails(nexusIds) {
     const res = await fetch(NEXUS_GQL_ENDPOINT, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ query, variables: { uids } }),
+      body: JSON.stringify({ query, variables: { uids, count: validIds.length } }),
     });
     const json = await res.json();
     const nodes = json?.data?.modsByUid?.nodes || [];
@@ -313,7 +313,6 @@ async function initMap() {
     // Fetch Nexus thumbnails for all mods
     const nexusIds = mods.map((m) => String(m.nexus_id)).filter(Boolean);
     const nexusThumbs = await fetchNexusThumbnails(nexusIds);
-    console.log("[DEBUG] Nexus thumbs result:", nexusThumbs); // TODO: remove after debugging
 
     mods
       .sort((a, b) => a.name.localeCompare(b.name))
