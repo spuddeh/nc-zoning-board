@@ -36,12 +36,13 @@ jobs:
             };
 
             const modName = extract('Mod Name');
-            const authorsRaw = extract('Author Alias');
+            const authorsRaw = extract('Author Alias\\(es\\)');
             const coordYRaw = extract('Y Coordinate');
             const coordXRaw = extract('X Coordinate');
             const nexusLink = extract('Nexus Mods Link');
             const category = extract('Category') || 'other';
-            const credits = extract('Credits');
+            const creditsRaw = extract('Credits');
+            const credits = creditsRaw.toLowerCase() === '_no response_' ? '' : creditsRaw;
             const tagsRaw = extract('Tags');
 
             // Handle description which might be multiline
