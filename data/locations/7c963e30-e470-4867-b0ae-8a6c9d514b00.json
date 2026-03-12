@@ -4,7 +4,7 @@
     "authors": [
         "Kaoziun"
     ],
-    "credits": "",
+    "credits": "_No response_",
     "coordinates": [
         -402.56494,
         1276.3997
@@ -12,5 +12,8 @@
     "nexus_id": "25294",
     "description": "A fully featured ramen restaurant with numerous NPCs, including custom characters, each with intricate schedules, interactions, vendors, and plenty of hidden Easter eggs.",
     "category": "new-location",
-    "tags": []
+    "tags": [
+        "entertainment",
+        "shop"
+    ]
 }
