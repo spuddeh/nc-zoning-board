@@ -5,6 +5,10 @@ on:
     types: [closed]
     branches: [main]
 
+permissions:
+  contents: write
+  issues: write
+
 jobs:
   # For new submissions: edit the existing Discord message that was posted when the issue was created
   notify-submission:
@@ -94,6 +98,17 @@ jobs:
               }]
             }"
 
+      - name: Delete branch
+        uses: actions/github-script@v7
+        continue-on-error: true
+        with:
+          script: |
+            await github.rest.git.deleteRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: `heads/${context.payload.pull_request.head.ref}`
+            });
+
   # For modifications/removals: edit the existing Discord message posted when the issue was processed
   notify-modification:
     if: startsWith(github.event.pull_request.head.ref, 'mod-mod-')
@@ -177,3 +192,14 @@ jobs:
                 \"footer\": { \"text\": \"NC Zoning Board\" }
               }]
             }"
+
+      - name: Delete branch
+        uses: actions/github-script@v7
+        continue-on-error: true
+        with:
+          script: |
+            await github.rest.git.deleteRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: `heads/${context.payload.pull_request.head.ref}`
+            });
