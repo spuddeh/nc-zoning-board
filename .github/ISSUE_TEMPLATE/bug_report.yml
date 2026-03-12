@@ -1,6 +1,5 @@
 name: 🐛 Report a Bug
 description: Report an issue with the NC Zoning Board map interface, data, or functionality.
-title: "[Bug]: "
 labels: ["bug"]
 body:
   - type: markdown

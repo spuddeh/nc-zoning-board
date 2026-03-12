@@ -1,6 +1,5 @@
 name: 💡 Suggest a New Feature
 description: Propose a new feature or enhancement for the map interface.
-title: "[Feature Request]: "
 labels: ["enhancement"]
 body:
   - type: markdown

@@ -1,6 +1,5 @@
 name: 💬 General Feedback
 description: Send general feedback about your experience using the map.
-title: "[Feedback]: "
 labels: ["feedback"]
 body:
   - type: markdown

@@ -1,6 +1,5 @@
 name: 🔄 Suggest a Modification or Removal
 description: Request an update, edit, or removal of an existing map pin.
-title: "[Mod Modification]: "
 labels: ["mod-modification"]
 body:
   - type: markdown

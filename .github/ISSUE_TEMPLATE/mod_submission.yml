@@ -1,6 +1,5 @@
 name: 📍 Submit a New Mod Location
 description: Register your mod's coordinates on the NC Zoning Board map to prevent overlaps.
-title: "[Mod Submission]: "
 labels: ["mod-submission"]
 body:
   - type: markdown
