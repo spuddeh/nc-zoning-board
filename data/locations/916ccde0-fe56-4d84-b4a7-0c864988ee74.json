@@ -1,0 +1,20 @@
+{
+    "id": "916ccde0-fe56-4d84-b4a7-0c864988ee74",
+    "name": "Dedka Car Dealership - Working Vehicle Shop Framework",
+    "authors": [
+        "dederara",
+        "Kaoziun"
+    ],
+    "credits": "",
+    "coordinates": [
+        618.02,
+        -385.87253
+    ],
+    "nexus_id": "24887",
+    "description": "Dedka Dealership is a location that allows you to purchase any vehicles physically at a showroom. Fully compatible with Virtual Car Dealer and Auto Fixer.",
+    "category": "new-location",
+    "tags": [
+        "neokitsch",
+        "shop"
+    ]
+}
