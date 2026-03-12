@@ -40,8 +40,8 @@ Before merging any PR, please verify these three things:
 
 ### 3. Tags & Category
 
-- Does the category (Appartment, Safehouse, Bar, etc.) make sense for the mod?
-- Do the tags match our [registry](../data/tags.json)? (The automated validation should catch typos here).
+- Does the category (`location-overhaul`, `new-location`, or `other`) make sense for the mod?
+- Are the selected tags reasonable? The automated validation will reject any tags not in the [registry](../data/tags.json), but a tag being valid doesn't mean it's accurate.
 
 ---
 

@@ -28,12 +28,12 @@ This is a YAML-defined GitHub Issue form. It guarantees that users submit data i
 
 [**.github/workflows/auto-pr-submission.yml**](../.github/workflows/auto-pr-submission.yml)
 
-This workflow triggers whenever an issue labeled `mod-submission` is opened. It runs a custom JavaScript script using `actions/github-script`.
+This workflow triggers whenever the `mod-submission` label is applied to an issue. It runs a custom JavaScript script using `actions/github-script`.
 
 **Step-by-step logic:**
 
 1. **Regex Extraction:** The script reads the raw Markdown body of the issue and uses Regex to locate the `###` headers and extract the values for Name, Authors, Coordinates, Link, Category, Tags, and Description.
-2. **Data Type Casting:** Validates that X and Y coordinates are floats (numbers) and splits comma-separated Authors and Tags into arrays.
+2. **Data Type Casting:** Validates that X and Y coordinates are floats (numbers). Authors are split from a comma-separated string. Tags are parsed from the checkbox list (`- [x] tagname`) in the form.
 3. **Append Data:** Generates a random completely unique `UUID v4` for the mod's ID and builds a JSON object with the user's data.
 4. **Create File:** Writes the data to a new file: `data/locations/<UUID>.json`. This design prevents merge conflicts when multiple submissions occur simultaneously.
 5. **Create PR:** Uses a Personal Access Token (`ACTIONS_PAT`) to open a Pull Request.
@@ -69,7 +69,8 @@ This Issue closure triggers [**`notify-discord-pr-status.yml`**](../.github/work
 
 If a user wants to update their mod's coordinates, tags, or authors (or request removal), they use the **Suggest Edit** feature.
 
-1. **Issue Form**: They click "Suggest Edit" on the map popup, which pre-fills the `suggest_edit.yml` GitHub Issue template with the mod's UUID.
-2. **Bot Processing**: The [**`modify-location-submission.yml`**](../.github/workflows/modify-location-submission.yml) workflow fires. It parses the new values.
-3. **PR Creation**: The bot modifies the existing `data/locations/<UUID>.json` file and creates a Pull Request reflecting the diff.
-4. **Validation & Merge**: Functions identically to the standard submission pipeline. Once merged, the map updates.
+1. **Issue Form**: They click "Suggest Edit" on the map popup, which pre-fills the [**`modify_location.yml`**](../.github/ISSUE_TEMPLATE/modify_location.yml) GitHub Issue template with the mod's UUID.
+2. **Bot Processing**: The [**`modify-location-submission.yml`**](../.github/workflows/modify-location-submission.yml) workflow fires when the `mod-modification` label is applied. It parses the new values, merging them with the existing file (blank fields keep their current value).
+3. **Discord Notification**: Follows the same stored-ID pattern as submissions — the initial "Awaiting Review" message ID is saved as a hidden comment on the issue so it can be edited (not reposted) on merge/close.
+4. **PR Creation**: The bot modifies the existing `data/locations/<UUID>.json` file and creates a Pull Request reflecting the diff.
+5. **Validation & Merge**: Functions identically to the standard submission pipeline. Once merged, the map updates.
