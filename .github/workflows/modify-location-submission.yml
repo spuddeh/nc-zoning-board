@@ -44,7 +44,8 @@ jobs:
             const coordXRaw = extract('X Coordinate');
             const coordYRaw = extract('Y Coordinate');
             const nexusLink = extract('Nexus Mods Link');
-            const credits = extract('Credits');
+            const creditsRaw = extract('Credits');
+            const credits = creditsRaw.toLowerCase() === '_no response_' ? '' : creditsRaw;
             const categoryRaw = extract('Category');
             const tagsRaw = extract('Tags');
 
