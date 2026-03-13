@@ -15,11 +15,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Auto-discovered pin indicators** — auto-discovered mods display an amber `[ N ]` badge in the popup title and sidebar entry (tooltip: "Sourced automatically from Nexus Mods"). They also receive an automatic `nczoning` tag badge (with matching tooltip) visible in the popup, tag filter panel, and sidebar.
   - **Conflict resolution** — if a mod has both an auto-discovered entry and a manually submitted entry sharing the same `nexus_id`, the manual entry always wins.
   - **"Suggest Edit" suppressed** for auto-discovered mods — edits go through the Nexus description directly.
-- **UI Improvements**:
-  - Filter sections ("Filter by Tags", "Author Filters") now collapse to 2 rows by default with a "show more / show less" toggle. Sections with ≤2 rows of buttons hide the toggle automatically.
-  - Sidebar location click now uses `flyTo` to the marker, then opens the popup after the animation completes. If the marker is inside a cluster, it spiderfies the cluster before opening the popup.
-  - Map now calls `invalidateSize()` before `fitBounds` to ensure correct container dimensions on page load.
-  - Popup `autoPan` disabled — the `maxBounds` constraint caused a visible snap-back; sidebar clicks handle positioning via `flyTo` instead.
 - **Bug Fixes**:
   - Fixed Nexus GraphQL filter sending `gameId` as a number — API requires a string (`"3333"`).
   - Fixed GraphQL query sending `uploader` as a scalar — corrected to `uploader { name }` (returns a `User` object).
@@ -33,6 +28,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 2026-03-13
 
+- **UI Improvements**:
+  - Filter sections ("Filter by Tags", "Author Filters") now collapse to 2 rows by default with a "show more / show less" toggle. Sections with ≤2 rows of buttons hide the toggle automatically.
+  - Sidebar location click now uses `flyTo` to the marker, then opens the popup after the animation completes. If the marker is inside a cluster, it spiderfies the cluster before opening the popup.
+  - Map now calls `invalidateSize()` before `fitBounds` to ensure correct container dimensions on page load.
+  - Popup `autoPan` disabled — the `maxBounds` constraint caused a visible snap-back; sidebar clicks handle positioning via `flyTo` instead.
 - **Data**:
   - Removed `ripperdoc` tag from the tag registry.
 - **Bug Fixes**:
