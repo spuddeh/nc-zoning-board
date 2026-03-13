@@ -517,12 +517,14 @@ async function initMap() {
   const sidebar = document.getElementById("sidebar");
   const sidebarClose = document.getElementById("sidebar-close");
   const sidebarOpen = document.getElementById("sidebar-open");
+  // Cluster menu DOM references
   const clusterPanel = document.getElementById("cluster-panel");
   const clusterPanelResizeHandle = document.getElementById("cluster-panel-resize-handle");
   const clusterPanelClose = document.getElementById("cluster-panel-close");
   const clusterPanelCount = document.getElementById("cluster-panel-count");
   const clusterModList = document.getElementById("cluster-mod-list");
 
+  // Compute the maximum allowed cluster menu width for current viewport
   function getClusterPanelMaxWidth() {
     const viewportBound = Math.floor(window.innerWidth * 0.7);
     return Math.max(
@@ -531,6 +533,7 @@ async function initMap() {
     );
   }
 
+  // Clamp width so dragging cannot make the panel too small or too wide
   function clampClusterPanelWidth(width) {
     return Math.min(
       getClusterPanelMaxWidth(),
@@ -538,6 +541,7 @@ async function initMap() {
     );
   }
 
+  // Apply panel width (desktop only), and optionally save it in localStorage
   function setClusterPanelWidth(width, persist = true) {
     if (window.innerWidth < MOBILE_BREAKPOINT) {
       clusterPanel.style.removeProperty("width");
@@ -556,6 +560,7 @@ async function initMap() {
     }
   }
 
+  // Enable drag-to-resize from the panel's left edge
   function initClusterPanelResize() {
     if (!clusterPanelResizeHandle) return;
 
@@ -563,12 +568,14 @@ async function initMap() {
     let startX = 0;
     let startWidth = 0;
 
+    // While dragging, update width based on horizontal mouse movement
     const onMouseMove = (event) => {
       if (!isResizing) return;
       const deltaX = startX - event.clientX;
       setClusterPanelWidth(startWidth + deltaX, false);
     };
 
+    // End drag operation, restore normal interactions, then persist final width
     const stopResizing = () => {
       if (!isResizing) return;
       isResizing = false;
@@ -585,6 +592,7 @@ async function initMap() {
       if (map.dragging) map.dragging.enable();
     };
 
+    // Start drag operation when user presses the resize handle
     clusterPanelResizeHandle.addEventListener("mousedown", (event) => {
       if (window.innerWidth < MOBILE_BREAKPOINT) return;
       event.preventDefault();
@@ -602,6 +610,7 @@ async function initMap() {
       window.addEventListener("mouseup", stopResizing);
     });
 
+    // Keep width valid when viewport size changes
     window.addEventListener("resize", () => {
       if (window.innerWidth < MOBILE_BREAKPOINT) {
         clusterPanel.style.removeProperty("width");
@@ -616,6 +625,7 @@ async function initMap() {
       setClusterPanelWidth(currentWidth, false);
     });
 
+    // Restore saved width, or use default width on first visit
     const savedWidth = Number.parseInt(
       localStorage.getItem(CLUSTER_PANEL_WIDTH_KEY),
       10,
@@ -629,6 +639,7 @@ async function initMap() {
 
   initClusterPanelResize();
 
+  // Hide and reset cluster menu state
   function hideClusterPanel() {
     clusterModList.innerHTML = "";
     clusterPanelCount.textContent = "";
@@ -642,11 +653,13 @@ async function initMap() {
   markerClusterGroup.on("clusterclick", (a) => {
     if (a.originalEvent) L.DomEvent.stop(a.originalEvent);
 
+    // Collect mods from clicked cluster and sort by name
     const childMarkers = a.layer
       .getAllChildMarkers()
       .slice()
       .sort((left, right) => left.modData.name.localeCompare(right.modData.name));
 
+    // Rebuild cluster menu list for this cluster
     clusterModList.innerHTML = "";
     clusterPanelCount.textContent = `(${childMarkers.length})`;
 
@@ -659,9 +672,11 @@ async function initMap() {
       childMarkers.forEach((childMarker) => {
         const mod = childMarker.modData;
         const catStyle = CATEGORY_STYLES[mod.category] || CATEGORY_STYLES.other;
+        // Build tag chips shown under author name
         const modTagsHtml = (mod.tags || [])
           .map((tag) => `<span class="tag-badge">${escapeHtml(tag)}</span>`)
           .join("");
+        // Thumbnail becomes clickable only when full-size image exists
         const isThumbClickable = Boolean(childMarker.modFull);
         const thumbMarkup = childMarker.modThumb
           ? `<img class="cluster-mod-thumb${isThumbClickable ? " cluster-mod-thumb-clickable" : ""}" src="${escapeHtml(childMarker.modThumb)}" alt="${escapeHtml(mod.name)} thumbnail" referrerpolicy="no-referrer"${isThumbClickable ? ` data-full-src="${escapeHtml(childMarker.modFull)}"` : ""}>`
@@ -688,6 +703,7 @@ async function initMap() {
           </span>
         `;
 
+        // Open image modal when thumbnail is clicked
         const imageButton = button.querySelector(".cluster-mod-thumb[data-full-src]");
         if (imageButton) {
           imageButton.addEventListener("click", (event) => {
@@ -697,6 +713,7 @@ async function initMap() {
           });
         }
 
+        // Clicking row focuses corresponding marker/popup on the map
         button.addEventListener("click", () => {
           focusMarker(childMarker);
           if (window.innerWidth < MOBILE_BREAKPOINT) hideClusterPanel();
@@ -707,6 +724,7 @@ async function initMap() {
       });
     }
 
+    // Slide menu in from the right
     clusterPanel.classList.remove("cluster-panel-closed");
   });
 
