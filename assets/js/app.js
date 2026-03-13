@@ -185,13 +185,17 @@ const NEXUS_GAME_ID = 3333; // Cyberpunk 2077
 const NEXUS_GQL_ENDPOINT = "https://api.nexusmods.com/v2/graphql";
 const NEXUS_BATCH_SIZE = 50;
 const DESCRIPTION_MAX_LENGTH = 500;
-const SPIDERFY_DEBOUNCE_MS = 500;
 const COPY_FEEDBACK_MS = 2000;
 const SEARCH_DEBOUNCE_MS = 200;
 const THUMB_CACHE_KEY = "nc_nexus_thumbs";
 const THUMB_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
 const AUTODISCOVERY_CACHE_KEY = "nc_nexus_autodiscovery";
 const AUTODISCOVERY_CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+const MOBILE_BREAKPOINT = 768;
+const CLUSTER_PANEL_WIDTH_KEY = "nc_cluster_panel_width";
+const CLUSTER_PANEL_DEFAULT_WIDTH = 400;
+const CLUSTER_PANEL_MIN_WIDTH = 260;
+const CLUSTER_PANEL_MAX_WIDTH = 720;
 
 // Read/write a JSON object from localStorage with a TTL check
 function cacheGet(key, ttl) {
@@ -492,9 +496,9 @@ async function initMap() {
 
   // 2. State & UI Elements
   const markerClusterGroup = L.markerClusterGroup({
-    spiderfyOnMaxZoom: true,
+    spiderfyOnMaxZoom: false,
     showCoverageOnHover: false,
-    zoomToBoundsOnClick: true,
+    zoomToBoundsOnClick: false,
     maxClusterRadius: 40,
     polygonOptions: {
       fillColor: "#00f0ff",
@@ -505,88 +509,6 @@ async function initMap() {
     },
   }).addTo(map);
 
-  // Cluster Hover Spiderfy (debounced)
-  let spiderfyTimer = null;
-  let currentSpiderfied = null;
-  let popupOpen = false;
-
-  // Track popup state to prevent unspiderfy while a popup is visible
-  map.on("popupopen", () => {
-    popupOpen = true;
-    if (spiderfyTimer) {
-      clearTimeout(spiderfyTimer);
-      spiderfyTimer = null;
-    }
-  });
-  map.on("popupclose", () => {
-    popupOpen = false;
-  });
-
-  markerClusterGroup.on("clustermouseover", function (a) {
-    if (spiderfyTimer) {
-      clearTimeout(spiderfyTimer);
-      spiderfyTimer = null;
-    }
-    if (currentSpiderfied && currentSpiderfied !== a.layer) {
-      currentSpiderfied.unspiderfy();
-    }
-    a.layer.spiderfy();
-    currentSpiderfied = a.layer;
-  });
-
-  markerClusterGroup.on("clustermouseout", function () {
-    if (!popupOpen) {
-      spiderfyTimer = setTimeout(() => {
-        if (currentSpiderfied && !popupOpen) {
-          currentSpiderfied.unspiderfy();
-          currentSpiderfied = null;
-        }
-      }, SPIDERFY_DEBOUNCE_MS);
-    }
-  });
-
-  // Keep fan open while hovering a spiderfied child marker
-  markerClusterGroup.on("mouseover", function () {
-    if (spiderfyTimer) {
-      clearTimeout(spiderfyTimer);
-      spiderfyTimer = null;
-    }
-  });
-
-  markerClusterGroup.on("mouseout", function () {
-    if (currentSpiderfied && !popupOpen) {
-      spiderfyTimer = setTimeout(() => {
-        if (currentSpiderfied && !popupOpen) {
-          currentSpiderfied.unspiderfy();
-          currentSpiderfied = null;
-        }
-      }, SPIDERFY_DEBOUNCE_MS);
-    }
-  });
-
-  // Immediately collapse on map click or zoom
-  map.on("click", () => {
-    if (spiderfyTimer) {
-      clearTimeout(spiderfyTimer);
-      spiderfyTimer = null;
-    }
-    if (currentSpiderfied) {
-      currentSpiderfied.unspiderfy();
-      currentSpiderfied = null;
-    }
-  });
-
-  map.on("zoomstart", () => {
-    if (spiderfyTimer) {
-      clearTimeout(spiderfyTimer);
-      spiderfyTimer = null;
-    }
-    if (currentSpiderfied) {
-      currentSpiderfied.unspiderfy();
-      currentSpiderfied = null;
-    }
-  });
-
   const allMarkers = [];
   const modCountEl = document.getElementById("mod-count");
   const modListEl = document.getElementById("mod-list");
@@ -595,6 +517,200 @@ async function initMap() {
   const sidebar = document.getElementById("sidebar");
   const sidebarClose = document.getElementById("sidebar-close");
   const sidebarOpen = document.getElementById("sidebar-open");
+  const clusterPanel = document.getElementById("cluster-panel");
+  const clusterPanelResizeHandle = document.getElementById("cluster-panel-resize-handle");
+  const clusterPanelClose = document.getElementById("cluster-panel-close");
+  const clusterPanelCount = document.getElementById("cluster-panel-count");
+  const clusterModList = document.getElementById("cluster-mod-list");
+
+  function getClusterPanelMaxWidth() {
+    const viewportBound = Math.floor(window.innerWidth * 0.7);
+    return Math.max(
+      CLUSTER_PANEL_MIN_WIDTH,
+      Math.min(CLUSTER_PANEL_MAX_WIDTH, viewportBound),
+    );
+  }
+
+  function clampClusterPanelWidth(width) {
+    return Math.min(
+      getClusterPanelMaxWidth(),
+      Math.max(CLUSTER_PANEL_MIN_WIDTH, Math.round(width)),
+    );
+  }
+
+  function setClusterPanelWidth(width, persist = true) {
+    if (window.innerWidth < MOBILE_BREAKPOINT) {
+      clusterPanel.style.removeProperty("width");
+      return;
+    }
+
+    const clampedWidth = clampClusterPanelWidth(width);
+    clusterPanel.style.width = `${clampedWidth}px`;
+
+    if (persist) {
+      try {
+        localStorage.setItem(CLUSTER_PANEL_WIDTH_KEY, String(clampedWidth));
+      } catch {
+        // Ignore storage failures (e.g. private mode/quota)
+      }
+    }
+  }
+
+  function initClusterPanelResize() {
+    if (!clusterPanelResizeHandle) return;
+
+    let isResizing = false;
+    let startX = 0;
+    let startWidth = 0;
+
+    const onMouseMove = (event) => {
+      if (!isResizing) return;
+      const deltaX = startX - event.clientX;
+      setClusterPanelWidth(startWidth + deltaX, false);
+    };
+
+    const stopResizing = () => {
+      if (!isResizing) return;
+      isResizing = false;
+      clusterPanel.classList.remove("resizing");
+      document.body.classList.remove("cluster-panel-resizing");
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", stopResizing);
+
+      const finalWidth = clusterPanel.getBoundingClientRect().width;
+      if (finalWidth) {
+        setClusterPanelWidth(finalWidth, true);
+      }
+
+      if (map.dragging) map.dragging.enable();
+    };
+
+    clusterPanelResizeHandle.addEventListener("mousedown", (event) => {
+      if (window.innerWidth < MOBILE_BREAKPOINT) return;
+      event.preventDefault();
+      event.stopPropagation();
+
+      isResizing = true;
+      startX = event.clientX;
+      startWidth = clusterPanel.getBoundingClientRect().width;
+      clusterPanel.classList.add("resizing");
+      document.body.classList.add("cluster-panel-resizing");
+
+      if (map.dragging) map.dragging.disable();
+
+      window.addEventListener("mousemove", onMouseMove);
+      window.addEventListener("mouseup", stopResizing);
+    });
+
+    window.addEventListener("resize", () => {
+      if (window.innerWidth < MOBILE_BREAKPOINT) {
+        clusterPanel.style.removeProperty("width");
+        return;
+      }
+
+      const inlineWidth = Number.parseFloat(clusterPanel.style.width);
+      const currentWidth =
+        Number.isFinite(inlineWidth) && inlineWidth > 0
+          ? inlineWidth
+          : clusterPanel.getBoundingClientRect().width || CLUSTER_PANEL_DEFAULT_WIDTH;
+      setClusterPanelWidth(currentWidth, false);
+    });
+
+    const savedWidth = Number.parseInt(
+      localStorage.getItem(CLUSTER_PANEL_WIDTH_KEY),
+      10,
+    );
+    if (Number.isFinite(savedWidth)) {
+      setClusterPanelWidth(savedWidth, false);
+    } else {
+      setClusterPanelWidth(CLUSTER_PANEL_DEFAULT_WIDTH, false);
+    }
+  }
+
+  initClusterPanelResize();
+
+  function hideClusterPanel() {
+    clusterModList.innerHTML = "";
+    clusterPanelCount.textContent = "";
+    clusterPanel.classList.add("cluster-panel-closed");
+  }
+
+  function focusMarker(marker) {
+    markerClusterGroup.zoomToShowLayer(marker, () => marker.openPopup());
+  }
+
+  markerClusterGroup.on("clusterclick", (a) => {
+    if (a.originalEvent) L.DomEvent.stop(a.originalEvent);
+
+    const childMarkers = a.layer
+      .getAllChildMarkers()
+      .slice()
+      .sort((left, right) => left.modData.name.localeCompare(right.modData.name));
+
+    clusterModList.innerHTML = "";
+    clusterPanelCount.textContent = `(${childMarkers.length})`;
+
+    if (childMarkers.length === 0) {
+      const empty = document.createElement("li");
+      empty.className = "cluster-empty";
+      empty.textContent = "No mods found in this cluster.";
+      clusterModList.appendChild(empty);
+    } else {
+      childMarkers.forEach((childMarker) => {
+        const mod = childMarker.modData;
+        const catStyle = CATEGORY_STYLES[mod.category] || CATEGORY_STYLES.other;
+        const modTagsHtml = (mod.tags || [])
+          .map((tag) => `<span class="tag-badge">${escapeHtml(tag)}</span>`)
+          .join("");
+        const isThumbClickable = Boolean(childMarker.modFull);
+        const thumbMarkup = childMarker.modThumb
+          ? `<img class="cluster-mod-thumb${isThumbClickable ? " cluster-mod-thumb-clickable" : ""}" src="${escapeHtml(childMarker.modThumb)}" alt="${escapeHtml(mod.name)} thumbnail" referrerpolicy="no-referrer"${isThumbClickable ? ` data-full-src="${escapeHtml(childMarker.modFull)}"` : ""}>`
+          : `<span class="cluster-mod-thumb cluster-mod-thumb-placeholder" aria-hidden="true"></span>`;
+
+        const item = document.createElement("li");
+        item.className = "cluster-mod-item";
+
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "cluster-mod-btn";
+        button.innerHTML = `
+          <span class="cluster-mod-layout">
+            ${thumbMarkup}
+            <span class="cluster-mod-content">
+              <span class="cluster-mod-name" style="text-shadow: 0 0 8px ${escapeHtml(catStyle.color)};">${escapeHtml(mod.name)}</span>
+              <span class="cluster-mod-separator" style="background-color: ${escapeHtml(catStyle.color)};"></span>
+              <span class="cluster-mod-meta">by ${escapeHtml(mod.authors.join(", "))}</span>
+              <span class="cluster-mod-tags">
+                ${modTagsHtml}
+              </span>
+              <span class="cluster-mod-desc">${escapeHtml(mod.description || "No description provided.")}</span>
+            </span>
+          </span>
+        `;
+
+        const imageButton = button.querySelector(".cluster-mod-thumb[data-full-src]");
+        if (imageButton) {
+          imageButton.addEventListener("click", (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            window.openImageGallery([imageButton.dataset.fullSrc], 0);
+          });
+        }
+
+        button.addEventListener("click", () => {
+          focusMarker(childMarker);
+          if (window.innerWidth < MOBILE_BREAKPOINT) hideClusterPanel();
+        });
+
+        item.appendChild(button);
+        clusterModList.appendChild(item);
+      });
+    }
+
+    clusterPanel.classList.remove("cluster-panel-closed");
+  });
+
+  clusterPanelClose.addEventListener("click", hideClusterPanel);
 
   // Close Sidebar
   sidebarClose.addEventListener("click", () => {
@@ -609,10 +725,13 @@ async function initMap() {
   });
 
   // Auto-hide sidebar on mobile screens
-  if (window.innerWidth < 768) {
+  if (window.innerWidth < MOBILE_BREAKPOINT) {
     sidebar.classList.add("hidden");
     sidebarOpen.classList.add("visible");
   }
+
+  map.on("click", hideClusterPanel);
+  map.on("zoomstart", hideClusterPanel);
 
   // 3. Fetch and Setup Data
   try {
@@ -712,6 +831,8 @@ async function initMap() {
         const nexusThumb = nexusThumbs[String(mod.nexus_id)];
         const thumbSrc = nexusThumb?.thumbnailUrl || null;
         const fullSrc = nexusThumb?.pictureUrl || null;
+        marker.modThumb = thumbSrc;
+        marker.modFull = fullSrc;
 
         const nexusAutoBadge = mod._source === "nexus-auto"
           ? ` <span class="nexus-auto-badge" title="Sourced automatically from Nexus Mods">[ N ]</span>`
@@ -761,47 +882,9 @@ async function initMap() {
             `;
         li.addEventListener("click", (e) => {
           if (e.target.tagName !== "A") {
-            const coords = cetToLeaflet(mod.coordinates[0], mod.coordinates[1]);
-            map.once("moveend", () => {
-              const visibleParent = markerClusterGroup.getVisibleParent(marker);
-              if (!visibleParent || visibleParent === marker) {
-                marker.openPopup();
-              } else {
-                markerClusterGroup.once("spiderfied", () => marker.openPopup());
-                visibleParent.spiderfy();
-              }
-            });
-            map.flyTo(coords, 5);
-            if (window.innerWidth < 768) sidebar.classList.add("hidden");
-          }
-        });
-
-        // Pulse marker (or parent cluster) on sidebar hover
-        li.addEventListener("mouseenter", () => {
-          const element = marker.getElement();
-          if (element) {
-            const pin = element.querySelector(".marker-pin");
-            if (pin) pin.classList.add("pulsing");
-          } else {
-            // Marker is inside a cluster — pulse the cluster icon
-            const visibleParent = markerClusterGroup.getVisibleParent(marker);
-            if (visibleParent && visibleParent !== marker) {
-              const clusterEl = visibleParent.getElement();
-              if (clusterEl) clusterEl.classList.add("pulsing");
-            }
-          }
-        });
-        li.addEventListener("mouseleave", () => {
-          const element = marker.getElement();
-          if (element) {
-            const pin = element.querySelector(".marker-pin");
-            if (pin) pin.classList.remove("pulsing");
-          } else {
-            const visibleParent = markerClusterGroup.getVisibleParent(marker);
-            if (visibleParent && visibleParent !== marker) {
-              const clusterEl = visibleParent.getElement();
-              if (clusterEl) clusterEl.classList.remove("pulsing");
-            }
+            focusMarker(marker);
+            hideClusterPanel();
+            if (window.innerWidth < MOBILE_BREAKPOINT) sidebar.classList.add("hidden");
           }
         });
 
@@ -924,6 +1007,7 @@ async function initMap() {
 
       // Clear current cluster group
       markerClusterGroup.clearLayers();
+      hideClusterPanel();
       const visibleMarkers = [];
 
       // Filter individual markers
