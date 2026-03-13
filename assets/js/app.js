@@ -27,6 +27,88 @@ document.addEventListener("DOMContentLoaded", () => {
     aboutModal.classList.add("hidden");
   });
 
+  // BBCode Generator Modal Logic
+  const bbcodeBtn = document.getElementById("bbcode-btn");
+  const bbcodeSidebarBtn = document.getElementById("bbcode-sidebar-btn");
+  const bbcodeModal = document.getElementById("bbcode-modal");
+  const closeBbcodeModalBtn = document.getElementById("close-bbcode-modal");
+
+  function openBbcodeModal() {
+    bbcodeModal.classList.remove("hidden");
+  }
+  function closeBbcodeModal() {
+    bbcodeModal.classList.add("hidden");
+  }
+
+  if (bbcodeBtn) bbcodeBtn.addEventListener("click", openBbcodeModal);
+  if (bbcodeSidebarBtn) bbcodeSidebarBtn.addEventListener("click", openBbcodeModal);
+  if (closeBbcodeModalBtn) closeBbcodeModalBtn.addEventListener("click", closeBbcodeModal);
+
+  const bbcodeGenerateBtn = document.getElementById("bbcode-generate-btn");
+  if (bbcodeGenerateBtn) {
+    bbcodeGenerateBtn.addEventListener("click", () => {
+      const x = document.getElementById("bbcode-coord-x").value.trim();
+      const y = document.getElementById("bbcode-coord-y").value.trim();
+      const category = document.getElementById("bbcode-category").value;
+      const credits = document.getElementById("bbcode-credits").value.trim();
+      const authors = document.getElementById("bbcode-authors").value.trim();
+      const spoiler = document.getElementById("bbcode-spoiler").checked;
+
+      if (!x || !y || isNaN(parseFloat(x)) || isNaN(parseFloat(y))) {
+        alert("Please enter valid X and Y coordinates.");
+        return;
+      }
+      if (!category) {
+        alert("Please select a category.");
+        return;
+      }
+
+      const selectedTags = Array.from(
+        document.querySelectorAll("#bbcode-tag-checkboxes input:checked"),
+      ).map((cb) => cb.value).join(",");
+
+      const lines = [`NCZoning:`, `coords=${x},${y}`, `category=${category}`];
+      if (selectedTags) lines.push(`tags=${selectedTags}`);
+      if (credits) lines.push(`credits=${credits}`);
+      if (authors) lines.push(`authors=${authors}`);
+
+      let block = `[code]\n${lines.join("\n")}\n[/code]`;
+      if (spoiler) block = `[spoiler]\n${block}\n[/spoiler]`;
+
+      document.getElementById("bbcode-output").value = block;
+      document.getElementById("bbcode-output-section").classList.remove("hidden");
+    });
+  }
+
+  const bbcodeCopyBtn = document.getElementById("bbcode-copy-btn");
+  if (bbcodeCopyBtn) {
+    bbcodeCopyBtn.addEventListener("click", () => {
+      const output = document.getElementById("bbcode-output").value;
+      navigator.clipboard.writeText(output).then(() => {
+        const original = bbcodeCopyBtn.textContent;
+        bbcodeCopyBtn.textContent = "[ COPIED! ]";
+        setTimeout(() => {
+          bbcodeCopyBtn.textContent = original;
+        }, 2000);
+      });
+    });
+  }
+
+  const bbcodeResetBtn = document.getElementById("bbcode-reset-btn");
+  if (bbcodeResetBtn) {
+    bbcodeResetBtn.addEventListener("click", () => {
+      document.getElementById("bbcode-coord-x").value = "";
+      document.getElementById("bbcode-coord-y").value = "";
+      document.getElementById("bbcode-category").value = "";
+      document.getElementById("bbcode-credits").value = "";
+      document.getElementById("bbcode-authors").value = "";
+      document.getElementById("bbcode-spoiler").checked = false;
+      document.querySelectorAll("#bbcode-tag-checkboxes input:checked").forEach((cb) => (cb.checked = false));
+      document.getElementById("bbcode-output-section").classList.add("hidden");
+      document.getElementById("bbcode-output").value = "";
+    });
+  }
+
   // Sync Offset Telemetry Animation
   const statusLed = document.querySelector(".status-led");
   const statusLabel = document.querySelector(".status-label");
@@ -135,6 +217,164 @@ async function fetchNexusThumbnails(nexusIds) {
   }
 }
 
+// Parse the [code]NCZoning:...[/code] metadata block from a Nexus mod description.
+// Returns a parsed object or null if the block is missing/invalid.
+function parseNcZoningBlock(description, validTagNames) {
+  if (!description) return null;
+
+  // Normalize HTML line breaks from Nexus API to actual newlines
+  let text = description.replace(/<br\s*\/?>/gi, "\n");
+
+  // Strip outer [spoiler]...[/spoiler] wrapper if present
+  text = text.replace(/\[spoiler\]([\s\S]*?)\[\/spoiler\]/gi, "$1");
+
+  // Extract [code]NCZoning:\n...[/code] block
+  const match = text.match(/\[code\]\s*NCZoning:\s*\n([\s\S]*?)\[\/code\]/i);
+  if (!match) return null;
+
+  const data = {};
+  for (const line of match[1].split("\n")) {
+    const eqIdx = line.indexOf("=");
+    if (eqIdx === -1) continue;
+    const key = line.slice(0, eqIdx).trim().toLowerCase();
+    const value = line.slice(eqIdx + 1).trim();
+    if (key && value) data[key] = value;
+  }
+
+  // coords is required — two comma-separated numbers
+  if (!data.coords) return null;
+  const coordParts = data.coords.split(",").map((s) => parseFloat(s.trim()));
+  if (coordParts.length !== 2 || coordParts.some(isNaN)) return null;
+
+  // category is required
+  const validCategories = ["location-overhaul", "new-location", "other"];
+  if (!data.category || !validCategories.includes(data.category)) return null;
+
+  // tags: filter to known tags only — unknown tags silently dropped
+  const tags = data.tags
+    ? data.tags.split(",").map((t) => t.trim()).filter((t) => validTagNames.has(t))
+    : [];
+
+  // additional authors beyond Nexus uploader
+  const additionalAuthors = data.authors
+    ? data.authors.split(",").map((a) => a.trim()).filter(Boolean)
+    : [];
+
+  return {
+    coordinates: coordParts,
+    category: data.category,
+    tags,
+    credits: data.credits || null,
+    additionalAuthors,
+  };
+}
+
+// Fetch all mods tagged "NCZoning" from Nexus V2 GraphQL, parse their BBCode blocks,
+// and return an array of mod objects ready to merge with the manual mods.json entries.
+// ModsFilter schema: https://graphql.nexusmods.com/#definition-ModsFilter
+// Fields use [BaseFilterValue] = array of { value: ... } objects.
+// "uploader" on the Mod type is a plain string (username), not a nested object.
+async function fetchNexusTaggedMods(existingNexusIds, validTagNames) {
+  const query = `
+    query NCZoningMods($filter: ModsFilter!, $count: Int!, $offset: Int!) {
+      mods(filter: $filter, count: $count, offset: $offset) {
+        nodes {
+          modId
+          name
+          summary
+          description
+          pictureUrl
+          thumbnailUrl
+          uploader {
+            name
+          }
+        }
+        totalCount
+      }
+    }
+  `;
+
+  const COUNT = 50;
+  let offset = 0;
+  let totalCount = Infinity;
+  const results = [];
+
+  try {
+    while (offset < totalCount) {
+      const res = await fetch(NEXUS_GQL_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          query,
+          variables: {
+            filter: {
+              gameId: [{ value: String(NEXUS_GAME_ID) }],
+              tag: [{ value: "NCZoning" }],
+            },
+            count: COUNT,
+            offset,
+          },
+        }),
+      });
+      const json = await res.json();
+
+      if (json.errors) {
+        console.warn("NCZoning API errors:", json.errors);
+      }
+
+      const page = json?.data?.mods;
+      if (!page) {
+        console.warn("NCZoning auto-discovery: no mods page in response", json);
+        break;
+      }
+
+      totalCount = page.totalCount ?? 0;
+      const nodes = page.nodes || [];
+      console.log(`NCZoning: fetched ${nodes.length} mods (offset ${offset}, total ${totalCount})`);
+      if (nodes.length === 0) break;
+
+      for (const node of nodes) {
+        const nexusId = String(node.modId);
+        if (existingNexusIds.has(nexusId)) continue; // manual entry wins
+
+        const parsed = parseNcZoningBlock(node.description, validTagNames);
+        if (!parsed) {
+          console.log(`NCZoning: skipping mod ${nexusId} (${node.name}) — no valid [NCZoning] block found. Description preview:`, (node.description || "").slice(0, 300));
+          continue;
+        }
+
+        const uploaderName = node.uploader?.name || "Unknown";
+        const allAuthors = [uploaderName, ...parsed.additionalAuthors];
+
+        const summary = node.summary || "";
+        const description =
+          summary.length > 500 ? summary.slice(0, 497) + "..." : summary;
+
+        results.push({
+          id: `nexus-auto-${nexusId}`,
+          name: node.name || "Unknown Mod",
+          authors: allAuthors,
+          ...(parsed.credits ? { credits: parsed.credits } : {}),
+          coordinates: parsed.coordinates,
+          nexus_id: nexusId,
+          description,
+          category: parsed.category,
+          tags: ["nczoning", ...parsed.tags],
+          _source: "nexus-auto",
+        });
+      }
+
+      offset += nodes.length;
+      if (nodes.length < COUNT) break; // last page
+    }
+  } catch (err) {
+    console.warn("NCZoning auto-discovery failed:", err);
+  }
+
+  console.log(`NCZoning: auto-discovery complete — ${results.length} mods added`);
+  return results;
+}
+
 // Forward: CET (x, y) → Leaflet [lat, lng]
 function cetToLeaflet(cetX, cetY) {
   const lat = 0.02101335 * cetY - 93.68566;
@@ -170,6 +410,7 @@ async function initMap() {
     bounds: mapBounds,
   }).addTo(map);
 
+  map.invalidateSize();
   map.fitBounds(mapBounds);
   map.setMaxBounds(mapBounds);
 
@@ -308,9 +549,19 @@ async function initMap() {
     const mods = await modsRes.json();
     const tagsDict = await tagsRes.json();
 
+    // Auto-discover mods tagged "NCZoning" on Nexus (manual entries win on conflict)
+    const existingNexusIds = new Set(
+      mods
+        .filter((m) => m.nexus_id && !["WIP", "Dummy"].includes(String(m.nexus_id)))
+        .map((m) => String(m.nexus_id)),
+    );
+    const validTagNames = new Set(Object.keys(tagsDict));
+    const autoMods = await fetchNexusTaggedMods(existingNexusIds, validTagNames);
+    mods.push(...autoMods);
+
     modCountEl.textContent = `(${mods.length})`;
 
-    // Fetch Nexus thumbnails for all mods
+    // Fetch Nexus thumbnails for all mods (manual + auto-discovered)
     const nexusIds = mods.map((m) => String(m.nexus_id)).filter(Boolean);
     const nexusThumbs = await fetchNexusThumbnails(nexusIds);
 
@@ -359,7 +610,9 @@ async function initMap() {
         // Build Tags HTML
         const tagsHtml = (mod.tags || [])
           .map((tag) => {
-            const def = tagsDict[tag] || "";
+            const def = tag === "nczoning"
+              ? "Sourced automatically from Nexus Mods"
+              : tagsDict[tag] || "";
             return `<span class="tag-badge" title="${def}">${tag}</span>`;
           })
           .join("");
@@ -373,9 +626,13 @@ async function initMap() {
         const thumbSrc = nexusThumb?.thumbnailUrl || null;
         const fullSrc = nexusThumb?.pictureUrl || null;
 
+        const nexusAutoBadge = mod._source === "nexus-auto"
+          ? ` <span class="nexus-auto-badge" title="Sourced automatically from Nexus Mods">[ N ]</span>`
+          : "";
+
         const popupContent = `
                 <div class="custom-popup-content">
-                    <div class="custom-popup-title">${mod.name}</div>
+                    <div class="custom-popup-title">${mod.name}${nexusAutoBadge}</div>
                     <div class="custom-popup-authors">${authorsHtml}</div>
                     ${mod.credits ? `<div class="custom-popup-credits">Credits: ${mod.credits}</div>` : ""}
                     <div class="custom-popup-tags">${tagsHtml}</div>
@@ -391,19 +648,25 @@ async function initMap() {
                     <div class="custom-popup-desc">${mod.description || "No description provided."}</div>
                     <div class="popup-actions" style="display: flex; gap: 8px; margin-top: 10px;">
                         <a href="${nexusUrl}" target="_blank" class="custom-popup-link" style="margin-top:0;">${nexusLabel}</a>
-                        <a href="${editUrl}" target="_blank" class="custom-popup-link" style="margin-top:0; border-color: var(--nc-amber); color: var(--nc-amber);">Suggest Edit</a>
+                        ${!mod._source ? `<a href="${editUrl}" target="_blank" class="custom-popup-link" style="margin-top:0; border-color: var(--nc-amber); color: var(--nc-amber);">Suggest Edit</a>` : ""}
                     </div>
                 </div>
             `;
-        marker.bindPopup(popupContent);
+        marker.bindPopup(popupContent, { autoPan: false });
 
         // Add to Sidebar
         const li = document.createElement("li");
         li.className = "mod-item";
         li.dataset.category = mod.category;
         li.dataset.tags = (mod.tags || []).join(",");
+        li.dataset.authors = mod.authors.join(",");
+        const sidebarBadge = mod._source === "nexus-auto"
+          ? ` <span class="nexus-auto-badge" title="Sourced automatically from Nexus Mods">[ N ]</span>`
+          : "";
         li.innerHTML = `
-                <span class="mod-item-name">${mod.name}</span>
+                <div class="mod-item-header">
+                    <span class="mod-item-name">${mod.name}</span>${sidebarBadge}
+                </div>
                 <span class="mod-item-author">by ${mod.authors.join(", ")}</span>
                 <div class="mod-item-meta">
                     <span class="mod-item-category badge-${mod.category}">${catStyle.label}</span>
@@ -412,8 +675,16 @@ async function initMap() {
         li.addEventListener("click", (e) => {
           if (e.target.tagName !== "A") {
             const coords = cetToLeaflet(mod.coordinates[0], mod.coordinates[1]);
+            map.once("moveend", () => {
+              const visibleParent = markerClusterGroup.getVisibleParent(marker);
+              if (!visibleParent || visibleParent === marker) {
+                marker.openPopup();
+              } else {
+                markerClusterGroup.once("spiderfied", () => marker.openPopup());
+                visibleParent.spiderfy();
+              }
+            });
             map.flyTo(coords, 5);
-            marker.openPopup();
             if (window.innerWidth < 768) sidebar.classList.add("hidden");
           }
         });
@@ -455,6 +726,7 @@ async function initMap() {
       mods.map((mod) => cetToLeaflet(mod.coordinates[0], mod.coordinates[1])),
     );
     if (pinBounds.isValid()) {
+      map.invalidateSize();
       map.fitBounds(pinBounds, { padding: [50, 50], maxZoom: 5 });
     }
 
@@ -498,7 +770,9 @@ async function initMap() {
     Array.from(usedTags)
       .sort()
       .forEach((tag) => {
-        const def = tagsDict[tag] || "";
+        const def = tag === "nczoning"
+          ? "Sourced automatically from Nexus Mods"
+          : tagsDict[tag] || "";
         const btn = document.createElement("button");
         btn.className = "tag-filter-btn";
         btn.textContent = tag;
@@ -511,7 +785,36 @@ async function initMap() {
         tagsFilterContainer.appendChild(btn);
       });
 
-    // 6. Setup Text Search
+    // Setup show-more / show-less toggles for collapsible filter sections
+    document.querySelectorAll(".filter-show-more-btn").forEach((btn) => {
+      const target = document.getElementById(btn.dataset.target);
+      if (!target) return;
+      // Hide button if content fits within the collapsed height
+      if (target.scrollHeight <= target.clientHeight) {
+        btn.classList.add("hidden");
+        return;
+      }
+      btn.addEventListener("click", () => {
+        const collapsed = target.classList.toggle("filter-collapsed");
+        btn.textContent = collapsed ? "show more" : "show less";
+      });
+    });
+
+    // 6. Populate BBCode generator tag checkboxes (requires tagsDict from this scope)
+    const bbcodeTagGrid = document.getElementById("bbcode-tag-checkboxes");
+    if (bbcodeTagGrid) {
+      Object.keys(tagsDict)
+        .sort()
+        .forEach((tag) => {
+          const label = document.createElement("label");
+          label.className = "bbcode-tag-checkbox";
+          label.title = tagsDict[tag] || "";
+          label.innerHTML = `<input type="checkbox" value="${tag}"> ${tag}`;
+          bbcodeTagGrid.appendChild(label);
+        });
+    }
+
+    // 7. Setup Text Search
     const searchInput = document.getElementById("mod-search");
     searchInput.addEventListener("input", () => {
       applyFilters();
@@ -565,10 +868,7 @@ async function initMap() {
           .textContent.toLowerCase();
         const modCat = li.dataset.category;
         const modTags = (li.dataset.tags || "").split(",");
-        const modAuthors =
-          mods.find(
-            (m) => m.name.toLowerCase() === modName && m.category === modCat,
-          )?.authors || [];
+        const modAuthors = (li.dataset.authors || "").split(",").filter(Boolean);
 
         const matchesSearch =
           modName.includes(query) || modAuthor.includes(query);

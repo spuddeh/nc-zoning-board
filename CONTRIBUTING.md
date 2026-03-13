@@ -6,16 +6,24 @@ Thanks for wanting to help! There are a few different ways to contribute dependi
 
 ## 🗺️ Submitting a Mod Location
 
-This is the most common contribution. See **[docs/adding-mods.md](docs/adding-mods.md)** for full instructions.
+### Preferred: NCZoning Auto-Discovery
+
+Add your mod directly from Nexus — no GitHub required. Tag your mod with **NCZoning**, then use the **[+] Submit** button on the map to generate and paste a metadata block into your mod description.
+
+See **[docs/nczoning-auto-discovery.md](docs/nczoning-auto-discovery.md)** for full instructions.
+
+### Alternative: GitHub Issue
+
+For a permanent, manually curated entry. See **[docs/adding-mods.md](docs/adding-mods.md)** for full instructions.
 
 **Short version:**
 
-1. Get your in-game coordinates from the CET console: `print(GetPlayer():GetWorldPosition())`
+1. Get your in-game coordinates from the CET console: `Game.GetPlayer():GetWorldPosition()`
 2. Go to [Issues → New Issue → 📍 Submit a New Mod Location](https://github.com/spuddeh/nc-zoning-board/issues/new/choose)
 3. Fill in the form — the bot creates a PR automatically
 4. A maintainer reviews and merges it → your pin appears on the live map
 
-> **No Git knowledge required** for this method.
+> **No Git knowledge required** for either method.
 
 ---
 
@@ -90,10 +98,11 @@ If you're interested in helping out with any of these, just open an issue or pin
 
 ## 🔍 Useful Docs
 
+- [NCZoning Auto-Discovery](docs/nczoning-auto-discovery.md) — adding mods directly from Nexus
 - [Architecture](docs/architecture.md) — file structure, data flow, secrets
 - [Submission Pipeline](docs/submission-pipeline.md) — how GitHub Actions handles new mod entries
 - [Coordinate System](docs/coordinate-system.md) — CET ↔ Leaflet transform, calibration data
-- [Adding Mods](docs/adding-mods.md) — schema reference, getting coordinates, submission methods
+- [Adding Mods](docs/adding-mods.md) — schema reference, getting coordinates, GitHub submission methods
 - [Tag Registry](docs/tags.md) — current tags, and how to add, modify, or remove tags
 - [Tile Generation](docs/tile-generation.md) — how the map tiles are generated and upgraded
 - [Skills & Roles](docs/skills-and-roles.md) — full role descriptions and recruiting priorities

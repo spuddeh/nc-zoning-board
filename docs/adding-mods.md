@@ -1,5 +1,9 @@
 # Adding Mods to the Map
 
+> **Looking for the easiest way to add your mod?** Use [NCZoning Auto-Discovery](nczoning-auto-discovery.md) — tag your mod on Nexus and paste a metadata block into your description. No GitHub required.
+>
+> This guide covers the GitHub issue and manual PR methods for permanent, manually curated entries.
+
 ## mods.json Schema
 
 Each mod entry is stored in its own file in `data/locations/<UUID>.json`. The schema for a mod object is:

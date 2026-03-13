@@ -499,6 +499,36 @@ footer {
     padding: 0.8rem 1rem;
 }
 
+#tag-filters.filter-collapsed, #author-filters.filter-collapsed {
+    max-height: 72px;
+    overflow: hidden;
+}
+
+.filter-show-more-btn {
+    display: block;
+    width: 100%;
+    background: transparent;
+    border: none;
+    border-top: 1px solid rgba(0, 240, 255, 0.1);
+    color: #555;
+    font-family: var(--font-body);
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 4px 1rem;
+    cursor: pointer;
+    text-align: left;
+    transition: color 0.2s ease;
+}
+
+.filter-show-more-btn:hover {
+    color: var(--nc-cyan);
+}
+
+.filter-show-more-btn.hidden {
+    display: none;
+}
+
 .tag-filter-btn {
     background: transparent;
     border: 1px solid #444;
@@ -910,4 +940,259 @@ footer .footer-content {
 
 .hidden {
     display: none !important;
+}
+
+/* ── BBCode Header Button ─────────────────────────────────────────── */
+#bbcode-btn {
+    background: transparent;
+    border: 1px solid var(--nc-amber);
+    color: var(--nc-amber);
+    font-family: var(--font-heading);
+    font-size: 0.65rem;
+    padding: 2px 8px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: all 0.2s ease;
+    opacity: 1;
+}
+
+#bbcode-btn:hover {
+    background: var(--nc-amber);
+    color: var(--nc-navy);
+}
+
+/* ── Sidebar submit button (replaced <a> with <button>) ───────────── */
+.sidebar-submit-btn {
+    background: transparent;
+    border: none;
+    color: var(--nc-cyan);
+    font-size: 0.85rem;
+    cursor: pointer;
+    font-family: var(--font-body);
+    text-align: left;
+    padding: 0;
+    opacity: 0.7;
+    display: flex;
+    align-items: center;
+    transition: all 0.2s ease;
+}
+
+.sidebar-submit-btn:hover {
+    opacity: 1;
+    color: var(--nc-white);
+}
+
+/* ── Nexus Auto Badge ─────────────────────────────────────────────── */
+.nexus-auto-badge {
+    display: inline-block;
+    background: var(--nc-amber);
+    color: var(--nc-navy);
+    font-family: var(--font-heading);
+    font-size: 0.5rem;
+    font-weight: bold;
+    padding: 1px 4px;
+    margin-left: 6px;
+    vertical-align: middle;
+    white-space: nowrap;
+    cursor: help;
+    letter-spacing: 0;
+    line-height: 1.4;
+}
+
+/* ── Sidebar mod-item-header (wraps name + badge) ─────────────────── */
+.mod-item-header {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 0.2rem;
+}
+
+.mod-item-header .mod-item-name {
+    margin-bottom: 0;
+}
+
+/* ── BBCode Generator Modal ───────────────────────────────────────── */
+.bbcode-modal-content {
+    max-width: 560px;
+    width: 95%;
+}
+
+.bbcode-modal-body {
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.bbcode-form {
+    display: flex;
+    flex-direction: column;
+}
+
+.bbcode-field-row {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 14px;
+}
+
+.bbcode-label {
+    font-family: var(--font-heading);
+    font-size: 0.65rem;
+    color: var(--nc-cyan);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.bbcode-optional {
+    color: var(--nc-gray);
+    font-family: var(--font-body);
+    text-transform: none;
+    letter-spacing: 0;
+    font-size: 0.7rem;
+}
+
+.bbcode-coord-inputs {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.coord-input-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.coord-label {
+    font-family: var(--font-heading);
+    font-size: 0.7rem;
+    color: var(--nc-gray);
+    min-width: 10px;
+}
+
+.bbcode-coord-inputs input[type="number"],
+.bbcode-input,
+.bbcode-select,
+.bbcode-textarea {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--nc-gray);
+    color: var(--nc-white);
+    padding: 6px 10px;
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s ease;
+    width: 100%;
+}
+
+.bbcode-coord-inputs input[type="number"] {
+    width: 140px;
+}
+
+.bbcode-coord-inputs input[type="number"]:focus,
+.bbcode-input:focus,
+.bbcode-select:focus,
+.bbcode-textarea:focus {
+    border-color: var(--nc-cyan);
+}
+
+.bbcode-select option {
+    background: var(--nc-navy);
+    color: var(--nc-white);
+}
+
+.coord-help-btn {
+    background: transparent;
+    border: 1px solid var(--nc-gray);
+    color: var(--nc-gray);
+    font-family: var(--font-heading);
+    font-size: 0.65rem;
+    padding: 4px 8px;
+    cursor: help;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.coord-help-btn:hover {
+    border-color: var(--nc-cyan);
+    color: var(--nc-cyan);
+}
+
+.bbcode-tag-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.bbcode-tag-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.75rem;
+    color: var(--nc-gray);
+    cursor: pointer;
+    padding: 2px 6px;
+    border: 1px solid #333;
+    border-radius: 3px;
+    transition: all 0.15s ease;
+    user-select: none;
+}
+
+.bbcode-tag-checkbox:hover {
+    border-color: var(--nc-amber);
+    color: var(--nc-amber);
+}
+
+.bbcode-tag-checkbox input {
+    accent-color: var(--nc-amber);
+}
+
+.bbcode-checkbox-row {
+    flex-direction: row;
+    align-items: center;
+}
+
+.bbcode-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: var(--nc-gray);
+    cursor: pointer;
+}
+
+.bbcode-checkbox-label input[type="checkbox"] {
+    accent-color: var(--nc-cyan);
+    width: 14px;
+    height: 14px;
+}
+
+.bbcode-checkbox-label code {
+    color: var(--nc-cyan);
+    font-family: monospace;
+    font-size: 0.8rem;
+}
+
+.bbcode-output {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid var(--nc-dark-accent);
+    color: var(--nc-cyan);
+    padding: 10px;
+    font-family: monospace;
+    font-size: 0.8rem;
+    resize: vertical;
+    margin-top: 6px;
+    line-height: 1.5;
+}
+
+.bbcode-copy-btn {
+    margin-top: 6px !important;
+    border-color: var(--nc-amber) !important;
+    color: var(--nc-amber) !important;
+}
+
+.bbcode-copy-btn:hover {
+    background: var(--nc-amber) !important;
+    color: var(--nc-navy) !important;
 }

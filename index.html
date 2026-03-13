@@ -44,6 +44,7 @@
                 <span class="status-led"></span>
                 <span class="status-telemetry">SYNC_OFFSET: 0.00ms</span>
                 <button id="about-btn" aria-label="About" title="About NC Zoning Board">[?]</button>
+                <button id="bbcode-btn" aria-label="Generate NCZoning BBCode" title="Generate NCZoning metadata block for your Nexus mod">[+] SUBMIT</button>
             </div>
         </div>
     </header>
@@ -69,10 +70,12 @@
             <div id="category-filters"></div>
 
             <div class="sidebar-section-header">Filter by Tags</div>
-            <div id="tag-filters"></div>
+            <div id="tag-filters" class="filter-collapsed"></div>
+            <button class="filter-show-more-btn" data-target="tag-filters">show more</button>
 
             <div class="sidebar-section-header">Author Filters</div>
-            <div id="author-filters"></div>
+            <div id="author-filters" class="filter-collapsed"></div>
+            <button class="filter-show-more-btn" data-target="author-filters">show more</button>
 
             <div class="sidebar-section-header">Locations <span id="mod-count"></span></div>
             <div class="sidebar-search-container">
@@ -80,8 +83,7 @@
             </div>
             <ul id="mod-list"></ul>
             <div id="sidebar-footer">
-                <a href="https://github.com/spuddeh/nc-zoning-board/issues/new?template=mod_submission.yml"
-                    target="_blank">
+                <button id="bbcode-sidebar-btn" class="sidebar-submit-btn">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                         style="vertical-align: text-bottom; margin-right: 4px;">
@@ -89,7 +91,7 @@
                         <circle cx="12" cy="10" r="3"></circle>
                     </svg>
                     Submit a New Mod Location
-                </a>
+                </button>
                 <a href="https://discord.gg/sc4yEx2fNf" target="_blank">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linejoin="round"
@@ -244,6 +246,73 @@
                 </div>
                 <hr style="border: 0; border-top: 1px solid var(--nc-dark-accent); margin: 15px 0;">
                 <button id="close-about-modal" class="terminal-btn">[ CLOSE ]</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- BBCode Generator Modal -->
+    <div id="bbcode-modal" class="modal hidden">
+        <div class="modal-content nc-terminal bbcode-modal-content">
+            <div class="terminal-header">NIGHT CORP // BBCODE GENERATOR</div>
+            <div class="terminal-body bbcode-modal-body">
+                <div class="warning-text" style="margin-bottom: 15px;">
+                    &#9888; First, tag your mod on Nexus Mods with <strong>NCZoning</strong>. Results may take up to
+                    10 minutes to appear on the map after tagging and adding the block below.
+                </div>
+                <div class="bbcode-form">
+                    <div class="bbcode-field-row">
+                        <label class="bbcode-label">CET Coordinates</label>
+                        <div class="bbcode-coord-inputs">
+                            <div class="coord-input-group">
+                                <span class="coord-label">X</span>
+                                <input type="number" id="bbcode-coord-x" placeholder="e.g. -1234.56" step="any">
+                            </div>
+                            <div class="coord-input-group">
+                                <span class="coord-label">Y</span>
+                                <input type="number" id="bbcode-coord-y" placeholder="e.g. 789.01" step="any">
+                            </div>
+                            <button class="coord-help-btn" tabindex="-1"
+                                title="Open the CET overlay in-game, then run Game.GetPlayer():GetWorldPosition() in the CET console. Use the X and Y values — do not swap them.">?</button>
+                        </div>
+                    </div>
+                    <div class="bbcode-field-row">
+                        <label class="bbcode-label" for="bbcode-category">Category</label>
+                        <select id="bbcode-category" class="bbcode-select">
+                            <option value="">— Select Category —</option>
+                            <option value="location-overhaul">Location Overhaul</option>
+                            <option value="new-location">New Location</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="bbcode-field-row">
+                        <label class="bbcode-label">Tags <span class="bbcode-optional">(optional)</span></label>
+                        <div id="bbcode-tag-checkboxes" class="bbcode-tag-grid"></div>
+                    </div>
+                    <div class="bbcode-field-row">
+                        <label class="bbcode-label" for="bbcode-credits">Credits <span class="bbcode-optional">(optional)</span></label>
+                        <textarea id="bbcode-credits" class="bbcode-textarea" placeholder="e.g. Original map texture by XYZ" rows="2"></textarea>
+                    </div>
+                    <div class="bbcode-field-row">
+                        <label class="bbcode-label" for="bbcode-authors">Additional Authors <span class="bbcode-optional">(optional, comma-separated)</span></label>
+                        <input type="text" id="bbcode-authors" class="bbcode-input" placeholder="e.g. Author2, Author3">
+                    </div>
+                    <div class="bbcode-field-row bbcode-checkbox-row">
+                        <label class="bbcode-checkbox-label">
+                            <input type="checkbox" id="bbcode-spoiler">
+                            Wrap in <code>[spoiler]</code> tag (hides block on mod page)
+                        </label>
+                    </div>
+                    <div style="display:flex; gap:8px;">
+                        <button id="bbcode-generate-btn" class="terminal-btn" style="flex:3;">[ GENERATE BLOCK ]</button>
+                        <button id="bbcode-reset-btn" class="terminal-btn" style="flex:1; border-color: var(--nc-gray); color: var(--nc-gray);">[ RESET ]</button>
+                    </div>
+                    <div id="bbcode-output-section" class="hidden">
+                        <label class="bbcode-label" style="margin-top: 12px; display: block;">Output — paste this into your Nexus description</label>
+                        <textarea id="bbcode-output" class="bbcode-output" readonly rows="8"></textarea>
+                        <button id="bbcode-copy-btn" class="terminal-btn bbcode-copy-btn">[ COPY TO CLIPBOARD ]</button>
+                    </div>
+                </div>
+                <button id="close-bbcode-modal" class="terminal-btn" style="margin-top: 10px; border-color: var(--nc-gray); color: var(--nc-gray);">[ CLOSE ]</button>
             </div>
         </div>
     </div>

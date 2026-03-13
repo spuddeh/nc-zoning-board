@@ -21,6 +21,7 @@ The NC Zoning Board is a **proof of concept** interactive map for Cyberpunk 2077
 - ✅ **URL optimization**: Store only the Nexus mod ID and generate links dynamically.
 - ✅ **Image Support**: Dynamically fetching official thumbnails and full-size images from the Nexus GraphQL API.
 - ✅ **Pin clustering** — group nearby pins at low zoom levels
+- ✅ **NCZoning Auto-Discovery** — automatic pin creation from Nexus-tagged mods via GraphQL API, with BBCode generator modal
 
 ### Known Limitations
 

@@ -56,23 +56,28 @@ See [Tile Generation Guide](docs/tile-generation.md) for details.
 
 ## Submitting Your Mod
 
-### Quick Method (GitHub Issue)
+### Preferred Method (NCZoning Auto-Discovery)
 
-1. Go to the **Issues** tab → **New Issue** → **"📍 Submit a New Mod Location"**
-2. Fill in the form (Author list, Category, Tags, and CET coordinates).
-3. An automated bot creates a PR with your own dedicated `.json` file — a maintainer approves and your mod appears on the live map. (Images are pulled automatically from Nexus Mods using your provided Nexus ID).
+Add your mod to the map directly from Nexus — no GitHub account required:
 
-### Manual Method
+1. Tag your mod on Nexus with **NCZoning**
+2. Use the **[+] Submit** button on the map to generate your metadata block
+3. Paste the block into your mod description and save
 
-Create a new JSON file in `data/locations/` named with a UUID. See the [Adding Mods Guide](docs/adding-mods.md) for the full schema and how to get your CET coordinates. Do **not** edit the root `mods.json` directly.
+Your pin will appear on the map within a few minutes. See the **[NCZoning Auto-Discovery Guide](docs/nczoning-auto-discovery.md)** for full details.
+
+### GitHub Issue Method
+
+Prefer a permanent, manually curated entry? See **[docs/adding-mods.md](docs/adding-mods.md)** for instructions on submitting via GitHub issue or pull request.
 
 ## Documentation
 
 | Guide | Description |
 |-------|-------------|
-| [Architecture](docs/architecture.md) | File structure, data flow, tech stack |
+| [NCZoning Auto-Discovery](docs/nczoning-auto-discovery.md) | Add your mod to the map directly from Nexus |
+| [Adding Mods](docs/adding-mods.md) | GitHub issue / manual PR submission, mods.json schema |
 | [Coordinate System](docs/coordinate-system.md) | CET ↔ Leaflet transform, calibration data |
-| [Adding Mods](docs/adding-mods.md) | mods.json schema, getting coordinates |
+| [Architecture](docs/architecture.md) | File structure, data flow, tech stack |
 | [Tile Generation](docs/tile-generation.md) | Map tiling, source images, upgrading resolution |
 | [Roadmap](docs/roadmap.md) | Current status, planned features |
 
