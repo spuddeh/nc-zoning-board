@@ -6,6 +6,23 @@ The map can automatically discover and display your mod without a GitHub submiss
 
 ---
 
+## What the API Reads from Your Mod Page
+
+When your mod is discovered, the map reads these fields from the Nexus V2 GraphQL API — no authentication required, all public data:
+
+| Nexus field | Used as | Notes |
+| --- | --- | --- |
+| `modId` | Nexus mod ID / URL | Used to build `nexusmods.com/cyberpunk2077/mods/<id>` link |
+| `name` | Mod display name | Shown in popup title and sidebar |
+| `summary` | Popup description | Shown as the description text; truncated to 500 chars if longer |
+| `description` | Metadata source | Full BBCode body — only used to extract the `[NCZoning]` block, then discarded |
+| `uploader.name` | First author | Always prepended to the author list; additional authors come from `authors=` in the block |
+| `thumbnailUrl` | Thumbnail image | Displayed in the popup and sidebar entry |
+
+**Nothing else is read.** Tags, changelogs, version history, endorsements, file downloads, and all other mod fields are ignored.
+
+---
+
 ## How It Works
 
 When the map loads, it queries the Nexus Mods API for all Cyberpunk 2077 mods tagged with **NCZoning**. For each result it finds, it looks for a `[NCZoning]` metadata block inside the mod description. If a valid block is found, the mod is automatically added to the map as a live pin — no GitHub account or pull request required.
@@ -74,7 +91,7 @@ The Nexus uploader is always included as the first author automatically. Use `au
 
 1. Stand at the location in-game
 2. Open the CET console
-3. Run: `Game.GetPlayer():GetWorldPosition()`
+3. Run: `print(GetPlayer():GetWorldPosition())`
 4. Use the **X** and **Y** values — do not swap them, and ignore Z (height)
 
 See [Coordinate System](coordinate-system.md) for more detail.

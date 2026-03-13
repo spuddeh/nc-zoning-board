@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### 2026-03-13 (API optimization)
+
+- **Performance**:
+  - Eliminated duplicate image API calls — auto-discovered mods now carry their own `pictureUrl`/`thumbnailUrl` from the discovery query, so `fetchNexusThumbnails()` only fetches images for manual mods.
+  - Added localStorage caching for Nexus API responses — auto-discovery results cached for 10 minutes, thumbnail data cached for 24 hours. Incremental fetches for new IDs not yet in cache.
+  - Added 200ms debounce to sidebar search input to avoid excessive re-filtering on every keystroke.
+  - Extracted magic numbers (`NEXUS_BATCH_SIZE`, `DESCRIPTION_MAX_LENGTH`, `SPIDERFY_DEBOUNCE_MS`, `COPY_FEEDBACK_MS`, `SEARCH_DEBOUNCE_MS`) into named constants.
+
+### 2026-03-13 (security & hardening)
+
+- **Security**:
+  - Added `escapeHtml()` utility and applied to all user-supplied data in popup and sidebar HTML (`mod.name`, `mod.credits`, `mod.description`, authors, tag names/descriptions, URLs). Prevents XSS from Nexus API or submitted JSON.
+  - Replaced inline `onclick` handler on popup thumbnails with a `data-full-src` attribute and delegated event listener.
+  - Added `nexus_id` pattern validation (`^\d+|WIP|Dummy$`) to `mods.schema.json`.
+  - Added coordinate range validation to the BBCode generator — rejects non-finite values and coordinates outside ±5000.
+- **Bug Fixes**:
+  - `build_mods.js` now exits with code 1 on any JSON parse error and detects duplicate IDs before writing output.
+  - `deploy.yml` build step now uses `set -e` to propagate build failures.
+  - `modify-location-submission.yml` now preserves existing coordinates when both coordinate fields are left blank (instead of failing with "Invalid coordinates").
+  - Added `.catch()` to clipboard API call — shows "COPY FAILED" feedback instead of silently failing.
+  - Removed stale `ripperdoc` tag from both issue templates and `docs/tags.md` (tag was removed from registry but references remained, causing validation failures).
+- **Docs**:
+  - Added Nexus V2 GraphQL API section to `CLAUDE.md` (endpoint, docs URL, query descriptions, caching strategy).
+  - Added "What the API Reads from Your Mod Page" table to `docs/nczoning-auto-discovery.md`.
+  - Standardized CET coordinate command to `print(GetPlayer():GetWorldPosition())` across all docs.
+  - Added `npm run build` and `npm run validate` scripts to `package.json`.
+  - Cleaned up `.gitignore` — removed dead `assets/images/raw maps/` pattern and duplicate `README.md` entry.
+
 ### 2026-03-13 (NCZoning auto-discovery)
 
 - **Features**:

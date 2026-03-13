@@ -1,3 +1,9 @@
+// HTML escape utility — prevents XSS from user-supplied data (Nexus API, submitted JSON)
+function escapeHtml(text) {
+  const map = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+  return String(text).replace(/[&<>"']/g, (m) => map[m]);
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   // Welcome Modal Logic — runs immediately, independent of map loading
   const welcomeModal = document.getElementById("welcome-modal");
@@ -54,8 +60,14 @@ document.addEventListener("DOMContentLoaded", () => {
       const authors = document.getElementById("bbcode-authors").value.trim();
       const spoiler = document.getElementById("bbcode-spoiler").checked;
 
-      if (!x || !y || isNaN(parseFloat(x)) || isNaN(parseFloat(y))) {
+      const xNum = parseFloat(x);
+      const yNum = parseFloat(y);
+      if (!Number.isFinite(xNum) || !Number.isFinite(yNum)) {
         alert("Please enter valid X and Y coordinates.");
+        return;
+      }
+      if (Math.abs(xNum) > 5000 || Math.abs(yNum) > 5000) {
+        alert("Coordinates appear out of range. Night City CET coords are typically within \u00b14000. Check your values.");
         return;
       }
       if (!category) {
@@ -89,7 +101,12 @@ document.addEventListener("DOMContentLoaded", () => {
         bbcodeCopyBtn.textContent = "[ COPIED! ]";
         setTimeout(() => {
           bbcodeCopyBtn.textContent = original;
-        }, 2000);
+        }, COPY_FEEDBACK_MS);
+      }).catch(() => {
+        bbcodeCopyBtn.textContent = "[ COPY FAILED ]";
+        setTimeout(() => {
+          bbcodeCopyBtn.textContent = "[ COPY TO CLIPBOARD ]";
+        }, COPY_FEEDBACK_MS);
       });
     });
   }
@@ -166,6 +183,30 @@ const CATEGORY_STYLES = {
 
 const NEXUS_GAME_ID = 3333; // Cyberpunk 2077
 const NEXUS_GQL_ENDPOINT = "https://api.nexusmods.com/v2/graphql";
+const NEXUS_BATCH_SIZE = 50;
+const DESCRIPTION_MAX_LENGTH = 500;
+const SPIDERFY_DEBOUNCE_MS = 500;
+const COPY_FEEDBACK_MS = 2000;
+const SEARCH_DEBOUNCE_MS = 200;
+const THUMB_CACHE_KEY = "nc_nexus_thumbs";
+const THUMB_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
+const AUTODISCOVERY_CACHE_KEY = "nc_nexus_autodiscovery";
+const AUTODISCOVERY_CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+
+// Read/write a JSON object from localStorage with a TTL check
+function cacheGet(key, ttl) {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const { ts, data } = JSON.parse(raw);
+    if (Date.now() - ts > ttl) return null;
+    return data;
+  } catch { return null; }
+}
+function cacheSet(key, data) {
+  try { localStorage.setItem(key, JSON.stringify({ ts: Date.now(), data })); }
+  catch { /* quota exceeded — silently skip */ }
+}
 
 // Convert gameId + modId → Nexus UID (composite BigInt key)
 function toNexusUid(modId) {
@@ -184,6 +225,29 @@ async function fetchNexusThumbnails(nexusIds) {
   });
   if (validIds.length === 0) return {};
 
+  // Return cached thumbnails if still fresh
+  const cached = cacheGet(THUMB_CACHE_KEY, THUMB_CACHE_TTL);
+  if (cached) {
+    // Check if all requested IDs are in the cache — if so, skip the API call
+    const missing = validIds.filter((id) => !cached[id]);
+    if (missing.length === 0) {
+      console.log(`Thumbnails: serving ${validIds.length} from cache`);
+      return cached;
+    }
+    // Only fetch the missing IDs
+    console.log(`Thumbnails: ${validIds.length - missing.length} cached, fetching ${missing.length} new`);
+    const fetched = await fetchNexusThumbnailsFromApi(missing);
+    const merged = { ...cached, ...fetched };
+    cacheSet(THUMB_CACHE_KEY, merged);
+    return merged;
+  }
+
+  const result = await fetchNexusThumbnailsFromApi(validIds);
+  cacheSet(THUMB_CACHE_KEY, result);
+  return result;
+}
+
+async function fetchNexusThumbnailsFromApi(validIds) {
   const uids = validIds.map((id) => toNexusUid(id));
   const query = `query modsByUid($uids: [ID!]!, $count: Int!) {
         modsByUid(uids: $uids, count: $count) {
@@ -275,6 +339,15 @@ function parseNcZoningBlock(description, validTagNames) {
 // Fields use [BaseFilterValue] = array of { value: ... } objects.
 // "uploader" on the Mod type is a plain string (username), not a nested object.
 async function fetchNexusTaggedMods(existingNexusIds, validTagNames) {
+  // Return cached auto-discovery results if still fresh
+  const cached = cacheGet(AUTODISCOVERY_CACHE_KEY, AUTODISCOVERY_CACHE_TTL);
+  if (cached) {
+    // Re-filter against current manual entries (may have changed since cache was written)
+    const filtered = cached.filter((m) => !existingNexusIds.has(m.nexus_id));
+    console.log(`NCZoning: serving ${filtered.length} auto-discovered mods from cache`);
+    return filtered;
+  }
+
   const query = `
     query NCZoningMods($filter: ModsFilter!, $count: Int!, $offset: Int!) {
       mods(filter: $filter, count: $count, offset: $offset) {
@@ -294,7 +367,7 @@ async function fetchNexusTaggedMods(existingNexusIds, validTagNames) {
     }
   `;
 
-  const COUNT = 50;
+  const COUNT = NEXUS_BATCH_SIZE;
   let offset = 0;
   let totalCount = Infinity;
   const results = [];
@@ -348,7 +421,7 @@ async function fetchNexusTaggedMods(existingNexusIds, validTagNames) {
 
         const summary = node.summary || "";
         const description =
-          summary.length > 500 ? summary.slice(0, 497) + "..." : summary;
+          summary.length > DESCRIPTION_MAX_LENGTH ? summary.slice(0, DESCRIPTION_MAX_LENGTH - 3) + "..." : summary;
 
         results.push({
           id: `nexus-auto-${nexusId}`,
@@ -361,6 +434,8 @@ async function fetchNexusTaggedMods(existingNexusIds, validTagNames) {
           category: parsed.category,
           tags: ["nczoning", ...parsed.tags],
           _source: "nexus-auto",
+          _thumbnailUrl: node.thumbnailUrl || null,
+          _pictureUrl: node.pictureUrl || null,
         });
       }
 
@@ -372,6 +447,7 @@ async function fetchNexusTaggedMods(existingNexusIds, validTagNames) {
   }
 
   console.log(`NCZoning: auto-discovery complete — ${results.length} mods added`);
+  cacheSet(AUTODISCOVERY_CACHE_KEY, results);
   return results;
 }
 
@@ -465,7 +541,7 @@ async function initMap() {
           currentSpiderfied.unspiderfy();
           currentSpiderfied = null;
         }
-      }, 500);
+      }, SPIDERFY_DEBOUNCE_MS);
     }
   });
 
@@ -484,7 +560,7 @@ async function initMap() {
           currentSpiderfied.unspiderfy();
           currentSpiderfied = null;
         }
-      }, 500);
+      }, SPIDERFY_DEBOUNCE_MS);
     }
   });
 
@@ -561,9 +637,20 @@ async function initMap() {
 
     modCountEl.textContent = `(${mods.length})`;
 
-    // Fetch Nexus thumbnails for all mods (manual + auto-discovered)
-    const nexusIds = mods.map((m) => String(m.nexus_id)).filter(Boolean);
-    const nexusThumbs = await fetchNexusThumbnails(nexusIds);
+    // Pre-seed thumbnail map from auto-discovery (already fetched), then
+    // only call the API for manual mods that still need images
+    const nexusThumbs = {};
+    const manualNexusIds = [];
+    for (const mod of mods) {
+      const nid = String(mod.nexus_id);
+      if (mod._thumbnailUrl || mod._pictureUrl) {
+        nexusThumbs[nid] = { pictureUrl: mod._pictureUrl, thumbnailUrl: mod._thumbnailUrl };
+      } else if (nid && !["wip", "dummy"].includes(nid.toLowerCase())) {
+        manualNexusIds.push(nid);
+      }
+    }
+    const fetchedThumbs = await fetchNexusThumbnails(manualNexusIds);
+    Object.assign(nexusThumbs, fetchedThumbs);
 
     mods
       .sort((a, b) => a.name.localeCompare(b.name))
@@ -602,7 +689,7 @@ async function initMap() {
         const authorsHtml = mod.authors
           .map(
             (author) => `
-                <a href="https://www.nexusmods.com/profile/${author}/mods?gameId=3333" target="_blank" class="author-link">👤 ${author}</a>
+                <a href="https://www.nexusmods.com/profile/${encodeURIComponent(author)}/mods?gameId=3333" target="_blank" class="author-link">👤 ${escapeHtml(author)}</a>
             `,
           )
           .join(" ");
@@ -613,7 +700,7 @@ async function initMap() {
             const def = tag === "nczoning"
               ? "Sourced automatically from Nexus Mods"
               : tagsDict[tag] || "";
-            return `<span class="tag-badge" title="${def}">${tag}</span>`;
+            return `<span class="tag-badge" title="${escapeHtml(def)}">${escapeHtml(tag)}</span>`;
           })
           .join("");
 
@@ -632,23 +719,23 @@ async function initMap() {
 
         const popupContent = `
                 <div class="custom-popup-content">
-                    <div class="custom-popup-title">${mod.name}${nexusAutoBadge}</div>
+                    <div class="custom-popup-title">${escapeHtml(mod.name)}${nexusAutoBadge}</div>
                     <div class="custom-popup-authors">${authorsHtml}</div>
-                    ${mod.credits ? `<div class="custom-popup-credits">Credits: ${mod.credits}</div>` : ""}
+                    ${mod.credits ? `<div class="custom-popup-credits">Credits: ${escapeHtml(mod.credits)}</div>` : ""}
                     <div class="custom-popup-tags">${tagsHtml}</div>
                     ${
                       thumbSrc && fullSrc
                         ? `
                         <div class="custom-popup-images">
-                            <img src="${thumbSrc}" class="popup-thumb" referrerpolicy="no-referrer" onclick="window.openImageGallery([&quot;${fullSrc}&quot;], 0)">
+                            <img src="${escapeHtml(thumbSrc)}" class="popup-thumb" referrerpolicy="no-referrer" data-full-src="${escapeHtml(fullSrc)}">
                         </div>
                     `
                         : ""
                     }
-                    <div class="custom-popup-desc">${mod.description || "No description provided."}</div>
+                    <div class="custom-popup-desc">${escapeHtml(mod.description || "No description provided.")}</div>
                     <div class="popup-actions" style="display: flex; gap: 8px; margin-top: 10px;">
-                        <a href="${nexusUrl}" target="_blank" class="custom-popup-link" style="margin-top:0;">${nexusLabel}</a>
-                        ${!mod._source ? `<a href="${editUrl}" target="_blank" class="custom-popup-link" style="margin-top:0; border-color: var(--nc-amber); color: var(--nc-amber);">Suggest Edit</a>` : ""}
+                        <a href="${escapeHtml(nexusUrl)}" target="_blank" class="custom-popup-link" style="margin-top:0;">${escapeHtml(nexusLabel)}</a>
+                        ${!mod._source ? `<a href="${escapeHtml(editUrl)}" target="_blank" class="custom-popup-link" style="margin-top:0; border-color: var(--nc-amber); color: var(--nc-amber);">Suggest Edit</a>` : ""}
                     </div>
                 </div>
             `;
@@ -665,11 +752,11 @@ async function initMap() {
           : "";
         li.innerHTML = `
                 <div class="mod-item-header">
-                    <span class="mod-item-name">${mod.name}</span>${sidebarBadge}
+                    <span class="mod-item-name">${escapeHtml(mod.name)}</span>${sidebarBadge}
                 </div>
-                <span class="mod-item-author">by ${mod.authors.join(", ")}</span>
+                <span class="mod-item-author">by ${escapeHtml(mod.authors.join(", "))}</span>
                 <div class="mod-item-meta">
-                    <span class="mod-item-category badge-${mod.category}">${catStyle.label}</span>
+                    <span class="mod-item-category badge-${escapeHtml(mod.category)}">${escapeHtml(catStyle.label)}</span>
                 </div>
             `;
         li.addEventListener("click", (e) => {
@@ -814,10 +901,12 @@ async function initMap() {
         });
     }
 
-    // 7. Setup Text Search
+    // 7. Setup Text Search (debounced to avoid excessive re-filtering)
     const searchInput = document.getElementById("mod-search");
+    let searchDebounce;
     searchInput.addEventListener("input", () => {
-      applyFilters();
+      clearTimeout(searchDebounce);
+      searchDebounce = setTimeout(applyFilters, SEARCH_DEBOUNCE_MS);
     });
 
     // Centralized Filter Logic
@@ -927,6 +1016,14 @@ function closeGallery() {
   if (imageModal) imageModal.classList.add("hidden");
   if (modalImage) modalImage.src = "";
 }
+
+// Delegated click handler for popup thumbnails (avoids inline onclick / XSS risk)
+document.addEventListener("click", (e) => {
+  const thumb = e.target.closest(".popup-thumb[data-full-src]");
+  if (thumb) {
+    window.openImageGallery([thumb.dataset.fullSrc], 0);
+  }
+});
 
 // Global Event Listeners for Image Modal
 document.addEventListener("DOMContentLoaded", () => {

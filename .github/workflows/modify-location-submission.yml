@@ -82,12 +82,17 @@ jobs:
 
               const existingData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
               
-              // Prepare new data
-              const coordX = parseFloat(coordXRaw);
-              const coordY = parseFloat(coordYRaw);
-              if (isNaN(coordX) || isNaN(coordY)) {
-                core.setFailed(`Invalid coordinates: X=${coordXRaw}, Y=${coordYRaw}`);
-                return;
+              // Prepare new data — keep existing coordinates if both are blank
+              let coordX, coordY;
+              if (!coordXRaw && !coordYRaw) {
+                [coordX, coordY] = existingData.coordinates;
+              } else {
+                coordX = parseFloat(coordXRaw);
+                coordY = parseFloat(coordYRaw);
+                if (isNaN(coordX) || isNaN(coordY)) {
+                  core.setFailed(`Invalid coordinates: X=${coordXRaw}, Y=${coordYRaw}`);
+                  return;
+                }
               }
 
               let nexusId = existingData.nexus_id;

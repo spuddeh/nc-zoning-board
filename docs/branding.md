@@ -10,7 +10,6 @@ As a Night Corp interface, the application should feel:
 - **Bureaucratic but High-Tech:** Clean lines, structured data, and an undeniable corporate authority. It's the silent, watchful guardian of the city's infrastructure.
 - **Civic-Minded:** Designed "for the public good". We manage the city's growth, infrastructure, and zoning.
 - **Secretive & Protected:** Night Corp is known for its tight security and secretive policies. The interface should feel strictly authorized.
-- **Clinical & Precise:** No unnecessary noise. The data is what matters.
 
 ### Voice & Tone
 - *In UI Copy:* Official, authoritative, and slightly sterile. 

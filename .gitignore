@@ -17,12 +17,6 @@
 !/package.json
 !/package-lock.json
 
-# But ignore everything inside assets/images/raw maps if it existed
-assets/images/raw maps/
-
-# Keep the readme
-!README.md
-
 # Ignore system and agent files
 .agent/
 .gemini/

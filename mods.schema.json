@@ -46,6 +46,7 @@
             },
             "nexus_id": {
                 "type": "string",
+                "pattern": "^(\\d+|WIP|Dummy)$",
                 "description": "The Nexus Mods ID (number), or 'WIP' / 'Dummy' for unpublished content"
             },
             "description": {

@@ -23,7 +23,7 @@ jobs:
         uses: actions/configure-pages@v4
       
       - name: Build mods.json
-        run: node scripts/build_mods.js
+        run: set -e && node scripts/build_mods.js
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

@@ -20,7 +20,6 @@ Tags are used to describe the aesthetic, function, or intended audience of a loc
 | `nomad` | Off-the-grid, scrapyard, desert, or vehicular-based habitats. |
 | `photos` | Scenic or atmospheric locations well-suited for virtual photography. |
 | `quest` | A location closely tied to custom gigs, missions, or storylines. |
-| `ripperdoc` | A clinic specialized in cyberware installation and medical services. |
 | `shop` | A retail location to purchase weapons, clothing, items, etc. |
 | `streetkid` | Environments resonating with gang culture, neon lights, and urban survival. |
 

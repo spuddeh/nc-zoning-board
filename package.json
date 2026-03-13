@@ -4,6 +4,8 @@
   "description": "**An interactive web map and coordinate registry for Cyberpunk 2077 location modders to claim spaces and prevent overlap.**",
   "main": "index.js",
   "scripts": {
+    "build": "node scripts/build_mods.js",
+    "validate": "node scripts/validate_tags.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

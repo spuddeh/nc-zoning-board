@@ -16,6 +16,7 @@ The NC Zoning Board is a **proof of concept** interactive map for Cyberpunk 2077
 - ✅ Tile generation script (`scripts/generate_tiles.js`)
 - ✅ **Data refactor**: Split `mods.json` into individual JSON files for cleaner management.
 - ✅ **Persistent Changelog**: Following SemVer and Keep a Changelog.
+- ✅ **Custom pin icons** — colour-coded by mod category or author
 - ✅ **Tagging System**: Dynamic filters with hover tooltips and definitions.
 - ✅ **Multi-Author & Credits**: Support for authorship arrays and team credits.
 - ✅ **URL optimization**: Store only the Nexus mod ID and generate links dynamically.
@@ -25,7 +26,6 @@ The NC Zoning Board is a **proof of concept** interactive map for Cyberpunk 2077
 
 ### Known Limitations
 
-- Mod pins use default Leaflet markers — no custom icons yet
 - District overlay is disabled (SVG source needs rework)
 - No mobile-specific optimizations
 
@@ -33,11 +33,12 @@ The NC Zoning Board is a **proof of concept** interactive map for Cyberpunk 2077
 
 ### High Priority
 
-- [ ] **Custom pin icons** — colour-coded by mod category or author
+- [ ] **Transparent map background** — current map background is black, limiting UI options. Change to transparent, and regenerate the tiles.
 
 ### Medium Priority
 
 - [ ] **District overlays** — semi-transparent coloured district boundaries
+- [ ] **SLM Export String** — Add a button to generate a Simple Location Manager export string
 
 ### Low Priority / Nice to Have
 
