@@ -1196,3 +1196,55 @@ footer .footer-content {
     background: var(--nc-amber) !important;
     color: var(--nc-navy) !important;
 }
+
+/* ── BBCode Steps & Notes ────────────────────────────────────────── */
+.bbcode-doc-link {
+    font-size: 0.8rem;
+    margin-bottom: 10px;
+    display: inline-block;
+}
+
+.bbcode-steps {
+    list-style: none;
+    counter-reset: step;
+    padding: 0;
+    margin: 0 0 12px 0;
+}
+
+.bbcode-steps li {
+    counter-increment: step;
+    padding: 6px 10px 6px 0;
+    font-size: 0.82rem;
+    color: var(--nc-white);
+    border-left: 2px solid var(--nc-dark-accent);
+    padding-left: 10px;
+    margin-bottom: 4px;
+}
+
+.bbcode-steps li::before {
+    content: counter(step) ".";
+    color: var(--nc-cyan);
+    font-family: var(--font-heading);
+    font-weight: bold;
+    font-size: 0.75rem;
+    margin-right: 8px;
+}
+
+.bbcode-steps li strong {
+    font-family: var(--font-heading);
+    color: var(--nc-cyan);
+    font-size: 0.7rem;
+    letter-spacing: 1px;
+}
+
+.bbcode-steps li code {
+    color: var(--nc-amber);
+    font-size: 0.78rem;
+}
+
+.bbcode-note {
+    font-size: 0.75rem;
+    color: var(--nc-gray);
+    font-style: italic;
+    margin-bottom: 12px;
+}

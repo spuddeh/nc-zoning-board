@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### 2026-03-13
+
+- **UI**:
+  - Added step-by-step instructions to the BBCode Generator modal (Acquire Coordinates, Configure Metadata, Tag Your Mod, Deploy Block) replacing the single warning line.
+  - Added placement recommendations in the output section — suggests bottom of description as common spot, notes block can go anywhere, references spoiler wrap option.
+  - Added link to full auto-discovery documentation from the modal.
+  - Updated CET coordinate tooltip to use `print(GetPlayer():GetWorldPosition())`.
+
 ### 2026-03-13 (API optimization)
 
 - **Performance**:

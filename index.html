@@ -255,10 +255,14 @@
         <div class="modal-content nc-terminal bbcode-modal-content">
             <div class="terminal-header">NIGHT CORP // BBCODE GENERATOR</div>
             <div class="terminal-body bbcode-modal-body">
-                <div class="warning-text" style="margin-bottom: 15px;">
-                    &#9888; First, tag your mod on Nexus Mods with <strong>NCZoning</strong>. Results may take up to
-                    10 minutes to appear on the map after tagging and adding the block below.
-                </div>
+                <a href="https://github.com/spuddeh/nc-zoning-board/blob/main/docs/nczoning-auto-discovery.md" target="_blank" rel="noopener" class="terminal-link bbcode-doc-link">&gt; Full auto-discovery documentation</a>
+                <ol class="bbcode-steps">
+                    <li><strong>ACQUIRE COORDINATES</strong> — Open CET in-game, run <code>print(GetPlayer():GetWorldPosition())</code>, note the X and Y values</li>
+                    <li><strong>CONFIGURE METADATA</strong> — Fill out the form below and generate the block</li>
+                    <li><strong>TAG YOUR MOD</strong> — Add the <code>NCZoning</code> tag to your mod on Nexus Mods</li>
+                    <li><strong>DEPLOY BLOCK</strong> — Paste the generated code into your Nexus mod description</li>
+                </ol>
+                <div class="bbcode-note">Results may take up to 10 minutes to appear on the map after tagging and adding the block.</div>
                 <div class="bbcode-form">
                     <div class="bbcode-field-row">
                         <label class="bbcode-label">CET Coordinates</label>
@@ -272,7 +276,7 @@
                                 <input type="number" id="bbcode-coord-y" placeholder="e.g. 789.01" step="any">
                             </div>
                             <button class="coord-help-btn" tabindex="-1"
-                                title="Open the CET overlay in-game, then run Game.GetPlayer():GetWorldPosition() in the CET console. Use the X and Y values — do not swap them.">?</button>
+                                title="Open the CET overlay in-game, then run print(GetPlayer():GetWorldPosition()) in the CET console. Use the X and Y values — do not swap them.">?</button>
                         </div>
                     </div>
                     <div class="bbcode-field-row">
@@ -307,7 +311,8 @@
                         <button id="bbcode-reset-btn" class="terminal-btn" style="flex:1; border-color: var(--nc-gray); color: var(--nc-gray);">[ RESET ]</button>
                     </div>
                     <div id="bbcode-output-section" class="hidden">
-                        <label class="bbcode-label" style="margin-top: 12px; display: block;">Output — paste this into your Nexus description</label>
+                        <label class="bbcode-label" style="margin-top: 12px; display: block;">DEPLOYMENT OUTPUT</label>
+                        <div class="bbcode-note" style="margin-bottom: 6px;">Paste into your Nexus mod description. Common placement is at the bottom. Block can go anywhere &mdash; use the spoiler wrap option above to keep it clean.</div>
                         <textarea id="bbcode-output" class="bbcode-output" readonly rows="8"></textarea>
                         <button id="bbcode-copy-btn" class="terminal-btn bbcode-copy-btn">[ COPY TO CLIPBOARD ]</button>
                     </div>

@@ -144,10 +144,11 @@ The **NCZoning** tag is provided by the Nexus Mods team specifically for this sy
 
 ## Using the BBCode Generator
 
-The map includes a built-in generator to make adding the block easier:
+The map includes a built-in generator to make adding the block easier. Click **[+] Submit** in the map header (or the **Submit a New Mod Location** button in the sidebar) to open the generator. The modal walks you through four steps:
 
-1. Click **[+] Submit** in the map header (or the **Submit a New Mod Location** button in the sidebar)
-2. Enter your CET coordinates, pick a category, and select any applicable tags
-3. Optionally add credits, additional authors, and check the spoiler wrapper option
-4. Click **Generate Block** — then **Copy to Clipboard**
-5. Paste into your Nexus mod description and save
+1. **Acquire Coordinates** — get your CET X/Y values in-game
+2. **Configure Metadata** — fill out the form (category, tags, credits, authors) and click **Generate Block**
+3. **Tag Your Mod** — add the `NCZoning` tag on your Nexus mod page
+4. **Deploy Block** — copy the output and paste it into your Nexus mod description
+
+The block can be placed anywhere in your description. A common spot is at the bottom. Use the **spoiler wrap** option to keep it hidden from casual readers.
