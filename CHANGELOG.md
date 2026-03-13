@@ -25,6 +25,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Fixed GraphQL query sending `uploader` as a scalar — corrected to `uploader { name }` (returns a `User` object).
   - Fixed BBCode block parsing failing on mod descriptions returned by the Nexus API with `<br />` HTML line breaks — parser now normalises these to `\n` before matching.
   - Fixed `applyFilters()` author lookup breaking when the `[ N ]` badge was added to the sidebar item name — authors are now stored in `li.dataset.authors` and read directly.
+- **Data**:
+  - Removed `ripperdoc` tag from the tag registry.
 - **Docs**:
   - Added `docs/nczoning-auto-discovery.md` — full guide covering setup, BBCode format, field reference, editing, removal, conflict resolution, limitations, and misuse policy.
   - Updated `README.md` — NCZoning auto-discovery is now the preferred submission method; docs table updated.
