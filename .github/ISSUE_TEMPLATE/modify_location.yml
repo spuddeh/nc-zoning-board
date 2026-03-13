@@ -38,16 +38,30 @@ body:
       description: Comma-separated list of authors.
     validations:
       required: true
+  - type: markdown
+    attributes:
+      value: |
+        ### Getting Your Coordinates
+        Coordinates must come from **Cyber Engine Tweaks (CET)** — do **not** use World Builder coordinates, as they may place your pin in the wrong location.
+
+        **Option 1 — CET Console:**
+        1. Stand at the location in-game
+        2. Open the CET console (`~`)
+        3. Run: `print(GetPlayer():GetWorldPosition())`
+        4. Note the **X** and **Y** values (ignore Z — that's height)
+
+        **Option 2 — Simple Location Manager:**
+        Install [Simple Location Manager](https://www.nexusmods.com/cyberpunk2077/mods/26454), save the location, then read the X/Y from the saved entry.
   - type: input
     id: coord_x
     attributes:
       label: X Coordinate
-      description: Required for updates. Leave blank if requesting removal.
+      description: Required for updates. **Include the minus sign if the value is negative**. Leave blank if requesting removal.
   - type: input
     id: coord_y
     attributes:
       label: Y Coordinate
-      description: Required for updates. Leave blank if requesting removal.
+      description: Required for updates. **Include the minus sign if the value is negative**. Leave blank if requesting removal.
   - type: dropdown
     id: category
     attributes:
