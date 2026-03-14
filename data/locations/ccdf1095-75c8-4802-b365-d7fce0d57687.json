@@ -11,10 +11,9 @@
     ],
     "nexus_id": "25506",
     "description": "Hidden deep in the dusty Badlands, Under the Sun adds a mysterious new location to Cyberpunk 2077: the abandoned Strange Insight Radio Station, a forgotten voice of truth and rebellion once broadcasting freely beyond the city’s walls.",
-    "category": "location-overhaul",
+    "category": "new-location",
     "tags": [
         "entropism",
-        "house",
-        "streetkid"
+        "nomad"
     ]
 }
