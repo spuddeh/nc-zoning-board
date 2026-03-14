@@ -192,6 +192,10 @@ const THUMB_CACHE_KEY = "nc_nexus_thumbs";
 const THUMB_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
 const AUTODISCOVERY_CACHE_KEY = "nc_nexus_autodiscovery";
 const AUTODISCOVERY_CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+const PIN_TOOLTIP_MARGIN_PX = 10;
+const PIN_TOOLTIP_GAP_PX = 8;
+const PIN_TOOLTIP_ARROW_SIZE_PX = 6;
+const PIN_TOOLTIP_ARROW_EDGE_PADDING_PX = 12;
 
 // Read/write a JSON object from localStorage with a TTL check
 function cacheGet(key, ttl) {
@@ -458,6 +462,149 @@ function cetToLeaflet(cetX, cetY) {
   return [lat, lng];
 }
 
+function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max);
+}
+
+/** Controls pin hover tooltip placement and visibility inside map bounds. */
+function createPinTooltipController(map) {
+  // Create one tooltip element we reuse for every marker.
+  const container = map.getContainer();
+  const tooltipEl = document.createElement("div");
+  tooltipEl.className = "pin-tooltip";
+  tooltipEl.innerHTML = `
+    <div class="pin-tooltip-content"></div>
+    <div class="pin-tooltip-arrow" aria-hidden="true"></div>
+  `;
+  container.appendChild(tooltipEl);
+
+  const contentEl = tooltipEl.querySelector(".pin-tooltip-content");
+  let activeMarker = null;
+
+  function clearDirectionClasses() {
+    tooltipEl.classList.remove("dir-top", "dir-bottom", "dir-left", "dir-right");
+  }
+
+  function measureTooltip() {
+    // Temporarily show tooltip to get its current size.
+    tooltipEl.classList.add("visible", "measure");
+    const rect = contentEl.getBoundingClientRect();
+    tooltipEl.classList.remove("measure");
+    return {
+      width: Math.max(1, Math.ceil(rect.width)),
+      height: Math.max(1, Math.ceil(rect.height)),
+    };
+  }
+
+  function pickDirection(point, size, mapWidth, mapHeight) {
+    // Choose the best side (top/bottom/left/right) based on free space.
+    const requiredVertical = size.height + PIN_TOOLTIP_GAP_PX + PIN_TOOLTIP_ARROW_SIZE_PX;
+    const requiredHorizontal = size.width + PIN_TOOLTIP_GAP_PX + PIN_TOOLTIP_ARROW_SIZE_PX;
+
+    const space = {
+      top: point.y - PIN_TOOLTIP_MARGIN_PX,
+      bottom: mapHeight - point.y - PIN_TOOLTIP_MARGIN_PX,
+      left: point.x - PIN_TOOLTIP_MARGIN_PX,
+      right: mapWidth - point.x - PIN_TOOLTIP_MARGIN_PX,
+    };
+
+    if (space.top >= requiredVertical) return "top";
+    if (space.bottom >= requiredVertical) return "bottom";
+    if (space.right >= requiredHorizontal) return "right";
+    if (space.left >= requiredHorizontal) return "left";
+
+    const order = ["top", "bottom", "right", "left"];
+    return order.reduce((best, dir) => (space[dir] > space[best] ? dir : best), "top");
+  }
+
+  function positionTooltip() {
+    const markerEl = activeMarker?.getElement?.();
+    if (!activeMarker || !markerEl) {
+      hide();
+      return;
+    }
+
+    const point = map.latLngToContainerPoint(activeMarker.getLatLng());
+    const mapWidth = container.clientWidth;
+    const mapHeight = container.clientHeight;
+    const size = measureTooltip();
+    const direction = pickDirection(point, size, mapWidth, mapHeight);
+
+    clearDirectionClasses();
+    tooltipEl.classList.add(`dir-${direction}`);
+
+    let left = point.x - (size.width / 2);
+    let top = point.y - size.height - PIN_TOOLTIP_GAP_PX - PIN_TOOLTIP_ARROW_SIZE_PX;
+
+    if (direction === "bottom") {
+      top = point.y + PIN_TOOLTIP_GAP_PX + PIN_TOOLTIP_ARROW_SIZE_PX;
+    } else if (direction === "left") {
+      left = point.x - size.width - PIN_TOOLTIP_GAP_PX - PIN_TOOLTIP_ARROW_SIZE_PX;
+      top = point.y - (size.height / 2);
+    } else if (direction === "right") {
+      left = point.x + PIN_TOOLTIP_GAP_PX + PIN_TOOLTIP_ARROW_SIZE_PX;
+      top = point.y - (size.height / 2);
+    }
+
+    let minLeft = PIN_TOOLTIP_MARGIN_PX;
+    let maxLeft = mapWidth - PIN_TOOLTIP_MARGIN_PX - size.width;
+    let minTop = PIN_TOOLTIP_MARGIN_PX;
+    let maxTop = mapHeight - PIN_TOOLTIP_MARGIN_PX - size.height;
+
+    if (direction === "right") minLeft += PIN_TOOLTIP_ARROW_SIZE_PX;
+    if (direction === "left") maxLeft -= PIN_TOOLTIP_ARROW_SIZE_PX;
+    if (direction === "bottom") minTop += PIN_TOOLTIP_ARROW_SIZE_PX;
+    if (direction === "top") maxTop -= PIN_TOOLTIP_ARROW_SIZE_PX;
+
+    if (maxLeft < minLeft) {
+      minLeft = maxLeft = Math.max(0, (mapWidth - size.width) / 2);
+    }
+    if (maxTop < minTop) {
+      minTop = maxTop = Math.max(0, (mapHeight - size.height) / 2);
+    }
+
+    // Clamp position so the tooltip box stays inside map edges.
+    left = clamp(left, minLeft, maxLeft);
+    top = clamp(top, minTop, maxTop);
+
+    // Re-anchor the arrow so it still points at the marker.
+    const localAnchorX = clamp(
+      point.x - left,
+      PIN_TOOLTIP_ARROW_EDGE_PADDING_PX,
+      size.width - PIN_TOOLTIP_ARROW_EDGE_PADDING_PX,
+    );
+    const localAnchorY = clamp(
+      point.y - top,
+      PIN_TOOLTIP_ARROW_EDGE_PADDING_PX,
+      size.height - PIN_TOOLTIP_ARROW_EDGE_PADDING_PX,
+    );
+
+    tooltipEl.style.left = `${left}px`;
+    tooltipEl.style.top = `${top}px`;
+    tooltipEl.style.setProperty("--pin-tooltip-arrow-x", `${localAnchorX}px`);
+    tooltipEl.style.setProperty("--pin-tooltip-arrow-y", `${localAnchorY}px`);
+  }
+
+  function show(marker, text) {
+    activeMarker = marker;
+    contentEl.textContent = text;
+    tooltipEl.classList.add("visible");
+    positionTooltip();
+  }
+
+  function hide(marker = null) {
+    if (marker && marker !== activeMarker) return;
+    activeMarker = null;
+    tooltipEl.classList.remove("visible");
+  }
+
+  return {
+    show,
+    hide,
+    reposition: positionTooltip,
+  };
+}
+
 async function initMap() {
   // 1. Setup Map
   const map = L.map("map", {
@@ -505,6 +652,8 @@ async function initMap() {
     },
   }).addTo(map);
 
+  const pinTooltip = createPinTooltipController(map);
+
   // Cluster Hover Spiderfy (debounced)
   let spiderfyTimer = null;
   let currentSpiderfied = null;
@@ -512,6 +661,7 @@ async function initMap() {
 
   // Track popup state to prevent unspiderfy while a popup is visible
   map.on("popupopen", () => {
+    pinTooltip.hide();
     popupOpen = true;
     if (spiderfyTimer) {
       clearTimeout(spiderfyTimer);
@@ -520,6 +670,10 @@ async function initMap() {
   });
   map.on("popupclose", () => {
     popupOpen = false;
+  });
+
+  map.on("move zoom resize", () => {
+    pinTooltip.reposition();
   });
 
   markerClusterGroup.on("clustermouseover", function (a) {
@@ -671,6 +825,19 @@ async function initMap() {
         marker.modData = mod; // Store data for filtering later
         allMarkers.push(marker);
         markerClusterGroup.addLayer(marker);
+
+        marker.on("mouseover", () => {
+          pinTooltip.show(marker, mod.name);
+        });
+        marker.on("mouseout", () => {
+          pinTooltip.hide(marker);
+        });
+        marker.on("click", () => {
+          pinTooltip.hide(marker);
+        });
+        marker.on("remove", () => {
+          pinTooltip.hide(marker);
+        });
 
         // Build Link based on nexus_id
         const nexus_id_lower = String(mod.nexus_id).toLowerCase();
