@@ -347,6 +347,7 @@ footer {
 }
 .leaflet-control-zoom-in, .leaflet-control-zoom-out {
     border-radius: 0 !important;
+    line-height: 1.625rem !important;
 }
 
 .leaflet-popup-content-wrapper {
