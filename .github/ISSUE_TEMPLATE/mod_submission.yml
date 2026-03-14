@@ -1,5 +1,5 @@
 name: 📍 Submit a New Mod Location
-description: Register your mod's coordinates on the NC Zoning Board map to prevent overlaps.
+description: Register your mod's coordinates on the NC Zoning Board — an interactive map showing where Cyberpunk 2077 location mods are in Night City.
 labels: ["mod-submission"]
 body:
   - type: markdown
@@ -48,15 +48,15 @@ body:
     id: coord_x
     attributes:
       label: X Coordinate
-      description: The exact X coordinate from Cyber Engine Tweaks output (first value shown). **Include the minus sign if the value is negative**.
-      placeholder: "e.g., 500"
+      description: "The exact X coordinate from CET output (first value shown). \u26A0\uFE0F IMPORTANT: Include the minus sign (-) if the value is negative. CET output often contains negative numbers."
+      placeholder: "e.g., -500"
     validations:
       required: true
   - type: input
     id: coord_y
     attributes:
       label: Y Coordinate
-      description: The exact Y coordinate from Cyber Engine Tweaks output (second value shown). **Include the minus sign if the value is negative**.
+      description: "The exact Y coordinate from CET output (second value shown). \u26A0\uFE0F IMPORTANT: Include the minus sign (-) if the value is negative. CET output often contains negative numbers."
       placeholder: "e.g., -1200"
     validations:
       required: true

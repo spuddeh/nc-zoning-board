@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### 2026-03-14
+
+- **UI**:
+  - Replaced "show more / show less" toggles on Tag and Author filter sections with collapsible section headers — click the header to expand/collapse. Both sections are collapsed by default to remove perceived bias toward alphabetically-first entries.
+  - Added close buttons (X) to the terminal header bar of all modals (Welcome, About, BBCode Generator) for improved usability.
+  - Location count now updates dynamically when filters or search are applied, showing filtered/total format (e.g., `42/97`).
+  - `nczoning` tag now sorts first in the tag filter list (before alphabetical tags).
+  - Added amber warning note below coordinate inputs in the BBCode Generator modal reminding users to include the minus sign for negative coordinates.
+  - Updated About modal description to neutral tone — removed "avoid overlapping builds" language.
+- **Issue Templates**:
+  - Rewrote mod submission template description to neutral tone — removed "to prevent overlaps" language that implied the tool gatekeeps or plays favourites.
+  - Strengthened negative coordinate guidance in both X and Y coordinate fields with warning emoji and clearer instructions.
+  - Changed X coordinate placeholder to show a negative example (`-500`).
+
 ### 2026-03-13
 
 - **UI**:
