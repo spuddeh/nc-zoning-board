@@ -5,6 +5,18 @@ function escapeHtml(text) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  // Terminal header close buttons — delegates to each modal's existing close button
+  document.querySelectorAll(".terminal-close-btn[data-close-modal]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const modal = document.getElementById(btn.dataset.closeModal);
+      if (modal) modal.classList.add("hidden");
+      // Preserve welcome modal session flag
+      if (btn.dataset.closeModal === "welcome-modal") {
+        sessionStorage.setItem("nc_zoning_board_visited", "true");
+      }
+    });
+  });
+
   // Welcome Modal Logic — runs immediately, independent of map loading
   const welcomeModal = document.getElementById("welcome-modal");
   const closeModalBtn = document.getElementById("close-modal");
@@ -500,6 +512,23 @@ async function initMap() {
     showCoverageOnHover: false,
     zoomToBoundsOnClick: false,
     maxClusterRadius: 40,
+    iconCreateFunction: function (cluster) {
+      const count = cluster.getChildCount();
+      let sizeClass = "xlarge";
+      if (count < 10) {
+        sizeClass = "small";
+      } else if (count < 25) {
+        sizeClass = "medium";
+      } else if (count < 50) {
+        sizeClass = "large";
+      }
+
+      return L.divIcon({
+        html: `<div><span>${count}</span></div>`,
+        className: `marker-cluster marker-cluster-${sizeClass}`,
+        iconSize: L.point(40, 40),
+      });
+    },
     polygonOptions: {
       fillColor: "#00f0ff",
       color: "#00f0ff",
@@ -984,7 +1013,11 @@ async function initMap() {
     mods.forEach((mod) => (mod.tags || []).forEach((t) => usedTags.add(t)));
 
     Array.from(usedTags)
-      .sort()
+      .sort((a, b) => {
+        if (a === "nczoning") return -1;
+        if (b === "nczoning") return 1;
+        return a.localeCompare(b);
+      })
       .forEach((tag) => {
         const def = tag === "nczoning"
           ? "Sourced automatically from Nexus Mods"
@@ -1001,18 +1034,13 @@ async function initMap() {
         tagsFilterContainer.appendChild(btn);
       });
 
-    // Setup show-more / show-less toggles for collapsible filter sections
-    document.querySelectorAll(".filter-show-more-btn").forEach((btn) => {
-      const target = document.getElementById(btn.dataset.target);
+    // Setup collapsible section headers
+    document.querySelectorAll(".sidebar-section-header.collapsible").forEach((header) => {
+      const target = document.getElementById(header.dataset.collapseTarget);
       if (!target) return;
-      // Hide button if content fits within the collapsed height
-      if (target.scrollHeight <= target.clientHeight) {
-        btn.classList.add("hidden");
-        return;
-      }
-      btn.addEventListener("click", () => {
-        const collapsed = target.classList.toggle("filter-collapsed");
-        btn.textContent = collapsed ? "show more" : "show less";
+      header.addEventListener("click", () => {
+        header.classList.toggle("collapsed");
+        target.classList.toggle("filter-collapsed");
       });
     });
 
@@ -1104,6 +1132,9 @@ async function initMap() {
             ? "block"
             : "none";
       });
+
+      // Update visible mod count
+      modCountEl.textContent = `(${visibleMarkers.length}/${mods.length})`;
     }
   } catch (error) {
     console.error("Error loading mod data:", error);

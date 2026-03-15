@@ -534,6 +534,7 @@ body.cluster-panel-resizing * {
 }
 .leaflet-control-zoom-in, .leaflet-control-zoom-out {
     border-radius: 0 !important;
+    line-height: 1.625rem !important;
 }
 
 .leaflet-popup-content-wrapper {
@@ -687,33 +688,27 @@ body.cluster-panel-resizing * {
 }
 
 #tag-filters.filter-collapsed, #author-filters.filter-collapsed {
-    max-height: 72px;
+    max-height: 0;
     overflow: hidden;
+    padding-top: 0;
+    padding-bottom: 0;
 }
 
-.filter-show-more-btn {
-    display: block;
-    width: 100%;
-    background: transparent;
-    border: none;
-    border-top: 1px solid rgba(0, 240, 255, 0.1);
-    color: #555;
-    font-family: var(--font-body);
-    font-size: 0.65rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    padding: 4px 1rem;
+.sidebar-section-header.collapsible {
     cursor: pointer;
-    text-align: left;
-    transition: color 0.2s ease;
+    user-select: none;
 }
 
-.filter-show-more-btn:hover {
-    color: var(--nc-cyan);
+.sidebar-section-header.collapsible:hover {
+    background: rgba(0, 240, 255, 0.1);
 }
 
-.filter-show-more-btn.hidden {
-    display: none;
+.collapse-chevron {
+    transition: transform 0.2s ease;
+}
+
+.sidebar-section-header.collapsed .collapse-chevron {
+    transform: rotate(-90deg);
 }
 
 .tag-filter-btn {
@@ -1042,6 +1037,26 @@ body::before {
     font-size: 0.8rem;
     font-weight: bold;
     letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.terminal-close-btn {
+    background: transparent;
+    border: none;
+    color: var(--nc-navy);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px;
+    opacity: 0.6;
+    transition: opacity 0.2s ease;
+}
+
+.terminal-close-btn:hover {
+    opacity: 1;
 }
 
 .terminal-body {
@@ -1267,6 +1282,13 @@ footer .footer-content {
     min-width: 10px;
 }
 
+.bbcode-coord-note {
+    font-size: 0.7rem;
+    color: var(--nc-amber);
+    margin-top: 0.25rem;
+    font-family: var(--font-body);
+}
+
 .bbcode-coord-inputs input[type="number"],
 .bbcode-input,
 .bbcode-select,
@@ -1444,4 +1466,75 @@ footer .footer-content {
     color: var(--nc-gray);
     font-style: italic;
     margin-bottom: 12px;
+}
+
+/* ── MarkerCluster style ────────────────────────────────────────── */
+.leaflet-cluster-anim .leaflet-marker-icon, .leaflet-cluster-anim .leaflet-marker-shadow {
+	transition: transform 0.3s ease-out, opacity 0.3s ease-in;
+}
+
+.leaflet-cluster-spider-leg {
+	/* stroke-dashoffset (duration and function) should match with leaflet-marker-icon transform in order to track it exactly */
+	transition: stroke-dashoffset 0.3s ease-out, stroke-opacity 0.3s ease-in;
+}
+
+.marker-cluster-small {
+	background-color: rgba(181, 226, 140, 0.6);
+}
+.marker-cluster-small div {
+	background-color: rgba(110, 204, 57, 0.65);
+}
+
+.marker-cluster-medium {
+	background-color: rgba(241, 211, 87, 0.6);
+}
+.marker-cluster-medium div {
+	background-color: rgba(240, 194, 12, 0.65);
+}
+
+.marker-cluster-large {
+	background-color: rgba(253, 156, 115, 0.6);
+}
+.marker-cluster-large div {
+	background-color: rgba(241, 128, 23, 0.65);
+}
+
+.marker-cluster-xlarge {
+	background-color: rgba(243, 86, 86, 0.6);
+}
+.marker-cluster-xlarge div {
+	background-color: rgba(238, 26, 26, 0.65);
+}
+
+.marker-cluster {
+	background-clip: padding-box;
+	border-radius: 20px;
+}
+.marker-cluster div {
+	width: 30px;
+	height: 30px;
+	margin-left: 5px;
+	margin-top: 5px;
+
+	text-align: center;
+	border-radius: 15px;
+}
+
+.marker-cluster > div::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background: radial-gradient(
+        circle at center,
+        rgba(0, 0, 0, 0.9) 0%,
+        rgba(0, 0, 0, 0.18) 45%,
+        rgba(0, 0, 0, 0) 78%
+    );
+    z-index: -1;
+}
+
+.marker-cluster span {
+	line-height: 30px;
 }
