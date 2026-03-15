@@ -337,7 +337,7 @@ body.cluster-panel-resizing * {
     cursor: pointer;
     text-transform: uppercase;
     transition: var(--transition-fast);
-    letter-spacing: var(--ui-border-thin);
+    letter-spacing: 1px;
 
     &:hover {
         border-color: var(--nc-cyan);
@@ -419,7 +419,7 @@ body.cluster-panel-resizing * {
     .mod-item-category {
         font-size: var(--text-xs);
         text-transform: uppercase;
-        padding: var(--ui-border-thin) var(--space-xxs);
+        padding: 1px var(--space-xxs);
         border-radius: var(--ui-radius-xs);
         margin-left: 0.5rem;
 
@@ -698,7 +698,7 @@ body.cluster-panel-resizing * {
         margin-bottom: 0.5rem;
         border-bottom: var(--ui-border-thin) solid var(--nc-cyan);
         padding-bottom: 0.2rem;
-        letter-spacing: var(--ui-border-thin);
+        letter-spacing: 1px;
     }
 
     .custom-popup-authors {
@@ -801,7 +801,7 @@ body.cluster-panel-resizing * {
     color: var(--nc-cyan) !important;
     font-family: var(--font-heading) !important;
     font-size: var(--text-sm) !important;
-    letter-spacing: var(--ui-border-thin) !important;
+    letter-spacing: 1px !important;
     padding: var(--space-xxs) var(--space-sm) !important;
     box-shadow: 0 0 var(--space-md) var(--cyan-tint-20) !important;
 
@@ -814,7 +814,7 @@ body.cluster-panel-resizing * {
     background: var(--white-tint-10);
     color: var(--text-subtle);
     font-size: var(--text-2xs);
-    padding: var(--ui-border-thin) var(--space-xs);
+    padding: 1px var(--space-xs);
     border-radius: var(--space-md);
     text-transform: uppercase;
     cursor: help;
@@ -1073,7 +1073,7 @@ header {
 
 h1 {
     font-family: var(--font-heading);
-    font-size: var(--text-2xl);
+    font-size: var(--text-xl);
     color: var(--nc-cyan);
     letter-spacing: var(--space-xxs);
     margin: 0;
@@ -1104,7 +1104,7 @@ h1 {
     font-size: var(--text-2xs);
     padding: 2px var(--space-sm);
     cursor: pointer;
-    letter-spacing: var(--ui-border-thin);
+    letter-spacing: 1px;
     transition: var(--transition-fast);
     opacity: 1;
 
@@ -1115,7 +1115,7 @@ h1 {
 }
 
 .status-label {
-    letter-spacing: var(--ui-border-thin);
+    letter-spacing: 1px;
     
     &.status-elevated {
         color: var(--nc-amber);
@@ -1199,7 +1199,7 @@ body::before {
     font-family: var(--font-heading);
     font-size: var(--text-sm);
     font-weight: bold;
-    letter-spacing: var(--ui-border-thin);
+    letter-spacing: 1px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -1326,7 +1326,7 @@ footer .footer-content {
     font-size: var(--text-2xs);
     padding: 2px var(--space-sm);
     cursor: pointer;
-    letter-spacing: var(--ui-border-thin);
+    letter-spacing: 1px;
     transition: var(--transition-fast);
     opacity: 1;
 
@@ -1365,7 +1365,7 @@ footer .footer-content {
     font-family: var(--font-heading);
     font-size: var(--text-2xs);
     font-weight: bold;
-    padding: var(--ui-border-thin) var(--space-xxs);
+    padding: 1px var(--space-xxs);
     margin-left: var(--space-xs);
     vertical-align: middle;
     white-space: nowrap;
@@ -1402,7 +1402,7 @@ footer .footer-content {
     font-size: var(--text-2xs);
     color: var(--nc-cyan);
     text-transform: uppercase;
-    letter-spacing: var(--ui-border-thin);
+    letter-spacing: 1px;
 }
 
 .bbcode-optional {
@@ -1602,7 +1602,7 @@ footer .footer-content {
             font-family: var(--font-heading);
             color: var(--nc-cyan);
             font-size: var(--text-xs);
-            letter-spacing: var(--ui-border-thin);
+            letter-spacing: 1px;
         }
 
         code {
