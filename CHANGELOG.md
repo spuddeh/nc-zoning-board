@@ -7,7 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### 2026-03-15
+### 2026-03-15 (refactor & CI)
+
+- **Refactor**:
+  - Split monolithic `app.js` (~1500 lines) into four focused modules using a `window.NCZ` global namespace (no bundler, no ES modules — loaded via ordered `<script>` tags):
+    - `constants.js` — all shared config values, category styles, API endpoints, cache keys, UI sizing
+    - `utils.js` — pure utility functions: `escapeHtml`, coordinate transform, localStorage cache helpers, tooltip/popup positioning algorithm, BBCode block parser
+    - `services.js` — Nexus V2 GraphQL API functions: thumbnail fetch, auto-discovery, new `NCZ.fetchModData()` which fetches `mods.json` and `tags.json` in parallel
+    - `app.js` — DOM logic, map init, sidebar filtering, cluster panel, modals, image gallery
+  - Added `NCZ.DATA_MODS_PATH` and `NCZ.DATA_TAGS_PATH` constants for data file paths (contributed by [@Akiway](https://github.com/Akiway))
+- **CI**:
+  - Fixed `validate-json` required status check blocking all non-data PRs — the workflow now always runs on every PR and reports a status immediately. Validation steps (build, schema check, tag check) are gated behind a `git diff` check and only execute when `data/locations/`, `data/tags.json`, or `mods.schema.json` are modified.
+- **Docs**:
+  - Updated `docs/architecture.md` — new file structure tree, added JavaScript Architecture section with module table, updated component section headers, added CSS nesting note.
+  - Updated `docs/submission-pipeline.md` — Stage 4 now describes the change-detection step.
+  - Updated `docs/coordinate-system.md` — `cetToLeaflet` reference updated to `utils.js`.
 
 - **UI** (contributed by [@Akiway](https://github.com/Akiway)):
   - **Cluster menu panel** — clicking a cluster now opens a resizable side panel listing all mods within that cluster, with thumbnails, tags, descriptions, and category-coloured headers. Clicking a mod in the panel zooms to its pin and opens its popup. Panel width is draggable and persisted in localStorage. On mobile, the panel uses a fixed width and hides the resize handle. Replaces the previous hover-to-spiderfy interaction.

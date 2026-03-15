@@ -1,0 +1,202 @@
+/**
+ * NC Zoning Board — API & Data Services
+ * All fetch/network functions. Depends on NCZ constants + utils.
+ */
+
+// Batch-fetch mod thumbnails from Nexus V2 GraphQL API (no auth needed for public data)
+// NOTE from Nexus Mods (Pickysaurus): The V2 API is technically unsupported, and long-term
+// they intend to move back to REST. This implementation might need an update in the future if V2 is retired.
+NCZ.fetchNexusThumbnails = async function (nexusIds) {
+  const validIds = nexusIds.filter((id) => {
+    if (!id) return false;
+    const lower = id.toLowerCase();
+    if (lower === "wip" || lower === "dummy") return false;
+    return /^\d+$/.test(id); // Must be numeric
+  });
+  if (validIds.length === 0) return {};
+
+  // Return cached thumbnails if still fresh
+  const cached = NCZ.cacheGet(NCZ.THUMB_CACHE_KEY, NCZ.THUMB_CACHE_TTL);
+  if (cached) {
+    // Check if all requested IDs are in the cache — if so, skip the API call
+    const missing = validIds.filter((id) => !cached[id]);
+    if (missing.length === 0) {
+      console.log(`Thumbnails: serving ${validIds.length} from cache`);
+      return cached;
+    }
+    // Only fetch the missing IDs
+    console.log(`Thumbnails: ${validIds.length - missing.length} cached, fetching ${missing.length} new`);
+    const fetched = await NCZ.fetchNexusThumbnailsFromApi(missing);
+    const merged = { ...cached, ...fetched };
+    NCZ.cacheSet(NCZ.THUMB_CACHE_KEY, merged);
+    return merged;
+  }
+
+  const result = await NCZ.fetchNexusThumbnailsFromApi(validIds);
+  NCZ.cacheSet(NCZ.THUMB_CACHE_KEY, result);
+  return result;
+};
+
+NCZ.fetchNexusThumbnailsFromApi = async function (validIds) {
+  const uids = validIds.map((id) => NCZ.toNexusUid(id));
+  const query = `query modsByUid($uids: [ID!]!, $count: Int!) {
+        modsByUid(uids: $uids, count: $count) {
+            nodes {
+                modId
+                pictureUrl
+                thumbnailUrl
+            }
+        }
+    }`;
+
+  try {
+    const res = await fetch(NCZ.NEXUS_GQL_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query, variables: { uids, count: validIds.length } }),
+    });
+    const json = await res.json();
+    const nodes = json?.data?.modsByUid?.nodes || [];
+    const thumbMap = {};
+    nodes.forEach((node) => {
+      thumbMap[String(node.modId)] = {
+        pictureUrl: node.pictureUrl,
+        thumbnailUrl: node.thumbnailUrl,
+      };
+    });
+    return thumbMap;
+  } catch (err) {
+    console.warn("Failed to fetch Nexus thumbnails:", err);
+    return {};
+  }
+};
+
+// Fetch all mods tagged "NCZoning" from Nexus V2 GraphQL, parse their BBCode blocks,
+// and return an array of mod objects ready to merge with the manual mods.json entries.
+// ModsFilter schema: https://graphql.nexusmods.com/#definition-ModsFilter
+// Fields use [BaseFilterValue] = array of { value: ... } objects.
+// "uploader" on the Mod type is a plain string (username), not a nested object.
+NCZ.fetchNexusTaggedMods = async function (existingNexusIds, validTagNames) {
+  // Return cached auto-discovery results if still fresh
+  const cached = NCZ.cacheGet(NCZ.AUTODISCOVERY_CACHE_KEY, NCZ.AUTODISCOVERY_CACHE_TTL);
+  if (cached) {
+    // Re-filter against current manual entries (may have changed since cache was written)
+    const filtered = cached.filter((m) => !existingNexusIds.has(m.nexus_id));
+    console.log(`NCZoning: serving ${filtered.length} auto-discovered mods from cache`);
+    return filtered;
+  }
+
+  const query = `
+    query NCZoningMods($filter: ModsFilter!, $count: Int!, $offset: Int!) {
+      mods(filter: $filter, count: $count, offset: $offset) {
+        nodes {
+          modId
+          name
+          summary
+          description
+          pictureUrl
+          thumbnailUrl
+          uploader {
+            name
+          }
+        }
+        totalCount
+      }
+    }
+  `;
+
+  const COUNT = NCZ.NEXUS_BATCH_SIZE;
+  let offset = 0;
+  let totalCount = Infinity;
+  const results = [];
+
+  try {
+    while (offset < totalCount) {
+      const res = await fetch(NCZ.NEXUS_GQL_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          query,
+          variables: {
+            filter: {
+              gameId: [{ value: String(NCZ.NEXUS_GAME_ID) }],
+              tag: [{ value: "NCZoning" }],
+            },
+            count: COUNT,
+            offset,
+          },
+        }),
+      });
+      const json = await res.json();
+
+      if (json.errors) {
+        console.warn("NCZoning API errors:", json.errors);
+      }
+
+      const page = json?.data?.mods;
+      if (!page) {
+        console.warn("NCZoning auto-discovery: no mods page in response", json);
+        break;
+      }
+
+      totalCount = page.totalCount ?? 0;
+      const nodes = page.nodes || [];
+      console.log(`NCZoning: fetched ${nodes.length} mods (offset ${offset}, total ${totalCount})`);
+      if (nodes.length === 0) break;
+
+      for (const node of nodes) {
+        const nexusId = String(node.modId);
+        if (existingNexusIds.has(nexusId)) continue; // manual entry wins
+
+        const parsed = NCZ.parseNcZoningBlock(node.description, validTagNames);
+        if (!parsed) {
+          console.log(`NCZoning: skipping mod ${nexusId} (${node.name}) — no valid [NCZoning] block found. Description preview:`, (node.description || "").slice(0, 300));
+          continue;
+        }
+
+        const uploaderName = node.uploader?.name || "Unknown";
+        const allAuthors = [uploaderName, ...parsed.additionalAuthors];
+
+        const summary = node.summary || "";
+        const description =
+          summary.length > NCZ.DESCRIPTION_MAX_LENGTH ? summary.slice(0, NCZ.DESCRIPTION_MAX_LENGTH - 3) + "..." : summary;
+
+        results.push({
+          id: `nexus-auto-${nexusId}`,
+          name: node.name || "Unknown Mod",
+          authors: allAuthors,
+          ...(parsed.credits ? { credits: parsed.credits } : {}),
+          coordinates: parsed.coordinates,
+          nexus_id: nexusId,
+          description,
+          category: parsed.category,
+          tags: ["nczoning", ...parsed.tags],
+          _source: "nexus-auto",
+          _thumbnailUrl: node.thumbnailUrl || null,
+          _pictureUrl: node.pictureUrl || null,
+        });
+      }
+
+      offset += nodes.length;
+      if (nodes.length < COUNT) break; // last page
+    }
+  } catch (err) {
+    console.warn("NCZoning auto-discovery failed:", err);
+  }
+
+  console.log(`NCZoning: auto-discovery complete — ${results.length} mods added`);
+  NCZ.cacheSet(NCZ.AUTODISCOVERY_CACHE_KEY, results);
+  return results;
+};
+
+// Fetch mod registry (mods.json) and tag definitions (tags.json) in parallel.
+// Returns { mods: Array, tagsDict: Object }.
+NCZ.fetchModData = async function () {
+  const [modsRes, tagsRes] = await Promise.all([
+    fetch(NCZ.DATA_MODS_PATH),
+    fetch(NCZ.DATA_TAGS_PATH),
+  ]);
+  const mods = await modsRes.json();
+  const tagsDict = await tagsRes.json();
+  return { mods, tagsDict };
+};
