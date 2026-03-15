@@ -66,44 +66,44 @@
     /* Font families */
     --font-heading: 'Orbitron', sans-serif;
     --font-body: 'Rajdhani', sans-serif;
+
+    /* Relative color tints derived from active theme base colors */
+    --primary-05: rgb(from var(--primary) r g b / 0.05);
+    --primary-10: rgb(from var(--primary) r g b / 0.1);
+    --primary-20: rgb(from var(--primary) r g b / 0.2);
+    --primary-30: rgb(from var(--primary) r g b / 0.3);
+    --primary-40: rgb(from var(--primary) r g b / 0.4);
+    --primary-50: rgb(from var(--primary) r g b / 0.5);
+    --primary-60: rgb(from var(--primary) r g b / 0.6);
+    --primary-80: rgb(from var(--primary) r g b / 0.8);
+    --primary-90: rgb(from var(--primary) r g b / 0.9);
+    --primary-95: rgb(from var(--primary) r g b / 0.95);
+
+    --secondary-05: rgb(from var(--secondary) r g b / 0.05);
+    --secondary-10: rgb(from var(--secondary) r g b / 0.1);
+    --secondary-20: rgb(from var(--secondary) r g b / 0.2);
+    --secondary-30: rgb(from var(--secondary) r g b / 0.3);
+    --secondary-40: rgb(from var(--secondary) r g b / 0.4);
+    --secondary-50: rgb(from var(--secondary) r g b / 0.5);
+    --secondary-60: rgb(from var(--secondary) r g b / 0.6);
+
+    --tertiary-05: rgb(from var(--tertiary) r g b / 0.05);
+    --tertiary-10: rgb(from var(--tertiary) r g b / 0.1);
+    --tertiary-20: rgb(from var(--tertiary) r g b / 0.2);
+    --tertiary-30: rgb(from var(--tertiary) r g b / 0.3);
+    --tertiary-40: rgb(from var(--tertiary) r g b / 0.4);
+    --tertiary-50: rgb(from var(--tertiary) r g b / 0.5);
+    --tertiary-60: rgb(from var(--tertiary) r g b / 0.6);
+
+    --gray-40: rgb(from var(--gray) r g b / 0.4);
 }
 
 body.theme-night-corp {
-    /* Primary */
     --primary: #0a192f;
-    --primary-05: rgba(10, 25, 47, 0.05);
-    --primary-10: rgba(10, 25, 47, 0.1);
-    --primary-20: rgba(10, 25, 47, 0.2);
-    --primary-30: rgba(10, 25, 47, 0.3);
-    --primary-40: rgba(10, 25, 47, 0.4);
-    --primary-50: rgba(10, 25, 47, 0.5);
-    --primary-60: rgba(10, 25, 47, 0.6);
-    --primary-80: rgba(10, 25, 47, 0.8);
-    --primary-90: rgba(10, 25, 47, 0.9);
-    --primary-95: rgba(10, 25, 47, 0.95);
-
-    /* Secondary */
     --secondary: #00f0ff;
-    --secondary-05: rgba(0, 240, 255, 0.05);
-    --secondary-10: rgba(0, 240, 255, 0.1);
-    --secondary-20: rgba(0, 240, 255, 0.2);
-    --secondary-30: rgba(0, 240, 255, 0.3);
-    --secondary-40: rgba(0, 240, 255, 0.4);
-    --secondary-50: rgba(0, 240, 255, 0.5);
-    --secondary-60: rgba(0, 240, 255, 0.6);
-
-    /* Tertiary */
     --tertiary: #ffb300;
-    --tertiary-05: rgba(255, 179, 0, 0.05);
-    --tertiary-10: rgba(255, 179, 0, 0.1);
-    --tertiary-20: rgba(255, 179, 0, 0.2);
-    --tertiary-30: rgba(255, 179, 0, 0.3);
-    --tertiary-40: rgba(255, 179, 0, 0.4);
-    --tertiary-50: rgba(255, 179, 0, 0.5);
-    --tertiary-60: rgba(255, 179, 0, 0.6);
 
     --gray: #8892b0;
-    --gray-40: rgba(136, 146, 176, 0.4);
     
     --white: #e6f1ff;
     --dark-accent: #112240;
@@ -115,6 +115,123 @@ body.theme-night-corp {
     --surface-tooltip-95: rgba(5, 10, 14, 0.95);
     --surface-tooltip-85: rgba(5, 10, 14, 0.85);
     --surface-nav-80: rgba(0, 20, 40, 0.8);
+    --white-78: rgba(230, 241, 255, 0.78);
+    --white-86: rgba(230, 241, 255, 0.86);
+
+    /* Theme category colors */
+    --category-location-overhaul: var(--secondary);
+    --category-location-overhaul-glow: var(--secondary-40);
+    --category-new-location: var(--tertiary);
+    --category-new-location-glow: var(--tertiary-40);
+    --category-other: var(--gray);
+    --category-other-glow: var(--gray-40);
+
+    /* Theme cluster size colors */
+    --cluster-small-bg: rgba(181, 226, 140, 0.6);
+    --cluster-small-inner: rgba(110, 204, 57, 0.65);
+    --cluster-medium-bg: rgba(241, 211, 87, 0.6);
+    --cluster-medium-inner: rgba(240, 194, 12, 0.65);
+    --cluster-large-bg: rgba(253, 156, 115, 0.6);
+    --cluster-large-inner: rgba(241, 128, 23, 0.65);
+    --cluster-xlarge-bg: rgba(243, 86, 86, 0.6);
+    --cluster-xlarge-inner: rgba(238, 26, 26, 0.65);
+}
+
+body.theme-arasaka {
+    --primary: #110d0e;
+    --secondary: #e60000;
+    --tertiary: #ffb300;
+
+    --gray: #8892b0;
+    
+    --white: #e6f1ff;
+    --dark-accent: #1a1a1a;
+
+    /* Themed surfaces */
+    --surface-panel: rgba(16, 16, 16, 0.95);
+    --surface-hover: rgba(230, 0, 0, 0.08);
+    --surface-panel-90: rgba(16, 16, 16, 0.9);
+    --surface-tooltip-95: rgba(8, 8, 8, 0.95);
+    --surface-tooltip-85: rgba(8, 8, 8, 0.85);
+    --surface-nav-80: rgba(16, 16, 16, 0.8);
+    --white-78: rgba(230, 241, 255, 0.78);
+    --white-86: rgba(230, 241, 255, 0.86);
+
+    /* Theme category colors */
+    --category-location-overhaul: var(--secondary);
+    --category-location-overhaul-glow: var(--secondary-40);
+    --category-new-location: var(--tertiary);
+    --category-new-location-glow: var(--tertiary-40);
+    --category-other: var(--gray);
+    --category-other-glow: var(--gray-40);
+
+    /* Theme cluster size colors */
+    --cluster-small-bg: rgba(181, 226, 140, 0.6);
+    --cluster-small-inner: rgba(110, 204, 57, 0.65);
+    --cluster-medium-bg: rgba(241, 211, 87, 0.6);
+    --cluster-medium-inner: rgba(240, 194, 12, 0.65);
+    --cluster-large-bg: rgba(253, 156, 115, 0.6);
+    --cluster-large-inner: rgba(241, 128, 23, 0.65);
+    --cluster-xlarge-bg: rgba(243, 86, 86, 0.6);
+    --cluster-xlarge-inner: rgba(238, 26, 26, 0.65);
+}
+
+body.theme-militech {
+    --primary: #2c3023;
+    --secondary: #fac901;
+    --tertiary: #ee6b00;
+
+    --gray: #93a58b;
+    
+    --white: #e6f1ff;
+    --dark-accent: #1a1a1a;
+
+    /* Themed surfaces */
+    --surface-panel: rgba(16, 16, 16, 0.95);
+    --surface-hover: rgba(250, 234, 0, 0.08);
+    --surface-panel-90: rgba(16, 16, 16, 0.9);
+    --surface-tooltip-95: rgba(8, 8, 8, 0.95);
+    --surface-tooltip-85: rgba(8, 8, 8, 0.85);
+    --surface-nav-80: rgba(16, 16, 16, 0.8);
+    --white-78: rgba(230, 241, 255, 0.78);
+    --white-86: rgba(230, 241, 255, 0.86);
+
+    /* Theme category colors */
+    --category-location-overhaul: var(--secondary);
+    --category-location-overhaul-glow: var(--secondary-40);
+    --category-new-location: var(--tertiary);
+    --category-new-location-glow: var(--tertiary-40);
+    --category-other: var(--gray);
+    --category-other-glow: var(--gray-40);
+
+    /* Theme cluster size colors */
+    --cluster-small-bg: rgba(181, 226, 140, 0.6);
+    --cluster-small-inner: rgba(110, 204, 57, 0.65);
+    --cluster-medium-bg: rgba(241, 211, 87, 0.6);
+    --cluster-medium-inner: rgba(240, 194, 12, 0.65);
+    --cluster-large-bg: rgba(253, 156, 115, 0.6);
+    --cluster-large-inner: rgba(241, 128, 23, 0.65);
+    --cluster-xlarge-bg: rgba(243, 86, 86, 0.6);
+    --cluster-xlarge-inner: rgba(238, 26, 26, 0.65);
+}
+
+body.theme-aldecaldos {
+    --primary: #101518;
+    --secondary: #dd612c;
+    --tertiary: #be8f27;
+
+    --gray: #545d7c;
+    
+    --white: #e6f1ff;
+    --dark-accent: #424a63;
+
+    /* Themed surfaces */
+    --surface-panel: rgba(16, 21, 24, 0.95);
+    --surface-hover: rgba(84, 93, 124, 0.12);
+    --surface-panel-90: rgba(16, 21, 24, 0.9);
+    --surface-tooltip-95: rgba(45, 50, 66, 0.95);
+    --surface-tooltip-85: rgba(45, 50, 66, 0.85);
+    --surface-nav-80: rgba(66, 74, 99, 0.8);
     --white-78: rgba(230, 241, 255, 0.78);
     --white-86: rgba(230, 241, 255, 0.86);
 

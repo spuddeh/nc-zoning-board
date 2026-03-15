@@ -4,6 +4,38 @@
  */
 window.NCZ = window.NCZ || {};
 
+// Theme definitions (selector + body class + header logo)
+NCZ.THEMES = [
+  {
+    id: "night-corp",
+    label: "Night Corp",
+    className: "theme-night-corp",
+    logo: "assets/img/nightcorp-logo.webp",
+    logoAlt: "Night Corp",
+  },
+  {
+    id: "arasaka",
+    label: "Arasaka",
+    className: "theme-arasaka",
+    logo: "assets/img/arasaka.png",
+    logoAlt: "Arasaka",
+  },
+  {
+    id: "militech",
+    label: "Militech",
+    className: "theme-militech",
+    logo: "assets/img/militech_logo.png",
+    logoAlt: "Militech",
+  },
+  {
+    id: "aldecaldos",
+    label: "Aldecaldos",
+    className: "theme-aldecaldos",
+    logo: "assets/img/aldecaldos.png",
+    logoAlt: "Aldecaldos",
+  },
+];
+
 // Category visual styles (color, label, CSS class)
 NCZ.CATEGORY_STYLES = {
   "location-overhaul": {
@@ -38,6 +70,7 @@ NCZ.COPY_FEEDBACK_MS = 2000;
 NCZ.SEARCH_DEBOUNCE_MS = 200;
 
 // LocalStorage cache keys & TTLs
+NCZ.THEME_PREFERENCE_KEY = "nc_theme_id";
 NCZ.THUMB_CACHE_KEY = "nc_nexus_thumbs";
 NCZ.THUMB_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
 NCZ.AUTODISCOVERY_CACHE_KEY = "nc_nexus_autodiscovery";
