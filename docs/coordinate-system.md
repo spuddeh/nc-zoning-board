@@ -65,7 +65,7 @@ These coefficients were derived from a **16-point uniform grid calibration** —
 
 ### Implementation
 
-In `app.js`:
+In `utils.js` (exposed as `NCZ.cetToLeaflet`):
 
 ```javascript
 function cetToLeaflet(cetX, cetY) {

@@ -14,7 +14,11 @@ nc-zoning-board/
 │
 ├── assets/
 │   ├── css/style.css       # Cyberpunk-themed styles (Orbitron + Rajdhani fonts)
-│   ├── js/app.js           # Main application logic (Leaflet map + coordinate transform)
+│   ├── js/
+│   │   ├── constants.js    # Shared constants (NCZ namespace)
+│   │   ├── utils.js        # Pure utility functions (coordinate transform, cache, positioning)
+│   │   ├── services.js     # API/fetch functions (Nexus thumbnails, auto-discovery, data loading)
+│   │   └── app.js          # Main app logic (map init, DOM events, sidebar, modals)
 │   ├── images/             # Static image assets
 │   └── tiles/              # Generated map tiles (zoom levels 0-5)
 │       └── {z}/{x}/{y}.png
@@ -67,7 +71,7 @@ nc-zoning-board/
                                                 │
                                                 ▼
                                     ┌────────────────────────┐
-                                    │      app.js            │
+                                    │     services.js        │
                                     │  cetToLeaflet(x, y)    │
                                     │  → [lat, lng] on map   │
                                     └────────────┬───────────┘
@@ -83,6 +87,19 @@ nc-zoning-board/
 
 ## Key Components
 
+### JavaScript Architecture
+
+Frontend JS is split into four files loaded via `<script>` tags (no ES modules, no bundler). All shared symbols live on the `window.NCZ` namespace.
+
+| File | Role |
+| --- | --- |
+| `constants.js` | All config values — category styles, API endpoints, cache keys, UI sizing |
+| `utils.js` | Pure functions — `escapeHtml`, `cetToLeaflet`, `clamp`, positioning algorithm, BBCode parser |
+| `services.js` | Fetch functions — Nexus thumbnail API, auto-discovery, `fetchModData()` |
+| `app.js` | DOM logic — map init, sidebar, cluster panel, modals, image gallery |
+
+Load order (linear dependency chain, no circular refs): `constants.js` → `utils.js` → `services.js` → `app.js`
+
 ### Map Layer (`app.js`)
 
 - Uses **Leaflet.js** with `L.CRS.Simple` (non-geographic coordinate reference system)
@@ -90,10 +107,9 @@ nc-zoning-board/
 - At max native zoom (5), the image is 32×32 = 1,024 tiles
 - Bounds are calculated via `map.unproject()` to align pixel coordinates with the tile grid
 
-### Coordinate Transform (`app.js`)
+### Coordinate Transform (`utils.js`)
 
-- `cetToLeaflet(x, y)` — converts CET game coordinates to Leaflet `[lat, lng]`
-- `leafletToCet(lat, lng)` — reverse transform
+- `NCZ.cetToLeaflet(x, y)` — converts CET game coordinates to Leaflet `[lat, lng]`
 - Simple linear mapping derived from a grid calibration
 - See [Coordinate System](coordinate-system.md) for full details
 
@@ -111,6 +127,7 @@ nc-zoning-board/
 - Colour palette: `--nc-navy` (#0a192f), `--nc-cyan` (#00f0ff), `--nc-amber` (#ffb300), `--nc-white` (#e6f1ff), `--nc-gray` (#8892b0)
 - Custom Leaflet popup, tooltip, and cluster styling
 - MarkerCluster CSS is inlined (no external CDN dependency)
+- Uses native CSS nesting — see [browser support](https://caniuse.com/css-nesting)
 
 ## Repo Setup (for new maintainers)
 
