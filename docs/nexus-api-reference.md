@@ -1,0 +1,212 @@
+# Nexus Mods V2 GraphQL API Reference
+
+This document covers the Nexus Mods GraphQL API implementation used by NC Zoning Board: the two queries we use, the limitations of the public API, caching strategy, and known risks.
+
+## Overview
+
+**Endpoint:** `https://api.nexusmods.com/v2/graphql`
+
+**Official Documentation:** https://graphql.nexusmods.com/
+
+**Authentication:** None required. The V2 API returns only public mod data; no credentials are needed.
+
+**Status:** ⚠️ **Technically Unsupported**
+
+The V2 API is not officially supported by Nexus Mods. Per direct conversation with Nexus Mods staff (Pickysaurus), they intend to eventually migrate back to REST. If that happens, [`services.js`](../assets/js/services.js) will need updates. Monitor [Nexus announcements](https://www.nexusmods.com) for any API retirement notices.
+
+**Rate Limits:** No rate limits are publicly documented, and none have been encountered in practice.
+
+## Queries Used
+
+### 1. `modsByUid` — Thumbnail Fetch for Manual Mods
+
+**Purpose:** Fetches featured images (`pictureUrl`, `thumbnailUrl`) for manually registered mods.
+
+**Query:**
+
+```graphql
+query modsByUid($uids: [ID!]!, $count: Int!) {
+  modsByUid(uids: $uids, count: $count) {
+    nodes {
+      modId
+      pictureUrl
+      thumbnailUrl
+    }
+  }
+}
+```
+
+**Input Variables:**
+- `uids` — Array of composite Nexus UIDs (see UID Construction below)
+- `count` — **Must equal the number of UIDs requested** ⚠️
+
+**UID Construction:**
+
+Nexus V2 uses a composite BigInt UID format. From [`constants.js`](../assets/js/constants.js), the conversion is:
+
+```javascript
+toNexusUid(modId) {
+  return (BigInt(3333) << BigInt(32)) + BigInt(modId)
+}.toString()
+```
+
+Where `3333` is the game ID for Cyberpunk 2077.
+
+**Output Fields per Node:**
+- `modId` — The numeric Nexus mod ID
+- `pictureUrl` — URL to the featured image (full resolution)
+- `thumbnailUrl` — URL to a thumbnail version of the featured image
+
+**Pagination:** None. All UIDs are sent in a single request.
+
+**⚠️ Silent Result Cap (Fixed 2026-03-13):**
+
+If the `count` variable is omitted or not explicitly passed, the Nexus API silently returns only the first 20 results regardless of how many UIDs you request. This caused a bug where only 20 mod thumbnails would load. **Always pass `count: validIds.length`** to ensure all requested images are returned.
+
+**Caching:**
+- Cache key: `nc_nexus_thumbs`
+- TTL: 24 hours
+- Strategy: Incremental — checks which IDs are cached, fetches only missing ones, merges result with existing cache before re-saving
+
+**Implementation:** [`fetchNexusThumbnails()` in services.js](../assets/js/services.js)
+
+---
+
+### 2. `NCZoningMods` (`mods`) — Auto-Discovery Query
+
+**Purpose:** Finds all mods on Nexus Mods for Cyberpunk 2077 that have been tagged `NCZoning` by their authors. These mods' descriptions are parsed for an `[NCZoning]` metadata block.
+
+**Query:**
+
+```graphql
+query NCZoningMods($filter: ModsFilter!, $count: Int!, $offset: Int!) {
+  mods(filter: $filter, count: $count, offset: $offset) {
+    nodes {
+      modId
+      name
+      summary
+      description
+      pictureUrl
+      thumbnailUrl
+      uploader {
+        name
+      }
+    }
+    totalCount
+  }
+}
+```
+
+**Input Variables:**
+- `filter.gameId` — `[{ value: "3333" }]` (Cyberpunk 2077)
+- `filter.tag` — `[{ value: "NCZoning" }]`
+- `count` — Results per page (see Pagination below)
+- `offset` — Current page offset
+
+**Output Fields per Node:**
+- `modId` — Numeric Nexus mod ID
+- `name` — Mod title
+- `summary` — Short description; used as the pin popup description (truncated to 500 chars)
+- `description` — Full mod description; parsed for `[NCZoning]` metadata block
+- `pictureUrl` — Featured image URL (full resolution)
+- `thumbnailUrl` — Featured image thumbnail URL
+- `uploader.name` — Nexus username of the mod author (used as first author)
+- `totalCount` — Total number of mods matching the filter (used for pagination loop)
+
+**Pagination: Offset-Based (Undocumented)**
+
+The Nexus API does not document pagination for the `mods` query, but it supports offset-based paging:
+
+- Page size: 50 mods per request (`NCZ.NEXUS_BATCH_SIZE`)
+- Loop: `while (offset < totalCount)`
+- Exit conditions:
+  - `nodes.length === 0` (empty page)
+  - `nodes.length < COUNT` (short final page)
+  - `page` is absent from response
+  - Network or parse error
+
+**Caching:**
+- Cache key: `nc_nexus_autodiscovery`
+- TTL: 10 minutes
+- Strategy: Full result set cached; re-filtered against current manual entries on every cache hit to suppress duplicates without waiting for expiry
+
+**Post-Fetch Processing:**
+1. Skip mods whose `modId` already exists in manual `mods.json` (manual entries win)
+2. Parse `node.description` for `[NCZoning]` metadata block (see [`parseNcZoningBlock()`](../assets/js/utils.js) in utils.js)
+3. If block missing or invalid, skip the mod with a log message
+4. Construct authors array: Nexus uploader name + any additional authors from the block
+5. Truncate `summary` to 500 characters for the popup description
+6. Prepend `"nczoning"` tag automatically (identifies auto-discovered mods in the UI)
+
+**Implementation:** [`fetchNexusTaggedMods()` in services.js](../assets/js/services.js)
+
+---
+
+## Image Availability Limitation ⚠️
+
+**Only the featured/header image is available via the public API — for now.**
+
+Both `modsByUid()` and `mods()` queries return only:
+- `pictureUrl` — the mod's featured image (full resolution)
+- `thumbnailUrl` — a thumbnail-sized version of the same featured image
+
+**Full mod image galleries are NOT currently accessible** without authenticated/private API access.
+
+This limitation has been **confirmed directly with Nexus Mods staff (Pickysaurus)**. Per Pickysaurus, featured image only is a "for now" limitation — full mod image galleries may be added to the public API in the future.
+
+**Current design implication:** The UI can only display the single featured image per mod from Nexus. Manual mod entries can link to external image galleries in their `description` field or credits if needed.
+
+---
+
+## Caching Strategy
+
+Both API calls use browser `localStorage` for caching via `cacheGet()`/`cacheSet()` helpers in [`utils.js`](../assets/js/utils.js).
+
+| Cache Key | TTL | What's Stored | Merge Strategy |
+|---|---|---|---|
+| `nc_nexus_thumbs` | 24 hours | Map of `nexus_id → { pictureUrl, thumbnailUrl }` | Incremental — only missing IDs fetched |
+| `nc_nexus_autodiscovery` | 10 minutes | Array of auto-discovered mod objects | Full replacement — re-filtered on read |
+
+### Cache Envelope
+
+Both caches use a `{ ts, data }` envelope:
+```javascript
+{ ts: <timestamp-ms>, data: <cached-value> }
+```
+
+On read, `Date.now() - ts > ttl` determines expiry.
+
+---
+
+## Error Handling
+
+**`modsByUid` (Thumbnail Fetch):**
+- Network/parse errors → `console.warn()` + return empty object `{}`
+- No retry logic
+
+**`mods` (Auto-Discovery):**
+- GraphQL errors in response → logged with `console.warn()`, loop continues collecting partial results
+- Network/parse errors → logged with `console.warn()`, loop stops
+- Partial results are still cached and returned
+
+**No automatic retries** are implemented for either query. Transient failures silently return whatever was collected before the error.
+
+---
+
+## Known Risks & Future Considerations
+
+1. **API Retirement Risk:** V2 is unsupported. Monitor for Nexus announcements of REST migration.
+2. **Undocumented Pagination:** The `mods` query's offset-based pagination is not documented. Page size and behavior may change without notice.
+3. **No Retry Logic:** Transient network failures don't trigger retries; silent partial results are returned.
+4. **Image URLs:** If Nexus changes URL formats or removes images, thumbnails will break without warning.
+5. **Image Galleries (Future):** Full mod image galleries may be added to the public API in the future (per Pickysaurus). When that happens, the thumbnail fetch and auto-discovery queries should be revisited to consider caching and displaying gallery images.
+
+---
+
+## References
+
+- **Nexus GraphQL API Docs:** https://graphql.nexusmods.com/
+- **Auto-Discovery Workflow:** See [`docs/nczoning-auto-discovery.md`](./nczoning-auto-discovery.md) for how mod authors tag mods and provide metadata
+- **Services Implementation:** [`assets/js/services.js`](../assets/js/services.js)
+- **Constants & Config:** [`assets/js/constants.js`](../assets/js/constants.js)
+- **Utility Functions:** [`assets/js/utils.js`](../assets/js/utils.js)
