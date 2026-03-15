@@ -587,6 +587,7 @@ async function initMap() {
 
         const item = document.createElement("li");
         item.className = "cluster-mod-item";
+        item.style.setProperty("--cluster-mod-color", catStyle.color);
 
         const button = document.createElement("button");
         button.type = "button";
@@ -595,8 +596,8 @@ async function initMap() {
           <span class="cluster-mod-layout">
             ${thumbMarkup}
             <span class="cluster-mod-content">
-              <span class="cluster-mod-name" style="text-shadow: 0 0 8px ${NCZ.escapeHtml(catStyle.color)};">${NCZ.escapeHtml(mod.name)}</span>
-              <span class="cluster-mod-separator" style="background-color: ${NCZ.escapeHtml(catStyle.color)};"></span>
+              <span class="cluster-mod-name">${NCZ.escapeHtml(mod.name)}</span>
+              <span class="cluster-mod-separator"></span>
               <span class="cluster-mod-meta">by ${NCZ.escapeHtml(mod.authors.join(", "))}</span>
               <span class="cluster-mod-tags">
                 ${modTagsHtml}
@@ -695,7 +696,7 @@ async function initMap() {
         // Custom Marker Icon (Diamond/Square for Night Corp)
         const icon = L.divIcon({
           className: "category-marker",
-          html: `<div class="marker-pin ${catStyle.class}" style="transform: rotate(45deg);"></div>`,
+          html: `<div class="marker-pin ${catStyle.class}"></div>`,
           iconSize: [12, 12],
           iconAnchor: [6, 6],
         });
@@ -781,9 +782,9 @@ async function initMap() {
                         : ""
                     }
                     <div class="custom-popup-desc">${NCZ.escapeHtml(mod.description || "No description provided.")}</div>
-                    <div class="popup-actions" style="display: flex; gap: 8px; margin-top: 10px;">
-                        <a href="${NCZ.escapeHtml(nexusUrl)}" target="_blank" class="custom-popup-link" style="margin-top:0;">${NCZ.escapeHtml(nexusLabel)}</a>
-                        ${!mod._source ? `<a href="${NCZ.escapeHtml(editUrl)}" target="_blank" class="custom-popup-link" style="margin-top:0; border-color: var(--nc-amber); color: var(--nc-amber);">Suggest Edit</a>` : ""}
+                    <div class="popup-actions">
+                        <a href="${NCZ.escapeHtml(nexusUrl)}" target="_blank" class="custom-popup-link">${NCZ.escapeHtml(nexusLabel)}</a>
+                        ${!mod._source ? `<a href="${NCZ.escapeHtml(editUrl)}" target="_blank" class="custom-popup-link custom-popup-link-edit">Suggest Edit</a>` : ""}
                     </div>
                 </div>
             `;
