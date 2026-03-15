@@ -30,7 +30,7 @@ Night Corp's aesthetic relies on conveying trust, stability, and control, contra
 | **Zoning Cyan (Accent)** | `#00f0ff` | Primary buttons, active tabs, and critical highlights (The classic Cyberpunk UI cyan). |
 | **Concrete Gray (Secondary)** | `#8a8d91` | Secondary text, inactive borders, and disabled states. |
 | **Archival White (Text)** | `#e6f1ff` | Primary text. Not pure white to reduce eye strain on dark backgrounds. |
-| **Warning Amber (Alerts)** | `#ffb300` | Warning states, overlaps, or critical alerts (like the "New Location" category). CSS: `--nc-amber`. |
+| **Warning Amber (Alerts)** | `#ffb300` | Warning states, overlaps, or critical alerts (like the "New Location" category). CSS: `--tertiary`. |
 | **Approval Green (Success)** | `#00ff9d` | Success states, verified locations, or "Safe" zones. |
 
 *Note: The map pins should utilize this palette, with specific colors assigned to different zoning categories (e.g., Apartments, Overhauls, New Structures).*

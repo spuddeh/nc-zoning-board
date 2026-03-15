@@ -7,16 +7,20 @@ window.NCZ = window.NCZ || {};
 // Category visual styles (color, label, CSS class)
 NCZ.CATEGORY_STYLES = {
   "location-overhaul": {
-    color: "#00f0ff",
+    color: "var(--category-location-overhaul)",
     label: "Overhaul",
     class: "cat-location-overhaul",
   },
   "new-location": {
-    color: "#ffb300",
+    color: "var(--category-new-location)",
     label: "New Location",
     class: "cat-new-location",
   },
-  other: { color: "#8892b0", label: "Other", class: "cat-other" },
+  other: {
+    color: "var(--category-other)",
+    label: "Other",
+    class: "cat-other",
+  },
 };
 
 // Nexus Mods API

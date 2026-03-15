@@ -1,12 +1,4 @@
 :root {
-    /* Theme */
-    --nc-navy: #0a192f;
-    --nc-cyan: #00f0ff;
-    --nc-amber: #ffb300;
-    --nc-white: #e6f1ff;
-    --nc-gray: #8892b0;
-    --nc-dark-accent: #112240;
-
     /* UI primitives */
     --ui-border-thin: 1px;
     --ui-radius-xs: 2px;
@@ -19,40 +11,6 @@
     --space-md: 10px;
     --space-lg: 12px;
 
-    /* Surface + theme tint palette */
-    --surface-panel: rgba(10, 25, 47, 0.95);
-    --surface-hover: rgba(255, 255, 255, 0.05);
-    --cyan-tint-05: rgba(0, 240, 255, 0.05);
-    --cyan-tint-10: rgba(0, 240, 255, 0.1);
-    --cyan-tint-20: rgba(0, 240, 255, 0.2);
-    --cyan-tint-30: rgba(0, 240, 255, 0.3);
-    --cyan-tint-40: rgba(0, 240, 255, 0.4);
-    --cyan-tint-50: rgba(0, 240, 255, 0.5);
-    
-    --amber-tint-05: rgba(255, 179, 0, 0.05);
-    --amber-tint-30: rgba(255, 179, 0, 0.3);
-    --amber-tint-40: rgba(255, 179, 0, 0.4);
-
-    --gray-tint-40: rgba(136, 146, 176, 0.4);
-
-    --white-tint-02: rgba(255, 255, 255, 0.02);
-    --white-tint-10: rgba(255, 255, 255, 0.1);
-    --white-tint-20: rgba(255, 255, 255, 0.2);
-
-    --black-tint-00: rgba(0, 0, 0, 0);
-    --black-tint-10: rgba(0, 0, 0, 0.1);
-    --black-tint-30: rgba(0, 0, 0, 0.3);
-    --black-tint-50: rgba(0, 0, 0, 0.5);
-    --black-tint-80: rgba(0, 0, 0, 0.8);
-
-    --overlay-dark: rgba(0, 0, 0, 0.9);
-    --surface-panel-90: rgba(10, 25, 47, 0.9);
-    --surface-tooltip-95: rgba(5, 10, 14, 0.95);
-    --surface-tooltip-85: rgba(5, 10, 14, 0.85);
-    --surface-nav-80: rgba(0, 20, 40, 0.8);
-    --nc-white-tint-78: rgba(230, 241, 255, 0.78);
-    --nc-white-tint-86: rgba(230, 241, 255, 0.86);
-
     /* Semantic color aliases */
     --color-black: #000;
     --color-white: #fff;
@@ -63,6 +21,18 @@
     --border-subtle: #333;
     --status-critical: #ff0000;
     --status-ok: #00ff00;
+
+    /* Generic utility tints */
+    --white-02: rgba(255, 255, 255, 0.02);
+    --white-10: rgba(255, 255, 255, 0.1);
+    --white-20: rgba(255, 255, 255, 0.2);
+    
+    --black-10: rgba(0, 0, 0, 0.1);
+    --black-30: rgba(0, 0, 0, 0.3);
+    --black-50: rgba(0, 0, 0, 0.5);
+    --black-80: rgba(0, 0, 0, 0.8);
+
+    --overlay-dark: rgba(0, 0, 0, 0.9);
 
     /* Typography scale */
     --text-2xs: 0.625rem;
@@ -90,7 +60,73 @@
     --scanline-green: rgba(0, 255, 0, 0.01);
     --scanline-blue: rgba(0, 0, 255, 0.03);
 
-    /* Marker cluster palette */
+    /* Motion */
+    --transition-fast: all 225ms ease;
+
+    /* Font families */
+    --font-heading: 'Orbitron', sans-serif;
+    --font-body: 'Rajdhani', sans-serif;
+}
+
+body.theme-night-corp {
+    /* Primary */
+    --primary: #0a192f;
+    --primary-05: rgba(10, 25, 47, 0.05);
+    --primary-10: rgba(10, 25, 47, 0.1);
+    --primary-20: rgba(10, 25, 47, 0.2);
+    --primary-30: rgba(10, 25, 47, 0.3);
+    --primary-40: rgba(10, 25, 47, 0.4);
+    --primary-50: rgba(10, 25, 47, 0.5);
+    --primary-60: rgba(10, 25, 47, 0.6);
+    --primary-80: rgba(10, 25, 47, 0.8);
+    --primary-90: rgba(10, 25, 47, 0.9);
+    --primary-95: rgba(10, 25, 47, 0.95);
+
+    /* Secondary */
+    --secondary: #00f0ff;
+    --secondary-05: rgba(0, 240, 255, 0.05);
+    --secondary-10: rgba(0, 240, 255, 0.1);
+    --secondary-20: rgba(0, 240, 255, 0.2);
+    --secondary-30: rgba(0, 240, 255, 0.3);
+    --secondary-40: rgba(0, 240, 255, 0.4);
+    --secondary-50: rgba(0, 240, 255, 0.5);
+    --secondary-60: rgba(0, 240, 255, 0.6);
+
+    /* Tertiary */
+    --tertiary: #ffb300;
+    --tertiary-05: rgba(255, 179, 0, 0.05);
+    --tertiary-10: rgba(255, 179, 0, 0.1);
+    --tertiary-20: rgba(255, 179, 0, 0.2);
+    --tertiary-30: rgba(255, 179, 0, 0.3);
+    --tertiary-40: rgba(255, 179, 0, 0.4);
+    --tertiary-50: rgba(255, 179, 0, 0.5);
+    --tertiary-60: rgba(255, 179, 0, 0.6);
+
+    --gray: #8892b0;
+    --gray-40: rgba(136, 146, 176, 0.4);
+    
+    --white: #e6f1ff;
+    --dark-accent: #112240;
+
+    /* Themed surfaces */
+    --surface-panel: rgba(10, 25, 47, 0.95);
+    --surface-hover: rgba(255, 255, 255, 0.05);
+    --surface-panel-90: rgba(10, 25, 47, 0.9);
+    --surface-tooltip-95: rgba(5, 10, 14, 0.95);
+    --surface-tooltip-85: rgba(5, 10, 14, 0.85);
+    --surface-nav-80: rgba(0, 20, 40, 0.8);
+    --white-78: rgba(230, 241, 255, 0.78);
+    --white-86: rgba(230, 241, 255, 0.86);
+
+    /* Theme category colors */
+    --category-location-overhaul: var(--secondary);
+    --category-location-overhaul-glow: var(--secondary-40);
+    --category-new-location: var(--tertiary);
+    --category-new-location-glow: var(--tertiary-40);
+    --category-other: var(--gray);
+    --category-other-glow: var(--gray-40);
+
+    /* Theme cluster size colors */
     --cluster-small-bg: rgba(181, 226, 140, 0.6);
     --cluster-small-inner: rgba(110, 204, 57, 0.65);
     --cluster-medium-bg: rgba(241, 211, 87, 0.6);
@@ -99,13 +135,6 @@
     --cluster-large-inner: rgba(241, 128, 23, 0.65);
     --cluster-xlarge-bg: rgba(243, 86, 86, 0.6);
     --cluster-xlarge-inner: rgba(238, 26, 26, 0.65);
-
-    /* Motion */
-    --transition-fast: all 225ms ease;
-
-    /* Font families */
-    --font-heading: 'Orbitron', sans-serif;
-    --font-body: 'Rajdhani', sans-serif;
 }
 
 /* Global reset */
@@ -117,15 +146,15 @@
 
 /* Base page shell */
 body {
-    background-color: var(--nc-navy);
-    color: var(--nc-white);
+    background-color: var(--primary);
+    color: var(--white);
     font-family: var(--font-body);
     height: 100svh;
     display: flex;
     flex-direction: column;
     overflow: hidden;
     scrollbar-width: thin;
-    scrollbar-color: var(--nc-cyan) transparent;
+    scrollbar-color: var(--secondary) transparent;
 }
 
 /* Scrollbar Styling (Webkit) */
@@ -137,10 +166,10 @@ body {
     background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-    background: var(--nc-dark-accent);
-    border: var(--ui-border-thin) solid var(--nc-cyan);
+    background: var(--dark-accent);
+    border: var(--ui-border-thin) solid var(--secondary);
     border-radius: var(--ui-radius-sm);
 }
 ::-webkit-scrollbar-thumb:hover {
-    background: var(--nc-cyan);
+    background: var(--secondary);
 }

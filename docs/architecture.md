@@ -122,9 +122,9 @@ Load order (linear dependency chain, no circular refs): `constants.js` → `util
 
 ### Styling (`style.css`)
 
-- Cyberpunk theme using CSS custom properties (all prefixed `--nc-`)
+- Cyberpunk theme using CSS custom properties (all prefixed `--`)
 - Fonts: **Orbitron** (headings), **Rajdhani** (body) from Google Fonts
-- Colour palette: `--nc-navy` (#0a192f), `--nc-cyan` (#00f0ff), `--nc-amber` (#ffb300), `--nc-white` (#e6f1ff), `--nc-gray` (#8892b0)
+- Colour palette: `--primary` (#0a192f), `--secondary` (#00f0ff), `--tertiary` (#ffb300), `--white` (#e6f1ff), `--gray` (#8892b0)
 - Custom Leaflet popup, tooltip, and cluster styling
 - MarkerCluster CSS is inlined (no external CDN dependency)
 - Uses native CSS nesting — see [browser support](https://caniuse.com/css-nesting)
