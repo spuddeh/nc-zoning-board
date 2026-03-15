@@ -3,16 +3,8 @@ name: Validate Mod Data
 on:
   pull_request:
     branches: [ main ]
-    paths:
-      - 'data/locations/**.json'
-      - 'data/tags.json'
-      - 'mods.schema.json'
   push:
     branches: [ main ]
-    paths:
-      - 'data/locations/**.json'
-      - 'data/tags.json'
-      - 'mods.schema.json'
 
 jobs:
   validate-json:
@@ -20,12 +12,33 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for data file changes
+        id: changes
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE="${{ github.event.pull_request.base.sha }}"
+          else
+            BASE="${{ github.event.before }}"
+          fi
+          CHANGED=$(git diff --name-only "$BASE" "${{ github.sha }}" 2>/dev/null \
+            | grep -E '^(data/locations/|data/tags\.json|mods\.schema\.json)' || true)
+          if [ -n "$CHANGED" ]; then
+            echo "data_changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "data_changed=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Build mods.json
+        if: steps.changes.outputs.data_changed == 'true'
         run: node scripts/build_mods.js
 
       - name: Validate JSON Schema against Data
+        if: steps.changes.outputs.data_changed == 'true'
         run: npx -y ajv-cli validate -s mods.schema.json -d mods.json
 
       - name: Validate Tags consistency
+        if: steps.changes.outputs.data_changed == 'true'
         run: node scripts/validate_tags.js
