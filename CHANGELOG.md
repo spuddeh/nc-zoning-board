@@ -17,7 +17,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Dynamic popup positioning** — popups now reposition dynamically to stay visible within the map container, with directional CSS arrows. Repositions on map move, zoom, and resize. Uses `requestAnimationFrame` coalescing for performance.
   - **Zoom button fix** — corrected vertical alignment of +/- icons in Leaflet zoom controls.
 - **Docs**:
-  - Added Library References section to `CLAUDE.md` with links to Leaflet and MarkerCluster documentation.
   - Updated `docs/architecture.md` — corrected colour palette to current `--nc-` CSS variables.
   - Updated `docs/branding.md` — fixed amber hex code to match actual CSS value (`#ffb300`).
   - Updated `docs/roadmap.md` — added cluster panel, tooltips, and dynamic popup positioning to completed features.
