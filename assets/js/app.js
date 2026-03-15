@@ -906,6 +906,34 @@ async function initMap() {
           }
         });
 
+        // Pulse marker (or parent cluster) on sidebar hover
+        li.addEventListener("mouseenter", () => {
+          const element = marker.getElement();
+          if (element) {
+            const pin = element.querySelector(".marker-pin");
+            if (pin) pin.classList.add("pulsing");
+          } else {
+            const visibleParent = markerClusterGroup.getVisibleParent(marker);
+            if (visibleParent && visibleParent !== marker) {
+              const clusterEl = visibleParent.getElement();
+              if (clusterEl) clusterEl.classList.add("pulsing");
+            }
+          }
+        });
+        li.addEventListener("mouseleave", () => {
+          const element = marker.getElement();
+          if (element) {
+            const pin = element.querySelector(".marker-pin");
+            if (pin) pin.classList.remove("pulsing");
+          } else {
+            const visibleParent = markerClusterGroup.getVisibleParent(marker);
+            if (visibleParent && visibleParent !== marker) {
+              const clusterEl = visibleParent.getElement();
+              if (clusterEl) clusterEl.classList.remove("pulsing");
+            }
+          }
+        });
+
         modListEl.appendChild(li);
       });
 

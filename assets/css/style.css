@@ -998,6 +998,19 @@ h1 span {
     50% { opacity: 0.3; }
 }
 
+/* Cluster icon pulse */
+.leaflet-marker-icon.pulsing {
+    filter: brightness(1.5) drop-shadow(0 0 10px var(--nc-cyan));
+    z-index: 1000 !important;
+    animation: clusterPulse 1.5s infinite ease-in-out;
+}
+
+@keyframes clusterPulse {
+    0%   { filter: brightness(1); }
+    50%  { filter: brightness(1.5) drop-shadow(0 0 15px var(--nc-cyan)); }
+    100% { filter: brightness(1); }
+}
+
 /* Scanline Overlay */
 body::before {
     content: "";
