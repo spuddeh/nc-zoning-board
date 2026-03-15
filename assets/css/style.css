@@ -98,6 +98,67 @@ footer {
     display: none;
 }
 
+#cluster-panel {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 400px;
+    min-width: 260px;
+    max-width: min(70vw, 720px);
+    height: 100%;
+    background: rgba(10, 25, 47, 0.95);
+    border-left: 1px solid var(--nc-cyan);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    backdrop-filter: blur(12px);
+    transform: translateX(0);
+    opacity: 1;
+    transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+#cluster-panel.cluster-panel-closed {
+    transform: translateX(100%);
+    opacity: 0;
+    pointer-events: none;
+}
+
+#cluster-panel.resizing {
+    user-select: none;
+}
+
+#cluster-panel-resize-handle {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 12px;
+    height: 100%;
+    cursor: ew-resize;
+    z-index: 2;
+    touch-action: none;
+}
+
+#cluster-panel-resize-handle::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 5px;
+    width: 1px;
+    background: rgba(0, 240, 255, 0.2);
+    transition: background 0.2s ease;
+}
+
+#cluster-panel-resize-handle:hover::before {
+    background: rgba(0, 240, 255, 0.5);
+}
+
+body.cluster-panel-resizing,
+body.cluster-panel-resizing * {
+    cursor: ew-resize !important;
+    user-select: none !important;
+}
+
 #sidebar-open {
     position: absolute;
     top: 10px;
@@ -145,6 +206,132 @@ footer {
     color: var(--nc-cyan);
 }
 
+#cluster-panel-header {
+    margin: 0;
+    border-bottom: 1px solid var(--nc-dark-accent);
+}
+
+#cluster-panel-close {
+    background: transparent;
+    border: none;
+    color: var(--nc-gray);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px;
+    transition: color 0.2s ease;
+}
+
+#cluster-panel-close:hover {
+    color: var(--nc-cyan);
+}
+
+#cluster-mod-list {
+    flex: 1;
+    overflow-y: auto;
+    list-style: none;
+    padding: 0;
+}
+
+.cluster-mod-item {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.cluster-mod-btn {
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    padding: 0.9rem 1rem;
+    transition: background 0.2s ease;
+    font-family: var(--font-body);
+}
+
+.cluster-mod-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.cluster-mod-layout {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.cluster-mod-thumb {
+    width: clamp(56px, 30%, 160px);
+    height: auto;
+    aspect-ratio: 3 / 2;
+    flex-shrink: 0;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    object-fit: cover;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.cluster-mod-thumb-clickable {
+    cursor: zoom-in;
+    transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.cluster-mod-thumb-clickable:hover {
+    border-color: var(--nc-cyan);
+    transform: scale(1.03);
+}
+
+.cluster-mod-thumb-placeholder {
+    display: inline-block;
+    border-style: dashed;
+}
+
+.cluster-mod-content {
+    min-width: 0;
+    flex: 1;
+}
+
+.cluster-mod-name {
+    display: block;
+    color: var(--nc-white);
+    font-weight: bold;
+    font-size: 0.95rem;
+}
+
+.cluster-mod-separator {
+    display: block;
+    width: 100%;
+    height: 1px;
+    margin-top: 0.3rem;
+    opacity: 0.75;
+}
+
+.cluster-mod-meta {
+    display: block;
+    color: var(--nc-gray);
+    font-size: 0.8rem;
+    margin-top: 0.2rem;
+}
+
+.cluster-mod-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 0.35rem;
+}
+
+.cluster-mod-desc {
+    display: block;
+    color: rgba(230, 241, 255, 0.78);
+    font-size: 0.8rem;
+    margin-top: 0.35rem;
+    line-height: 1.25;
+}
+
+.cluster-empty {
+    padding: 0.9rem 1rem;
+    color: var(--nc-gray);
+    font-size: 0.85rem;
+}
 
 .sidebar-search-container {
     padding: 0.5rem 1rem;
@@ -424,6 +611,7 @@ footer {
 }
 .leaflet-control-zoom-in, .leaflet-control-zoom-out {
     border-radius: 0 !important;
+    line-height: 1.625rem !important;
 }
 
 .leaflet-popup-content-wrapper {
@@ -633,33 +821,27 @@ footer {
 }
 
 #tag-filters.filter-collapsed, #author-filters.filter-collapsed {
-    max-height: 72px;
+    max-height: 0;
     overflow: hidden;
+    padding-top: 0;
+    padding-bottom: 0;
 }
 
-.filter-show-more-btn {
-    display: block;
-    width: 100%;
-    background: transparent;
-    border: none;
-    border-top: 1px solid rgba(0, 240, 255, 0.1);
-    color: #555;
-    font-family: var(--font-body);
-    font-size: 0.65rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    padding: 4px 1rem;
+.sidebar-section-header.collapsible {
     cursor: pointer;
-    text-align: left;
-    transition: color 0.2s ease;
+    user-select: none;
 }
 
-.filter-show-more-btn:hover {
-    color: var(--nc-cyan);
+.sidebar-section-header.collapsible:hover {
+    background: rgba(0, 240, 255, 0.1);
 }
 
-.filter-show-more-btn.hidden {
-    display: none;
+.collapse-chevron {
+    transition: transform 0.2s ease;
+}
+
+.sidebar-section-header.collapsed .collapse-chevron {
+    transform: rotate(-90deg);
 }
 
 .tag-filter-btn {
@@ -808,6 +990,16 @@ footer {
     #prev-image { left: 10px; }
     #next-image { right: 10px; }
     .nav-btn { padding: 5px 15px; font-size: 1.5rem; }
+
+    #cluster-panel {
+        width: min(92vw, 340px);
+        min-width: min(92vw, 340px);
+        max-width: min(92vw, 340px);
+    }
+
+    #cluster-panel-resize-handle {
+        display: none;
+    }
 }
 
 #image-counter {
@@ -978,6 +1170,26 @@ body::before {
     font-size: 0.8rem;
     font-weight: bold;
     letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.terminal-close-btn {
+    background: transparent;
+    border: none;
+    color: var(--nc-navy);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px;
+    opacity: 0.6;
+    transition: opacity 0.2s ease;
+}
+
+.terminal-close-btn:hover {
+    opacity: 1;
 }
 
 .terminal-body {
@@ -1203,6 +1415,13 @@ footer .footer-content {
     min-width: 10px;
 }
 
+.bbcode-coord-note {
+    font-size: 0.7rem;
+    color: var(--nc-amber);
+    margin-top: 0.25rem;
+    font-family: var(--font-body);
+}
+
 .bbcode-coord-inputs input[type="number"],
 .bbcode-input,
 .bbcode-select,
@@ -1380,4 +1599,75 @@ footer .footer-content {
     color: var(--nc-gray);
     font-style: italic;
     margin-bottom: 12px;
+}
+
+/* ── MarkerCluster style ────────────────────────────────────────── */
+.leaflet-cluster-anim .leaflet-marker-icon, .leaflet-cluster-anim .leaflet-marker-shadow {
+	transition: transform 0.3s ease-out, opacity 0.3s ease-in;
+}
+
+.leaflet-cluster-spider-leg {
+	/* stroke-dashoffset (duration and function) should match with leaflet-marker-icon transform in order to track it exactly */
+	transition: stroke-dashoffset 0.3s ease-out, stroke-opacity 0.3s ease-in;
+}
+
+.marker-cluster-small {
+	background-color: rgba(181, 226, 140, 0.6);
+}
+.marker-cluster-small div {
+	background-color: rgba(110, 204, 57, 0.65);
+}
+
+.marker-cluster-medium {
+	background-color: rgba(241, 211, 87, 0.6);
+}
+.marker-cluster-medium div {
+	background-color: rgba(240, 194, 12, 0.65);
+}
+
+.marker-cluster-large {
+	background-color: rgba(253, 156, 115, 0.6);
+}
+.marker-cluster-large div {
+	background-color: rgba(241, 128, 23, 0.65);
+}
+
+.marker-cluster-xlarge {
+	background-color: rgba(243, 86, 86, 0.6);
+}
+.marker-cluster-xlarge div {
+	background-color: rgba(238, 26, 26, 0.65);
+}
+
+.marker-cluster {
+	background-clip: padding-box;
+	border-radius: 20px;
+}
+.marker-cluster div {
+	width: 30px;
+	height: 30px;
+	margin-left: 5px;
+	margin-top: 5px;
+
+	text-align: center;
+	border-radius: 15px;
+}
+
+.marker-cluster > div::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background: radial-gradient(
+        circle at center,
+        rgba(0, 0, 0, 0.9) 0%,
+        rgba(0, 0, 0, 0.18) 45%,
+        rgba(0, 0, 0, 0) 78%
+    );
+    z-index: -1;
+}
+
+.marker-cluster span {
+	line-height: 30px;
 }

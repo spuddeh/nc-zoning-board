@@ -5,6 +5,18 @@ function escapeHtml(text) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  // Terminal header close buttons — delegates to each modal's existing close button
+  document.querySelectorAll(".terminal-close-btn[data-close-modal]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const modal = document.getElementById(btn.dataset.closeModal);
+      if (modal) modal.classList.add("hidden");
+      // Preserve welcome modal session flag
+      if (btn.dataset.closeModal === "welcome-modal") {
+        sessionStorage.setItem("nc_zoning_board_visited", "true");
+      }
+    });
+  });
+
   // Welcome Modal Logic — runs immediately, independent of map loading
   const welcomeModal = document.getElementById("welcome-modal");
   const closeModalBtn = document.getElementById("close-modal");
@@ -185,7 +197,6 @@ const NEXUS_GAME_ID = 3333; // Cyberpunk 2077
 const NEXUS_GQL_ENDPOINT = "https://api.nexusmods.com/v2/graphql";
 const NEXUS_BATCH_SIZE = 50;
 const DESCRIPTION_MAX_LENGTH = 500;
-const SPIDERFY_DEBOUNCE_MS = 500;
 const COPY_FEEDBACK_MS = 2000;
 const SEARCH_DEBOUNCE_MS = 200;
 const THUMB_CACHE_KEY = "nc_nexus_thumbs";
@@ -200,6 +211,11 @@ const PIN_POPUP_MARGIN_PX = 12;
 const PIN_POPUP_GAP_PX = 10;
 const PIN_POPUP_ARROW_SIZE_PX = 10;
 const PIN_POPUP_ARROW_EDGE_PADDING_PX = 18;
+const MOBILE_BREAKPOINT = 768;
+const CLUSTER_PANEL_WIDTH_KEY = "nc_cluster_panel_width";
+const CLUSTER_PANEL_DEFAULT_WIDTH = 400;
+const CLUSTER_PANEL_MIN_WIDTH = 260;
+const CLUSTER_PANEL_MAX_WIDTH = 720;
 
 // Read/write a JSON object from localStorage with a TTL check
 function cacheGet(key, ttl) {
@@ -748,10 +764,27 @@ async function initMap() {
 
   // 2. State & UI Elements
   const markerClusterGroup = L.markerClusterGroup({
-    spiderfyOnMaxZoom: true,
+    spiderfyOnMaxZoom: false,
     showCoverageOnHover: false,
-    zoomToBoundsOnClick: true,
+    zoomToBoundsOnClick: false,
     maxClusterRadius: 40,
+    iconCreateFunction: function (cluster) {
+      const count = cluster.getChildCount();
+      let sizeClass = "xlarge";
+      if (count < 10) {
+        sizeClass = "small";
+      } else if (count < 25) {
+        sizeClass = "medium";
+      } else if (count < 50) {
+        sizeClass = "large";
+      }
+
+      return L.divIcon({
+        html: `<div><span>${count}</span></div>`,
+        className: `marker-cluster marker-cluster-${sizeClass}`,
+        iconSize: L.point(40, 40),
+      });
+    },
     polygonOptions: {
       fillColor: "#00f0ff",
       color: "#00f0ff",
@@ -763,108 +796,45 @@ async function initMap() {
 
   const pinTooltip = createPinTooltipController(map);
   let activePopup = null;
+  let popupRepositionFrame = null;
 
-  // Cluster Hover Spiderfy (debounced)
-  let spiderfyTimer = null;
-  let currentSpiderfied = null;
-  let popupOpen = false;
-
-  // Track popup state to prevent unspiderfy while a popup is visible
   function repositionActivePopup() {
     if (!activePopup) return;
     positionDynamicPopup(map, activePopup);
+  }
+
+  // Coalesce bursty map/popup events into one popup reposition per animation frame.
+  function scheduleActivePopupReposition() {
+    if (popupRepositionFrame !== null) return;
+    popupRepositionFrame = requestAnimationFrame(() => {
+      popupRepositionFrame = null;
+      repositionActivePopup();
+    });
   }
 
   map.on("popupopen", (e) => {
     pinTooltip.hide();
     activePopup = e.popup;
     repositionActivePopup();
-    requestAnimationFrame(repositionActivePopup);
+    scheduleActivePopupReposition();
     const popupImages = activePopup.getElement()?.querySelectorAll("img") || [];
     popupImages.forEach((img) => {
       if (!img.complete) {
-        img.addEventListener("load", repositionActivePopup, { once: true });
+        img.addEventListener("load", scheduleActivePopupReposition, { once: true });
       }
     });
-    popupOpen = true;
-    if (spiderfyTimer) {
-      clearTimeout(spiderfyTimer);
-      spiderfyTimer = null;
-    }
   });
   map.on("popupclose", () => {
     activePopup = null;
-    popupOpen = false;
+    if (popupRepositionFrame !== null) {
+      cancelAnimationFrame(popupRepositionFrame);
+      popupRepositionFrame = null;
+    }
   });
 
   map.on("move zoom resize", () => {
     pinTooltip.reposition();
-    repositionActivePopup();
-  });
-
-  markerClusterGroup.on("clustermouseover", function (a) {
-    if (spiderfyTimer) {
-      clearTimeout(spiderfyTimer);
-      spiderfyTimer = null;
-    }
-    if (currentSpiderfied && currentSpiderfied !== a.layer) {
-      currentSpiderfied.unspiderfy();
-    }
-    a.layer.spiderfy();
-    currentSpiderfied = a.layer;
-  });
-
-  markerClusterGroup.on("clustermouseout", function () {
-    if (!popupOpen) {
-      spiderfyTimer = setTimeout(() => {
-        if (currentSpiderfied && !popupOpen) {
-          currentSpiderfied.unspiderfy();
-          currentSpiderfied = null;
-        }
-      }, SPIDERFY_DEBOUNCE_MS);
-    }
-  });
-
-  // Keep fan open while hovering a spiderfied child marker
-  markerClusterGroup.on("mouseover", function () {
-    if (spiderfyTimer) {
-      clearTimeout(spiderfyTimer);
-      spiderfyTimer = null;
-    }
-  });
-
-  markerClusterGroup.on("mouseout", function () {
-    if (currentSpiderfied && !popupOpen) {
-      spiderfyTimer = setTimeout(() => {
-        if (currentSpiderfied && !popupOpen) {
-          currentSpiderfied.unspiderfy();
-          currentSpiderfied = null;
-        }
-      }, SPIDERFY_DEBOUNCE_MS);
-    }
-  });
-
-  // Immediately collapse on map click or zoom
-  map.on("click", () => {
-    if (spiderfyTimer) {
-      clearTimeout(spiderfyTimer);
-      spiderfyTimer = null;
-    }
-    if (currentSpiderfied) {
-      currentSpiderfied.unspiderfy();
-      currentSpiderfied = null;
-    }
-  });
-
-  map.on("zoomstart", () => {
-    if (spiderfyTimer) {
-      clearTimeout(spiderfyTimer);
-      spiderfyTimer = null;
-    }
-    if (currentSpiderfied) {
-      currentSpiderfied.unspiderfy();
-      currentSpiderfied = null;
-    }
+    scheduleActivePopupReposition();
   });
 
   const allMarkers = [];
@@ -875,6 +845,218 @@ async function initMap() {
   const sidebar = document.getElementById("sidebar");
   const sidebarClose = document.getElementById("sidebar-close");
   const sidebarOpen = document.getElementById("sidebar-open");
+  // Cluster menu DOM references
+  const clusterPanel = document.getElementById("cluster-panel");
+  const clusterPanelResizeHandle = document.getElementById("cluster-panel-resize-handle");
+  const clusterPanelClose = document.getElementById("cluster-panel-close");
+  const clusterPanelCount = document.getElementById("cluster-panel-count");
+  const clusterModList = document.getElementById("cluster-mod-list");
+
+  // Compute the maximum allowed cluster menu width for current viewport
+  function getClusterPanelMaxWidth() {
+    const viewportBound = Math.floor(window.innerWidth * 0.7);
+    return Math.max(
+      CLUSTER_PANEL_MIN_WIDTH,
+      Math.min(CLUSTER_PANEL_MAX_WIDTH, viewportBound),
+    );
+  }
+
+  // Clamp width so dragging cannot make the panel too small or too wide
+  function clampClusterPanelWidth(width) {
+    return Math.min(
+      getClusterPanelMaxWidth(),
+      Math.max(CLUSTER_PANEL_MIN_WIDTH, Math.round(width)),
+    );
+  }
+
+  // Apply panel width (desktop only), and optionally save it in localStorage
+  function setClusterPanelWidth(width, persist = true) {
+    if (window.innerWidth < MOBILE_BREAKPOINT) {
+      clusterPanel.style.removeProperty("width");
+      return;
+    }
+
+    const clampedWidth = clampClusterPanelWidth(width);
+    clusterPanel.style.width = `${clampedWidth}px`;
+
+    if (persist) {
+      try {
+        localStorage.setItem(CLUSTER_PANEL_WIDTH_KEY, String(clampedWidth));
+      } catch {
+        // Ignore storage failures (e.g. private mode/quota)
+      }
+    }
+  }
+
+  // Enable drag-to-resize from the panel's left edge
+  function initClusterPanelResize() {
+    if (!clusterPanelResizeHandle) return;
+
+    let isResizing = false;
+    let startX = 0;
+    let startWidth = 0;
+
+    // While dragging, update width based on horizontal mouse movement
+    const onMouseMove = (event) => {
+      if (!isResizing) return;
+      const deltaX = startX - event.clientX;
+      setClusterPanelWidth(startWidth + deltaX, false);
+    };
+
+    // End drag operation, restore normal interactions, then persist final width
+    const stopResizing = () => {
+      if (!isResizing) return;
+      isResizing = false;
+      clusterPanel.classList.remove("resizing");
+      document.body.classList.remove("cluster-panel-resizing");
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", stopResizing);
+
+      const finalWidth = clusterPanel.getBoundingClientRect().width;
+      if (finalWidth) {
+        setClusterPanelWidth(finalWidth, true);
+      }
+
+      if (map.dragging) map.dragging.enable();
+    };
+
+    // Start drag operation when user presses the resize handle
+    clusterPanelResizeHandle.addEventListener("mousedown", (event) => {
+      if (window.innerWidth < MOBILE_BREAKPOINT) return;
+      event.preventDefault();
+      event.stopPropagation();
+
+      isResizing = true;
+      startX = event.clientX;
+      startWidth = clusterPanel.getBoundingClientRect().width;
+      clusterPanel.classList.add("resizing");
+      document.body.classList.add("cluster-panel-resizing");
+
+      if (map.dragging) map.dragging.disable();
+
+      window.addEventListener("mousemove", onMouseMove);
+      window.addEventListener("mouseup", stopResizing);
+    });
+
+    // Keep width valid when viewport size changes
+    window.addEventListener("resize", () => {
+      if (window.innerWidth < MOBILE_BREAKPOINT) {
+        clusterPanel.style.removeProperty("width");
+        return;
+      }
+
+      const inlineWidth = Number.parseFloat(clusterPanel.style.width);
+      const currentWidth =
+        Number.isFinite(inlineWidth) && inlineWidth > 0
+          ? inlineWidth
+          : clusterPanel.getBoundingClientRect().width || CLUSTER_PANEL_DEFAULT_WIDTH;
+      setClusterPanelWidth(currentWidth, false);
+    });
+
+    // Restore saved width, or use default width on first visit
+    const savedWidth = Number.parseInt(
+      localStorage.getItem(CLUSTER_PANEL_WIDTH_KEY),
+      10,
+    );
+    if (Number.isFinite(savedWidth)) {
+      setClusterPanelWidth(savedWidth, false);
+    } else {
+      setClusterPanelWidth(CLUSTER_PANEL_DEFAULT_WIDTH, false);
+    }
+  }
+
+  initClusterPanelResize();
+
+  // Hide and reset cluster menu state
+  function hideClusterPanel() {
+    clusterModList.innerHTML = "";
+    clusterPanelCount.textContent = "";
+    clusterPanel.classList.add("cluster-panel-closed");
+  }
+
+  function focusMarker(marker) {
+    markerClusterGroup.zoomToShowLayer(marker, () => marker.openPopup());
+  }
+
+  markerClusterGroup.on("clusterclick", (a) => {
+    if (a.originalEvent) L.DomEvent.stop(a.originalEvent);
+
+    // Collect mods from clicked cluster and sort by name
+    const childMarkers = a.layer
+      .getAllChildMarkers()
+      .slice()
+      .sort((left, right) => left.modData.name.localeCompare(right.modData.name));
+
+    // Rebuild cluster menu list for this cluster
+    clusterModList.innerHTML = "";
+    clusterPanelCount.textContent = `(${childMarkers.length})`;
+
+    if (childMarkers.length === 0) {
+      const empty = document.createElement("li");
+      empty.className = "cluster-empty";
+      empty.textContent = "No mods found in this cluster.";
+      clusterModList.appendChild(empty);
+    } else {
+      childMarkers.forEach((childMarker) => {
+        const mod = childMarker.modData;
+        const catStyle = CATEGORY_STYLES[mod.category] || CATEGORY_STYLES.other;
+        // Build tag chips shown under author name
+        const modTagsHtml = (mod.tags || [])
+          .map((tag) => `<span class="tag-badge">${escapeHtml(tag)}</span>`)
+          .join("");
+        // Thumbnail becomes clickable only when full-size image exists
+        const isThumbClickable = Boolean(childMarker.modFull);
+        const thumbMarkup = childMarker.modThumb
+          ? `<img class="cluster-mod-thumb${isThumbClickable ? " cluster-mod-thumb-clickable" : ""}" src="${escapeHtml(childMarker.modThumb)}" alt="${escapeHtml(mod.name)} thumbnail" referrerpolicy="no-referrer"${isThumbClickable ? ` data-full-src="${escapeHtml(childMarker.modFull)}"` : ""}>`
+          : `<span class="cluster-mod-thumb cluster-mod-thumb-placeholder" aria-hidden="true"></span>`;
+
+        const item = document.createElement("li");
+        item.className = "cluster-mod-item";
+
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "cluster-mod-btn";
+        button.innerHTML = `
+          <span class="cluster-mod-layout">
+            ${thumbMarkup}
+            <span class="cluster-mod-content">
+              <span class="cluster-mod-name" style="text-shadow: 0 0 8px ${escapeHtml(catStyle.color)};">${escapeHtml(mod.name)}</span>
+              <span class="cluster-mod-separator" style="background-color: ${escapeHtml(catStyle.color)};"></span>
+              <span class="cluster-mod-meta">by ${escapeHtml(mod.authors.join(", "))}</span>
+              <span class="cluster-mod-tags">
+                ${modTagsHtml}
+              </span>
+              <span class="cluster-mod-desc">${escapeHtml(mod.description || "No description provided.")}</span>
+            </span>
+          </span>
+        `;
+
+        // Open image modal when thumbnail is clicked
+        const imageButton = button.querySelector(".cluster-mod-thumb[data-full-src]");
+        if (imageButton) {
+          imageButton.addEventListener("click", (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            window.openImageGallery([imageButton.dataset.fullSrc], 0);
+          });
+        }
+
+        // Clicking row focuses corresponding marker/popup on the map
+        button.addEventListener("click", () => {
+          focusMarker(childMarker);
+          if (window.innerWidth < MOBILE_BREAKPOINT) hideClusterPanel();
+        });
+
+        item.appendChild(button);
+        clusterModList.appendChild(item);
+      });
+    }
+
+    // Slide menu in from the right
+    clusterPanel.classList.remove("cluster-panel-closed");
+  });
+
+  clusterPanelClose.addEventListener("click", hideClusterPanel);
 
   // Close Sidebar
   sidebarClose.addEventListener("click", () => {
@@ -889,10 +1071,13 @@ async function initMap() {
   });
 
   // Auto-hide sidebar on mobile screens
-  if (window.innerWidth < 768) {
+  if (window.innerWidth < MOBILE_BREAKPOINT) {
     sidebar.classList.add("hidden");
     sidebarOpen.classList.add("visible");
   }
+
+  map.on("click", hideClusterPanel);
+  map.on("zoomstart", hideClusterPanel);
 
   // 3. Fetch and Setup Data
   try {
@@ -1005,6 +1190,8 @@ async function initMap() {
         const nexusThumb = nexusThumbs[String(mod.nexus_id)];
         const thumbSrc = nexusThumb?.thumbnailUrl || null;
         const fullSrc = nexusThumb?.pictureUrl || null;
+        marker.modThumb = thumbSrc;
+        marker.modFull = fullSrc;
 
         const nexusAutoBadge = mod._source === "nexus-auto"
           ? ` <span class="nexus-auto-badge" title="Sourced automatically from Nexus Mods">[ N ]</span>`
@@ -1058,18 +1245,9 @@ async function initMap() {
             `;
         li.addEventListener("click", (e) => {
           if (e.target.tagName !== "A") {
-            const coords = cetToLeaflet(mod.coordinates[0], mod.coordinates[1]);
-            map.once("moveend", () => {
-              const visibleParent = markerClusterGroup.getVisibleParent(marker);
-              if (!visibleParent || visibleParent === marker) {
-                marker.openPopup();
-              } else {
-                markerClusterGroup.once("spiderfied", () => marker.openPopup());
-                visibleParent.spiderfy();
-              }
-            });
-            map.flyTo(coords, 5);
-            if (window.innerWidth < 768) sidebar.classList.add("hidden");
+            focusMarker(marker);
+            hideClusterPanel();
+            if (window.innerWidth < MOBILE_BREAKPOINT) sidebar.classList.add("hidden");
           }
         });
 
@@ -1080,7 +1258,6 @@ async function initMap() {
             const pin = element.querySelector(".marker-pin");
             if (pin) pin.classList.add("pulsing");
           } else {
-            // Marker is inside a cluster — pulse the cluster icon
             const visibleParent = markerClusterGroup.getVisibleParent(marker);
             if (visibleParent && visibleParent !== marker) {
               const clusterEl = visibleParent.getElement();
@@ -1152,7 +1329,11 @@ async function initMap() {
     mods.forEach((mod) => (mod.tags || []).forEach((t) => usedTags.add(t)));
 
     Array.from(usedTags)
-      .sort()
+      .sort((a, b) => {
+        if (a === "nczoning") return -1;
+        if (b === "nczoning") return 1;
+        return a.localeCompare(b);
+      })
       .forEach((tag) => {
         const def = tag === "nczoning"
           ? "Sourced automatically from Nexus Mods"
@@ -1169,18 +1350,13 @@ async function initMap() {
         tagsFilterContainer.appendChild(btn);
       });
 
-    // Setup show-more / show-less toggles for collapsible filter sections
-    document.querySelectorAll(".filter-show-more-btn").forEach((btn) => {
-      const target = document.getElementById(btn.dataset.target);
+    // Setup collapsible section headers
+    document.querySelectorAll(".sidebar-section-header.collapsible").forEach((header) => {
+      const target = document.getElementById(header.dataset.collapseTarget);
       if (!target) return;
-      // Hide button if content fits within the collapsed height
-      if (target.scrollHeight <= target.clientHeight) {
-        btn.classList.add("hidden");
-        return;
-      }
-      btn.addEventListener("click", () => {
-        const collapsed = target.classList.toggle("filter-collapsed");
-        btn.textContent = collapsed ? "show more" : "show less";
+      header.addEventListener("click", () => {
+        header.classList.toggle("collapsed");
+        target.classList.toggle("filter-collapsed");
       });
     });
 
@@ -1221,6 +1397,7 @@ async function initMap() {
 
       // Clear current cluster group
       markerClusterGroup.clearLayers();
+      hideClusterPanel();
       const visibleMarkers = [];
 
       // Filter individual markers
@@ -1271,6 +1448,9 @@ async function initMap() {
             ? "block"
             : "none";
       });
+
+      // Update visible mod count
+      modCountEl.textContent = `(${visibleMarkers.length}/${mods.length})`;
     }
   } catch (error) {
     console.error("Error loading mod data:", error);
