@@ -1,0 +1,46 @@
+:root {
+    --nc-navy: #0a192f;
+    --nc-cyan: #00f0ff;
+    --nc-amber: #ffb300;
+    --nc-white: #e6f1ff;
+    --nc-gray: #8892b0;
+    --nc-dark-accent: #112240;
+
+    --font-heading: 'Orbitron', sans-serif;
+    --font-body: 'Rajdhani', sans-serif;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: var(--nc-navy);
+    color: var(--nc-white);
+    font-family: var(--font-body);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: var(--nc-cyan) transparent;
+}
+
+/* Scrollbar Styling (Webkit) */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: var(--nc-dark-accent);
+    border: 1px solid var(--nc-cyan);
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--nc-cyan);
+}
