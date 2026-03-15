@@ -4,6 +4,38 @@
  */
 window.NCZ = window.NCZ || {};
 
+// Theme definitions (selector + body class + header logo)
+NCZ.THEMES = [
+  {
+    id: "night-corp",
+    label: "Night Corp",
+    className: "theme-night-corp",
+    logo: "assets/img/nightcorp-logo.webp",
+    logoAlt: "Night Corp",
+  },
+  {
+    id: "arasaka",
+    label: "Arasaka",
+    className: "theme-arasaka",
+    logo: "assets/img/arasaka.png",
+    logoAlt: "Arasaka",
+  },
+  {
+    id: "militech",
+    label: "Militech",
+    className: "theme-militech",
+    logo: "assets/img/militech_logo.png",
+    logoAlt: "Militech",
+  },
+  {
+    id: "aldecaldos",
+    label: "Aldecaldos",
+    className: "theme-aldecaldos",
+    logo: "assets/img/aldecaldos.png",
+    logoAlt: "Aldecaldos",
+  },
+];
+
 // Category visual styles (color, label, CSS class)
 NCZ.CATEGORY_STYLES = {
   "location-overhaul": {

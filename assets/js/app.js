@@ -45,6 +45,90 @@ document.addEventListener("DOMContentLoaded", () => {
     aboutModal.classList.add("hidden");
   });
 
+  // Parameters Modal Logic
+  const parametersBtn = document.getElementById("parameters-btn");
+  const parametersModal = document.getElementById("parameters-modal");
+  const closeParametersModalBtn = document.getElementById("close-parameters-modal");
+  const themeSelect = document.getElementById("theme-select");
+  const headerLogoImg = document.getElementById("header-logo-img");
+  const themes = Array.isArray(NCZ.THEMES) && NCZ.THEMES.length
+    ? NCZ.THEMES
+    : [{
+      id: "night-corp",
+      label: "Night Corp",
+      className: "theme-night-corp",
+      logo: "assets/img/nightcorp-logo.webp",
+      logoAlt: "Night Corp",
+    }];
+
+  function openParametersModal() {
+    if (parametersModal) parametersModal.classList.remove("hidden");
+  }
+
+  function closeParametersModal() {
+    if (parametersModal) parametersModal.classList.add("hidden");
+  }
+
+  if (parametersBtn) parametersBtn.addEventListener("click", openParametersModal);
+  if (closeParametersModalBtn) closeParametersModalBtn.addEventListener("click", closeParametersModal);
+
+  function findThemeById(themeId) {
+    return themes.find((theme) => theme.id === themeId) || themes[0];
+  }
+
+  function findThemeByClassName(themeClassName) {
+    return themes.find((theme) => theme.className === themeClassName) || themes[0];
+  }
+
+  function applyHeaderThemeBranding(theme) {
+    if (!headerLogoImg || !theme) return;
+    if (theme.logo) headerLogoImg.src = theme.logo;
+    headerLogoImg.alt = theme.logoAlt || theme.label || "Header logo";
+  }
+
+  function applyThemeById(themeId) {
+    const theme = findThemeById(themeId);
+    const targetClass = theme.className || `theme-${theme.id}`;
+
+    Array.from(document.body.classList)
+      .filter((cls) => cls.startsWith("theme-"))
+      .forEach((cls) => document.body.classList.remove(cls));
+    document.body.classList.add(targetClass);
+
+    applyHeaderThemeBranding(theme);
+    if (themeSelect) themeSelect.value = theme.id;
+  }
+
+  if (themeSelect) {
+    themeSelect.innerHTML = "";
+    themes.forEach((theme) => {
+      const option = document.createElement("option");
+      option.value = theme.id;
+      option.textContent = theme.label;
+      themeSelect.appendChild(option);
+    });
+
+    const activeThemeClass = Array.from(document.body.classList).find((cls) =>
+      cls.startsWith("theme-")
+    );
+    const activeTheme = activeThemeClass
+      ? findThemeByClassName(activeThemeClass)
+      : themes[0];
+    applyThemeById(activeTheme.id);
+
+    themeSelect.addEventListener("change", () => {
+      applyThemeById(themeSelect.value);
+    });
+  } else {
+    const activeThemeClass = Array.from(document.body.classList).find((cls) =>
+      cls.startsWith("theme-")
+    );
+    const activeTheme = activeThemeClass
+      ? findThemeByClassName(activeThemeClass)
+      : themes[0];
+    applyHeaderThemeBranding(activeTheme);
+  }
+
   // BBCode Generator Modal Logic
   const bbcodeBtn = document.getElementById("bbcode-btn");
   const bbcodeSidebarBtn = document.getElementById("bbcode-sidebar-btn");

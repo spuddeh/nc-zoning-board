@@ -1096,7 +1096,8 @@ h1 {
     opacity: 0.8;
 }
 
-#about-btn {
+#about-btn,
+#parameters-btn {
     background: transparent;
     border: var(--ui-border-thin) solid var(--secondary);
     color: var(--secondary);
@@ -1334,6 +1335,62 @@ footer .footer-content {
         background: var(--tertiary);
         color: var(--primary);
     }
+}
+
+.parameters-modal-content {
+    max-width: 420px;
+    width: 95%;
+}
+
+.parameters-modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.parameters-section-title {
+    margin: 0;
+    font-family: var(--font-heading);
+    font-size: var(--text-md);
+    color: var(--secondary);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.parameters-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    padding: var(--space-md);
+    border: var(--ui-border-thin) solid var(--dark-accent);
+    background: var(--black-30);
+}
+
+.parameters-label {
+    font-family: var(--font-heading);
+    font-size: var(--text-xs);
+    color: var(--white);
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+}
+
+.parameters-select {
+    background: var(--black-30);
+    border: var(--ui-border-thin) solid var(--gray);
+    color: var(--white);
+    padding: var(--space-xs) var(--space-md);
+    font-family: var(--font-body);
+    font-size: var(--text-md);
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+
+.parameters-select:focus {
+    border-color: var(--secondary);
+}
+
+.parameters-close-btn {
+    margin-top: 0;
 }
 
 /* ── Sidebar submit button (replaced <a> with <button>) ───────────── */

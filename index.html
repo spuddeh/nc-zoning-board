@@ -33,7 +33,7 @@
     <header>
         <div id="header-main">
             <div class="header-logo">
-                <img src="assets/img/nightcorp-logo.webp" alt="Night Corp">
+                <img id="header-logo-img" src="assets/img/nightcorp-logo.webp" alt="Night Corp">
                 <h1>NC<span>ZONING BOARD</span></h1>
             </div>
             <div id="header-status-bar">
@@ -41,6 +41,7 @@
                 <span class="status-led"></span>
                 <span class="status-telemetry">SYNC_OFFSET: 0.00ms</span>
                 <button id="about-btn" aria-label="About" title="About NC Zoning Board">[?]</button>
+                <button id="parameters-btn" aria-label="Open settings" title="Open interface settings">SETTINGS</button>
                 <button id="bbcode-btn" aria-label="Generate NCZoning BBCode" title="Generate NCZoning metadata block for your Nexus mod">[+] SUBMIT</button>
             </div>
         </div>
@@ -281,6 +282,28 @@
                 </div>
                 <hr style="border: 0; border-top: 1px solid var(--dark-accent); margin: 15px 0;">
                 <button id="close-about-modal" class="terminal-btn">[ CLOSE ]</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Parameters Modal -->
+    <div id="parameters-modal" class="modal hidden">
+        <div class="modal-content nc-terminal parameters-modal-content">
+            <div class="terminal-header">NIGHT CORP // PARAMETERS
+                <button class="terminal-close-btn" data-close-modal="parameters-modal" aria-label="Close modal">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 6 6 18" /><path d="m6 6 12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div class="terminal-body parameters-modal-body">
+                <h3 class="parameters-section-title">Appearance</h3>
+                <div class="parameters-section">
+                    <label class="parameters-label" for="theme-select">Theme</label>
+                    <select id="theme-select" class="parameters-select"></select>
+                </div>
+                <button id="close-parameters-modal" class="terminal-btn parameters-close-btn">[ CLOSE ]</button>
             </div>
         </div>
     </div>
