@@ -21,7 +21,10 @@ The NC Zoning Board is a **proof of concept** interactive map for Cyberpunk 2077
 - ✅ **Multi-Author & Credits**: Support for authorship arrays and team credits.
 - ✅ **URL optimization**: Store only the Nexus mod ID and generate links dynamically.
 - ✅ **Image Support**: Dynamically fetching official thumbnails and full-size images from the Nexus GraphQL API.
-- ✅ **Pin clustering** — group nearby pins at low zoom levels
+- ✅ **Pin clustering** — group nearby pins at low zoom levels, with custom 4-tier colour thresholds (10/25/50) and inlined MarkerCluster CSS
+- ✅ **Cluster menu panel** — clicking a cluster opens a resizable side panel listing all mods with thumbnails, tags, and descriptions
+- ✅ **Marker tooltips** — hovering a pin shows a smart-positioned tooltip with the mod name
+- ✅ **Dynamic popup positioning** — popups stay within map bounds with directional arrows
 - ✅ **NCZoning Auto-Discovery** — automatic pin creation from Nexus-tagged mods via GraphQL API, with BBCode generator modal
 
 ### Known Limitations

@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### 2026-03-15
+
+- **UI** (contributed by [@Akiway](https://github.com/Akiway)):
+  - **Cluster menu panel** — clicking a cluster now opens a resizable side panel listing all mods within that cluster, with thumbnails, tags, descriptions, and category-coloured headers. Clicking a mod in the panel zooms to its pin and opens its popup. Panel width is draggable and persisted in localStorage. On mobile, the panel uses a fixed width and hides the resize handle. Replaces the previous hover-to-spiderfy interaction.
+  - **Custom cluster thresholds** — cluster icon colours now use a 4-tier system (small/medium/large/xlarge at 0/10/25/50 mods) with a custom `iconCreateFunction`, replacing the default 0/10/100 thresholds. Added a radial gradient overlay for depth.
+  - **Inlined MarkerCluster CSS** — removed the two external CDN stylesheet links for `MarkerCluster.css` and `MarkerCluster.Default.css`, replacing them with inlined styles in `style.css`. Eliminates external requests and CDN dependency.
+  - **Marker tooltips** — hovering a map pin now shows a tooltip with the mod name. Tooltip uses smart directional placement (top/bottom/left/right) to stay within map bounds, with CSS arrows pointing back to the pin.
+  - **Dynamic popup positioning** — popups now reposition dynamically to stay visible within the map container, with directional CSS arrows. Repositions on map move, zoom, and resize. Uses `requestAnimationFrame` coalescing for performance.
+  - **Zoom button fix** — corrected vertical alignment of +/- icons in Leaflet zoom controls.
+- **Docs**:
+  - Added Library References section to `CLAUDE.md` with links to Leaflet and MarkerCluster documentation.
+  - Updated `docs/architecture.md` — corrected colour palette to current `--nc-` CSS variables.
+  - Updated `docs/branding.md` — fixed amber hex code to match actual CSS value (`#ffb300`).
+  - Updated `docs/roadmap.md` — added cluster panel, tooltips, and dynamic popup positioning to completed features.
+
 ### 2026-03-14
 
 - **UI**:

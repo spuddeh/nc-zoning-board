@@ -106,10 +106,11 @@ nc-zoning-board/
 
 ### Styling (`style.css`)
 
-- Cyberpunk theme using CSS custom properties
+- Cyberpunk theme using CSS custom properties (all prefixed `--nc-`)
 - Fonts: **Orbitron** (headings), **Rajdhani** (body) from Google Fonts
-- Colour palette: `--cb-yellow` (#fcee0a), `--cb-blue` (#00f0ff), `--cb-pink` (#ff003c)
-- Custom Leaflet popup and tooltip styling
+- Colour palette: `--nc-navy` (#0a192f), `--nc-cyan` (#00f0ff), `--nc-amber` (#ffb300), `--nc-white` (#e6f1ff), `--nc-gray` (#8892b0)
+- Custom Leaflet popup, tooltip, and cluster styling
+- MarkerCluster CSS is inlined (no external CDN dependency)
 
 ## Repo Setup (for new maintainers)
 
