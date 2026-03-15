@@ -508,6 +508,23 @@ async function initMap() {
     showCoverageOnHover: false,
     zoomToBoundsOnClick: true,
     maxClusterRadius: 40,
+    iconCreateFunction: function (cluster) {
+      const count = cluster.getChildCount();
+      let sizeClass = "xlarge";
+      if (count < 10) {
+        sizeClass = "small";
+      } else if (count < 25) {
+        sizeClass = "medium";
+      } else if (count < 50) {
+        sizeClass = "large";
+      }
+
+      return L.divIcon({
+        html: `<div><span>${count}</span></div>`,
+        className: `marker-cluster marker-cluster-${sizeClass}`,
+        iconSize: L.point(40, 40),
+      });
+    },
     polygonOptions: {
       fillColor: "#00f0ff",
       color: "#00f0ff",
