@@ -495,6 +495,83 @@ body.cluster-panel-resizing * {
     z-index: 1000 !important;
 }
 
+/* Dynamic Pin Tooltip */
+.pin-tooltip {
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 1200;
+    pointer-events: none;
+    display: none;
+}
+
+.pin-tooltip.visible {
+    display: block;
+}
+
+.pin-tooltip.measure {
+    visibility: hidden;
+}
+
+.pin-tooltip-content {
+    background: rgba(5, 10, 14, 0.95);
+    border: 1px solid var(--nc-cyan);
+    color: var(--nc-white);
+    font-family: var(--font-heading);
+    font-size: 0.72rem;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    padding: 5px 9px;
+    line-height: 1.2;
+    white-space: nowrap;
+    max-width: 260px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    box-shadow: 0 0 12px rgba(0, 240, 255, 0.25);
+}
+
+.pin-tooltip-arrow {
+    position: absolute;
+    width: 0;
+    height: 0;
+}
+
+.pin-tooltip.dir-top .pin-tooltip-arrow {
+    top: 100%;
+    left: var(--pin-tooltip-arrow-x, 50%);
+    transform: translateX(-50%);
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 6px solid var(--nc-cyan);
+}
+
+.pin-tooltip.dir-bottom .pin-tooltip-arrow {
+    bottom: 100%;
+    left: var(--pin-tooltip-arrow-x, 50%);
+    transform: translateX(-50%);
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-bottom: 6px solid var(--nc-cyan);
+}
+
+.pin-tooltip.dir-left .pin-tooltip-arrow {
+    left: 100%;
+    top: var(--pin-tooltip-arrow-y, 50%);
+    transform: translateY(-50%);
+    border-top: 6px solid transparent;
+    border-bottom: 6px solid transparent;
+    border-left: 6px solid var(--nc-cyan);
+}
+
+.pin-tooltip.dir-right .pin-tooltip-arrow {
+    right: 100%;
+    top: var(--pin-tooltip-arrow-y, 50%);
+    transform: translateY(-50%);
+    border-top: 6px solid transparent;
+    border-bottom: 6px solid transparent;
+    border-right: 6px solid var(--nc-cyan);
+}
+
 /* Night Corp Colors */
 .cat-location-overhaul { background-color: var(--nc-cyan); box-shadow: 0 0 10px var(--nc-cyan); }
 .cat-new-location { background-color: var(--nc-amber); box-shadow: 0 0 10px var(--nc-amber); }
@@ -548,6 +625,62 @@ body.cluster-panel-resizing * {
 
 .leaflet-popup-tip {
     background-color: var(--nc-cyan) !important;
+}
+
+.leaflet-popup.ncz-dynamic-popup {
+    margin: 0 !important;
+}
+
+.leaflet-popup.ncz-dynamic-popup .leaflet-popup-tip-container {
+    display: none !important;
+}
+
+.leaflet-popup.ncz-dynamic-popup .leaflet-popup-content-wrapper {
+    position: relative;
+}
+
+.leaflet-popup.ncz-dynamic-popup .leaflet-popup-content-wrapper::after {
+    content: "";
+    position: absolute;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+}
+
+.leaflet-popup.ncz-dynamic-popup.ncz-popup-top .leaflet-popup-content-wrapper::after {
+    top: 100%;
+    left: var(--ncz-popup-arrow-x, 50%);
+    transform: translateX(-50%);
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-top: 10px solid var(--nc-cyan);
+}
+
+.leaflet-popup.ncz-dynamic-popup.ncz-popup-bottom .leaflet-popup-content-wrapper::after {
+    bottom: 100%;
+    left: var(--ncz-popup-arrow-x, 50%);
+    transform: translateX(-50%);
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-bottom: 10px solid var(--nc-cyan);
+}
+
+.leaflet-popup.ncz-dynamic-popup.ncz-popup-left .leaflet-popup-content-wrapper::after {
+    left: 100%;
+    top: var(--ncz-popup-arrow-y, 50%);
+    transform: translateY(-50%);
+    border-top: 10px solid transparent;
+    border-bottom: 10px solid transparent;
+    border-left: 10px solid var(--nc-cyan);
+}
+
+.leaflet-popup.ncz-dynamic-popup.ncz-popup-right .leaflet-popup-content-wrapper::after {
+    right: 100%;
+    top: var(--ncz-popup-arrow-y, 50%);
+    transform: translateY(-50%);
+    border-top: 10px solid transparent;
+    border-bottom: 10px solid transparent;
+    border-right: 10px solid var(--nc-cyan);
 }
 
 .custom-popup-title {

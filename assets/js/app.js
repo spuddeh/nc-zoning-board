@@ -203,6 +203,14 @@ const THUMB_CACHE_KEY = "nc_nexus_thumbs";
 const THUMB_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
 const AUTODISCOVERY_CACHE_KEY = "nc_nexus_autodiscovery";
 const AUTODISCOVERY_CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+const PIN_TOOLTIP_MARGIN_PX = 10;
+const PIN_TOOLTIP_GAP_PX = 8;
+const PIN_TOOLTIP_ARROW_SIZE_PX = 6;
+const PIN_TOOLTIP_ARROW_EDGE_PADDING_PX = 12;
+const PIN_POPUP_MARGIN_PX = 12;
+const PIN_POPUP_GAP_PX = 10;
+const PIN_POPUP_ARROW_SIZE_PX = 10;
+const PIN_POPUP_ARROW_EDGE_PADDING_PX = 18;
 const MOBILE_BREAKPOINT = 768;
 const CLUSTER_PANEL_WIDTH_KEY = "nc_cluster_panel_width";
 const CLUSTER_PANEL_DEFAULT_WIDTH = 400;
@@ -474,6 +482,214 @@ function cetToLeaflet(cetX, cetY) {
   return [lat, lng];
 }
 
+function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max);
+}
+
+/**
+ * Chooses an anchor side and calculates a clamped box position + arrow anchor.
+ * Consumers apply the returned values to their own DOM elements/styles.
+ */
+function pickDirectionAndPosition(anchorPoint, size, mapSize, config) {
+  const mapWidth = mapSize.x ?? mapSize.width;
+  const mapHeight = mapSize.y ?? mapSize.height;
+  const directionOrder = config.directionOrder ?? ["top", "bottom", "right", "left"];
+
+  const requiredVertical = size.height + config.gapPx + config.arrowSizePx;
+  const requiredHorizontal = size.width + config.gapPx + config.arrowSizePx;
+
+  const space = {
+    top: anchorPoint.y - config.marginPx,
+    bottom: mapHeight - anchorPoint.y - config.marginPx,
+    left: anchorPoint.x - config.marginPx,
+    right: mapWidth - anchorPoint.x - config.marginPx,
+  };
+
+  let direction = directionOrder.find((dir) => {
+    if (dir === "top" || dir === "bottom") return space[dir] >= requiredVertical;
+    return space[dir] >= requiredHorizontal;
+  });
+
+  if (!direction) {
+    direction = directionOrder.reduce(
+      (best, dir) => (space[dir] > space[best] ? dir : best),
+      directionOrder[0],
+    );
+  }
+
+  let left = anchorPoint.x - (size.width / 2);
+  let top = anchorPoint.y - size.height - config.gapPx - config.arrowSizePx;
+
+  if (direction === "bottom") {
+    top = anchorPoint.y + config.gapPx + config.arrowSizePx;
+  } else if (direction === "left") {
+    left = anchorPoint.x - size.width - config.gapPx - config.arrowSizePx;
+    top = anchorPoint.y - (size.height / 2);
+  } else if (direction === "right") {
+    left = anchorPoint.x + config.gapPx + config.arrowSizePx;
+    top = anchorPoint.y - (size.height / 2);
+  }
+
+  let minLeft = config.marginPx;
+  let maxLeft = mapWidth - config.marginPx - size.width;
+  let minTop = config.marginPx;
+  let maxTop = mapHeight - config.marginPx - size.height;
+
+  if (direction === "right") minLeft += config.arrowSizePx;
+  if (direction === "left") maxLeft -= config.arrowSizePx;
+  if (direction === "bottom") minTop += config.arrowSizePx;
+  if (direction === "top") maxTop -= config.arrowSizePx;
+
+  if (maxLeft < minLeft) {
+    minLeft = maxLeft = Math.max(0, (mapWidth - size.width) / 2);
+  }
+  if (maxTop < minTop) {
+    minTop = maxTop = Math.max(0, (mapHeight - size.height) / 2);
+  }
+
+  left = clamp(left, minLeft, maxLeft);
+  top = clamp(top, minTop, maxTop);
+
+  const arrowX = clamp(
+    anchorPoint.x - left,
+    config.arrowEdgePaddingPx,
+    size.width - config.arrowEdgePaddingPx,
+  );
+  const arrowY = clamp(
+    anchorPoint.y - top,
+    config.arrowEdgePaddingPx,
+    size.height - config.arrowEdgePaddingPx,
+  );
+
+  return { direction, left, top, arrowX, arrowY };
+}
+
+/** Controls pin hover tooltip placement and visibility inside map bounds. */
+function createPinTooltipController(map) {
+  // Create one tooltip element we reuse for every marker.
+  const container = map.getContainer();
+  const tooltipEl = document.createElement("div");
+  tooltipEl.className = "pin-tooltip";
+  tooltipEl.innerHTML = `
+    <div class="pin-tooltip-content"></div>
+    <div class="pin-tooltip-arrow" aria-hidden="true"></div>
+  `;
+  container.appendChild(tooltipEl);
+
+  const contentEl = tooltipEl.querySelector(".pin-tooltip-content");
+  let activeMarker = null;
+
+  function clearDirectionClasses() {
+    tooltipEl.classList.remove("dir-top", "dir-bottom", "dir-left", "dir-right");
+  }
+
+  function measureTooltip() {
+    // Temporarily show tooltip to get its current size.
+    tooltipEl.classList.add("visible", "measure");
+    const rect = contentEl.getBoundingClientRect();
+    tooltipEl.classList.remove("measure");
+    return {
+      width: Math.max(1, Math.ceil(rect.width)),
+      height: Math.max(1, Math.ceil(rect.height)),
+    };
+  }
+
+  function positionTooltip() {
+    const markerEl = activeMarker?.getElement?.();
+    if (!activeMarker || !markerEl) {
+      hide();
+      return;
+    }
+
+    const point = map.latLngToContainerPoint(activeMarker.getLatLng());
+    const mapWidth = container.clientWidth;
+    const mapHeight = container.clientHeight;
+    const size = measureTooltip();
+    const { direction, left, top, arrowX, arrowY } = pickDirectionAndPosition(
+      point,
+      size,
+      { x: mapWidth, y: mapHeight },
+      {
+        marginPx: PIN_TOOLTIP_MARGIN_PX,
+        gapPx: PIN_TOOLTIP_GAP_PX,
+        arrowSizePx: PIN_TOOLTIP_ARROW_SIZE_PX,
+        arrowEdgePaddingPx: PIN_TOOLTIP_ARROW_EDGE_PADDING_PX,
+      },
+    );
+
+    clearDirectionClasses();
+    tooltipEl.classList.add(`dir-${direction}`);
+
+    tooltipEl.style.left = `${left}px`;
+    tooltipEl.style.top = `${top}px`;
+    tooltipEl.style.setProperty("--pin-tooltip-arrow-x", `${arrowX}px`);
+    tooltipEl.style.setProperty("--pin-tooltip-arrow-y", `${arrowY}px`);
+  }
+
+  function show(marker, text) {
+    activeMarker = marker;
+    contentEl.textContent = text;
+    tooltipEl.classList.add("visible");
+    positionTooltip();
+  }
+
+  function hide(marker = null) {
+    if (marker && marker !== activeMarker) return;
+    activeMarker = null;
+    tooltipEl.classList.remove("visible");
+  }
+
+  return {
+    show,
+    hide,
+    reposition: positionTooltip,
+  };
+}
+
+/** Repositions an open popup so it stays visible and points to its pin. */
+function positionDynamicPopup(map, popup) {
+  if (!popup) return;
+
+  const popupEl = popup.getElement?.();
+  if (!popupEl) return;
+
+  const wrapperEl = popupEl.querySelector(".leaflet-popup-content-wrapper");
+  if (!wrapperEl) return;
+
+  popupEl.classList.add("ncz-dynamic-popup");
+
+  // Read popup size and marker anchor position.
+  const size = {
+    width: Math.max(1, Math.ceil(wrapperEl.offsetWidth)),
+    height: Math.max(1, Math.ceil(wrapperEl.offsetHeight)),
+  };
+  const mapSize = map.getSize();
+  const anchor = map.latLngToContainerPoint(popup.getLatLng());
+  const { direction, left, top, arrowX, arrowY } = pickDirectionAndPosition(
+    anchor,
+    size,
+    mapSize,
+    {
+      marginPx: PIN_POPUP_MARGIN_PX,
+      gapPx: PIN_POPUP_GAP_PX,
+      arrowSizePx: PIN_POPUP_ARROW_SIZE_PX,
+      arrowEdgePaddingPx: PIN_POPUP_ARROW_EDGE_PADDING_PX,
+    },
+  );
+
+  const layerPos = map.containerPointToLayerPoint(L.point(left, top));
+  L.DomUtil.setPosition(popupEl, layerPos);
+  popupEl.style.left = "0px";
+  popupEl.style.top = "0px";
+  popupEl.style.bottom = "auto";
+  popupEl.style.margin = "0";
+  popupEl.style.setProperty("--ncz-popup-arrow-x", `${arrowX}px`);
+  popupEl.style.setProperty("--ncz-popup-arrow-y", `${arrowY}px`);
+
+  popupEl.classList.remove("ncz-popup-top", "ncz-popup-bottom", "ncz-popup-left", "ncz-popup-right");
+  popupEl.classList.add(`ncz-popup-${direction}`);
+}
+
 async function initMap() {
   // 1. Setup Map
   const map = L.map("map", {
@@ -537,6 +753,49 @@ async function initMap() {
       fillOpacity: 0.1,
     },
   }).addTo(map);
+
+  const pinTooltip = createPinTooltipController(map);
+  let activePopup = null;
+  let popupRepositionFrame = null;
+
+  function repositionActivePopup() {
+    if (!activePopup) return;
+    positionDynamicPopup(map, activePopup);
+  }
+
+  // Coalesce bursty map/popup events into one popup reposition per animation frame.
+  function scheduleActivePopupReposition() {
+    if (popupRepositionFrame !== null) return;
+    popupRepositionFrame = requestAnimationFrame(() => {
+      popupRepositionFrame = null;
+      repositionActivePopup();
+    });
+  }
+
+  map.on("popupopen", (e) => {
+    pinTooltip.hide();
+    activePopup = e.popup;
+    repositionActivePopup();
+    scheduleActivePopupReposition();
+    const popupImages = activePopup.getElement()?.querySelectorAll("img") || [];
+    popupImages.forEach((img) => {
+      if (!img.complete) {
+        img.addEventListener("load", scheduleActivePopupReposition, { once: true });
+      }
+    });
+  });
+  map.on("popupclose", () => {
+    activePopup = null;
+    if (popupRepositionFrame !== null) {
+      cancelAnimationFrame(popupRepositionFrame);
+      popupRepositionFrame = null;
+    }
+  });
+
+  map.on("move zoom resize", () => {
+    pinTooltip.reposition();
+    scheduleActivePopupReposition();
+  });
 
   const allMarkers = [];
   const modCountEl = document.getElementById("mod-count");
@@ -838,6 +1097,19 @@ async function initMap() {
         allMarkers.push(marker);
         markerClusterGroup.addLayer(marker);
 
+        marker.on("mouseover", () => {
+          pinTooltip.show(marker, mod.name);
+        });
+        marker.on("mouseout", () => {
+          pinTooltip.hide(marker);
+        });
+        marker.on("click", () => {
+          pinTooltip.hide(marker);
+        });
+        marker.on("remove", () => {
+          pinTooltip.hide(marker);
+        });
+
         // Build Link based on nexus_id
         const nexus_id_lower = String(mod.nexus_id).toLowerCase();
         let nexusUrl = `https://www.nexusmods.com/cyberpunk2077/mods/${mod.nexus_id}`;
@@ -907,7 +1179,11 @@ async function initMap() {
                     </div>
                 </div>
             `;
-        marker.bindPopup(popupContent, { autoPan: false });
+        marker.bindPopup(popupContent, {
+          autoPan: false,
+          offset: [0, 0],
+          className: "ncz-dynamic-popup",
+        });
 
         // Add to Sidebar
         const li = document.createElement("li");
