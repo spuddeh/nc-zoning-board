@@ -66,44 +66,44 @@
     /* Font families */
     --font-heading: 'Orbitron', sans-serif;
     --font-body: 'Rajdhani', sans-serif;
+
+    /* Relative color tints derived from active theme base colors */
+    --primary-05: rgb(from var(--primary) r g b / 0.05);
+    --primary-10: rgb(from var(--primary) r g b / 0.1);
+    --primary-20: rgb(from var(--primary) r g b / 0.2);
+    --primary-30: rgb(from var(--primary) r g b / 0.3);
+    --primary-40: rgb(from var(--primary) r g b / 0.4);
+    --primary-50: rgb(from var(--primary) r g b / 0.5);
+    --primary-60: rgb(from var(--primary) r g b / 0.6);
+    --primary-80: rgb(from var(--primary) r g b / 0.8);
+    --primary-90: rgb(from var(--primary) r g b / 0.9);
+    --primary-95: rgb(from var(--primary) r g b / 0.95);
+
+    --secondary-05: rgb(from var(--secondary) r g b / 0.05);
+    --secondary-10: rgb(from var(--secondary) r g b / 0.1);
+    --secondary-20: rgb(from var(--secondary) r g b / 0.2);
+    --secondary-30: rgb(from var(--secondary) r g b / 0.3);
+    --secondary-40: rgb(from var(--secondary) r g b / 0.4);
+    --secondary-50: rgb(from var(--secondary) r g b / 0.5);
+    --secondary-60: rgb(from var(--secondary) r g b / 0.6);
+
+    --tertiary-05: rgb(from var(--tertiary) r g b / 0.05);
+    --tertiary-10: rgb(from var(--tertiary) r g b / 0.1);
+    --tertiary-20: rgb(from var(--tertiary) r g b / 0.2);
+    --tertiary-30: rgb(from var(--tertiary) r g b / 0.3);
+    --tertiary-40: rgb(from var(--tertiary) r g b / 0.4);
+    --tertiary-50: rgb(from var(--tertiary) r g b / 0.5);
+    --tertiary-60: rgb(from var(--tertiary) r g b / 0.6);
+
+    --gray-40: rgb(from var(--gray) r g b / 0.4);
 }
 
 body.theme-night-corp {
-    /* Primary */
     --primary: #0a192f;
-    --primary-05: rgba(10, 25, 47, 0.05);
-    --primary-10: rgba(10, 25, 47, 0.1);
-    --primary-20: rgba(10, 25, 47, 0.2);
-    --primary-30: rgba(10, 25, 47, 0.3);
-    --primary-40: rgba(10, 25, 47, 0.4);
-    --primary-50: rgba(10, 25, 47, 0.5);
-    --primary-60: rgba(10, 25, 47, 0.6);
-    --primary-80: rgba(10, 25, 47, 0.8);
-    --primary-90: rgba(10, 25, 47, 0.9);
-    --primary-95: rgba(10, 25, 47, 0.95);
-
-    /* Secondary */
     --secondary: #00f0ff;
-    --secondary-05: rgba(0, 240, 255, 0.05);
-    --secondary-10: rgba(0, 240, 255, 0.1);
-    --secondary-20: rgba(0, 240, 255, 0.2);
-    --secondary-30: rgba(0, 240, 255, 0.3);
-    --secondary-40: rgba(0, 240, 255, 0.4);
-    --secondary-50: rgba(0, 240, 255, 0.5);
-    --secondary-60: rgba(0, 240, 255, 0.6);
-
-    /* Tertiary */
     --tertiary: #ffb300;
-    --tertiary-05: rgba(255, 179, 0, 0.05);
-    --tertiary-10: rgba(255, 179, 0, 0.1);
-    --tertiary-20: rgba(255, 179, 0, 0.2);
-    --tertiary-30: rgba(255, 179, 0, 0.3);
-    --tertiary-40: rgba(255, 179, 0, 0.4);
-    --tertiary-50: rgba(255, 179, 0, 0.5);
-    --tertiary-60: rgba(255, 179, 0, 0.6);
 
     --gray: #8892b0;
-    --gray-40: rgba(136, 146, 176, 0.4);
     
     --white: #e6f1ff;
     --dark-accent: #112240;
@@ -138,41 +138,11 @@ body.theme-night-corp {
 }
 
 body.theme-arasaka {
-    /* Primary */
     --primary: #110d0e;
-    --primary-05: rgba(17, 13, 14, 0.05);
-    --primary-10: rgba(17, 13, 14, 0.1);
-    --primary-20: rgba(17, 13, 14, 0.2);
-    --primary-30: rgba(17, 13, 14, 0.3);
-    --primary-40: rgba(17, 13, 14, 0.4);
-    --primary-50: rgba(17, 13, 14, 0.5);
-    --primary-60: rgba(17, 13, 14, 0.6);
-    --primary-80: rgba(17, 13, 14, 0.8);
-    --primary-90: rgba(17, 13, 14, 0.9);
-    --primary-95: rgba(17, 13, 14, 0.95);
-
-    /* Secondary */
     --secondary: #e60000;
-    --secondary-05: rgba(230, 0, 0, 0.05);
-    --secondary-10: rgba(230, 0, 0, 0.1);
-    --secondary-20: rgba(230, 0, 0, 0.2);
-    --secondary-30: rgba(230, 0, 0, 0.3);
-    --secondary-40: rgba(230, 0, 0, 0.4);
-    --secondary-50: rgba(230, 0, 0, 0.5);
-    --secondary-60: rgba(230, 0, 0, 0.6);
-
-    /* Tertiary (same as Night Corp) */
     --tertiary: #ffb300;
-    --tertiary-05: rgba(255, 179, 0, 0.05);
-    --tertiary-10: rgba(255, 179, 0, 0.1);
-    --tertiary-20: rgba(255, 179, 0, 0.2);
-    --tertiary-30: rgba(255, 179, 0, 0.3);
-    --tertiary-40: rgba(255, 179, 0, 0.4);
-    --tertiary-50: rgba(255, 179, 0, 0.5);
-    --tertiary-60: rgba(255, 179, 0, 0.6);
 
     --gray: #8892b0;
-    --gray-40: rgba(136, 146, 176, 0.4);
     
     --white: #e6f1ff;
     --dark-accent: #1a1a1a;
@@ -207,41 +177,11 @@ body.theme-arasaka {
 }
 
 body.theme-militech {
-    /* Primary */
     --primary: #2c3023;
-    --primary-05: rgba(44, 48, 35, 0.05);
-    --primary-10: rgba(44, 48, 35, 0.1);
-    --primary-20: rgba(44, 48, 35, 0.2);
-    --primary-30: rgba(44, 48, 35, 0.3);
-    --primary-40: rgba(44, 48, 35, 0.4);
-    --primary-50: rgba(44, 48, 35, 0.5);
-    --primary-60: rgba(44, 48, 35, 0.6);
-    --primary-80: rgba(44, 48, 35, 0.8);
-    --primary-90: rgba(44, 48, 35, 0.9);
-    --primary-95: rgba(44, 48, 35, 0.95);
-
-    /* Secondary */
-    --secondary: #faea00;
-    --secondary-05: rgba(250, 234, 0, 0.05);
-    --secondary-10: rgba(250, 234, 0, 0.1);
-    --secondary-20: rgba(250, 234, 0, 0.2);
-    --secondary-30: rgba(250, 234, 0, 0.3);
-    --secondary-40: rgba(250, 234, 0, 0.4);
-    --secondary-50: rgba(250, 234, 0, 0.5);
-    --secondary-60: rgba(250, 234, 0, 0.6);
-
-    /* Tertiary (same as Night Corp) */
-    --tertiary: #fc9802;
-    --tertiary-05: rgba(252, 152, 2, 0.05);
-    --tertiary-10: rgba(252, 152, 2, 0.1);
-    --tertiary-20: rgba(252, 152, 2, 0.2);
-    --tertiary-30: rgba(252, 152, 2, 0.3);
-    --tertiary-40: rgba(252, 152, 2, 0.4);
-    --tertiary-50: rgba(252, 152, 2, 0.5);
-    --tertiary-60: rgba(252, 152, 2, 0.6);
+    --secondary: #fac901;
+    --tertiary: #ee6b00;
 
     --gray: #93a58b;
-    --gray-40: rgba(147, 165, 139, 0.4);
     
     --white: #e6f1ff;
     --dark-accent: #1a1a1a;
@@ -276,41 +216,11 @@ body.theme-militech {
 }
 
 body.theme-aldecaldos {
-    /* Primary */
     --primary: #101518;
-    --primary-05: rgba(16, 21, 24, 0.05);
-    --primary-10: rgba(16, 21, 24, 0.1);
-    --primary-20: rgba(16, 21, 24, 0.2);
-    --primary-30: rgba(16, 21, 24, 0.3);
-    --primary-40: rgba(16, 21, 24, 0.4);
-    --primary-50: rgba(16, 21, 24, 0.5);
-    --primary-60: rgba(16, 21, 24, 0.6);
-    --primary-80: rgba(16, 21, 24, 0.8);
-    --primary-90: rgba(16, 21, 24, 0.9);
-    --primary-95: rgba(16, 21, 24, 0.95);
-
-    /* Secondary */
-    --secondary: #9d5131;
-    --secondary-05: rgba(157, 81, 49, 0.05);
-    --secondary-10: rgba(157, 81, 49, 0.1);
-    --secondary-20: rgba(157, 81, 49, 0.2);
-    --secondary-30: rgba(157, 81, 49, 0.3);
-    --secondary-40: rgba(157, 81, 49, 0.4);
-    --secondary-50: rgba(157, 81, 49, 0.5);
-    --secondary-60: rgba(157, 81, 49, 0.6);
-
-    /* Tertiary */
-    --tertiary: #9c7a30;
-    --tertiary-05: rgba(156, 122, 48, 0.05);
-    --tertiary-10: rgba(156, 122, 48, 0.1);
-    --tertiary-20: rgba(156, 122, 48, 0.2);
-    --tertiary-30: rgba(156, 122, 48, 0.3);
-    --tertiary-40: rgba(156, 122, 48, 0.4);
-    --tertiary-50: rgba(156, 122, 48, 0.5);
-    --tertiary-60: rgba(156, 122, 48, 0.6);
+    --secondary: #dd612c;
+    --tertiary: #be8f27;
 
     --gray: #545d7c;
-    --gray-40: rgba(84, 93, 124, 0.4);
     
     --white: #e6f1ff;
     --dark-accent: #424a63;

@@ -12,6 +12,49 @@
     <meta name="description"
         content="Interactive map for Cyberpunk 2077 location mods. Find custom apartments, overhauled zones, and new locations with ease.">
 
+    <!-- Shared constants needed by early theme bootstrap -->
+    <script src="assets/js/constants.js"></script>
+
+    <!-- Early theme bootstrap to prevent flash of default theme -->
+    <script>
+        (() => {
+            const themes = Array.isArray(window.NCZ?.THEMES) && window.NCZ.THEMES.length
+                ? window.NCZ.THEMES
+                : [{
+                    id: "night-corp",
+                    className: "theme-night-corp",
+                    logo: "assets/img/nightcorp-logo.webp",
+                    logoAlt: "Night Corp",
+                }];
+            const themeKey = window.NCZ?.THEME_PREFERENCE_KEY || "nc_theme_id";
+            const defaultTheme = themes[0];
+            const allowedThemeClasses = new Set(themes.map((theme) => theme.className || `theme-${theme.id}`));
+
+            let selectedTheme = defaultTheme;
+            try {
+                const storedThemeId = localStorage.getItem(themeKey);
+                if (storedThemeId) {
+                    const matchedTheme = themes.find((theme) => theme.id === storedThemeId);
+                    if (matchedTheme) selectedTheme = matchedTheme;
+                }
+            } catch (_) {
+                // Ignore storage errors and keep default theme.
+            }
+
+            const selectedThemeClass = selectedTheme.className || `theme-${selectedTheme.id}`;
+
+            // Expose early theme details so header logo can be applied immediately on body parse.
+            window.__NCZ_THEME_BOOTSTRAP = {
+                id: selectedTheme.id,
+                className: selectedThemeClass,
+                logo: {
+                    src: selectedTheme.logo || defaultTheme.logo,
+                    alt: selectedTheme.logoAlt || selectedTheme.label || "Header logo",
+                },
+            };
+        })();
+    </script>
+
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
@@ -28,12 +71,31 @@
         rel="stylesheet">
 </head>
 
-<body class="theme-night-corp">
+<body>
+    <script>
+        (() => {
+            const bootstrap = window.__NCZ_THEME_BOOTSTRAP;
+            if (!bootstrap || !bootstrap.className || !document.body) return;
+            Array.from(document.body.classList)
+                .filter((cls) => cls.startsWith("theme-"))
+                .forEach((cls) => document.body.classList.remove(cls));
+            document.body.classList.add(bootstrap.className);
+        })();
+    </script>
 
     <header>
         <div id="header-main">
             <div class="header-logo">
-                <img id="header-logo-img" src="assets/img/nightcorp-logo.webp" alt="Night Corp">
+                <img id="header-logo-img" alt="Night Corp">
+                <script>
+                    (() => {
+                        const img = document.getElementById("header-logo-img");
+                        const bootstrap = window.__NCZ_THEME_BOOTSTRAP;
+                        if (!img || !bootstrap || !bootstrap.logo) return;
+                        img.src = bootstrap.logo.src;
+                        img.alt = bootstrap.logo.alt || "Header logo";
+                    })();
+                </script>
                 <h1>NC<span>ZONING BOARD</span></h1>
             </div>
             <div id="header-status-bar">
@@ -192,7 +254,7 @@
     <!-- Night Corp Welcome Modal -->
     <div id="welcome-modal" class="modal">
         <div class="modal-content nc-terminal">
-            <div class="terminal-header">NIGHT CORP // INTERNAL ACCESS
+            <div class="terminal-header"><span class="terminal-header-theme-label" data-modal-title="INTERNAL ACCESS">NIGHT CORP // INTERNAL ACCESS</span>
                 <button class="terminal-close-btn" data-close-modal="welcome-modal" aria-label="Close modal">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -217,7 +279,7 @@
     <!-- About Modal -->
     <div id="about-modal" class="modal hidden">
         <div class="modal-content nc-terminal">
-            <div class="terminal-header">NIGHT CORP // ZONING BOARD — ABOUT
+            <div class="terminal-header"><span class="terminal-header-theme-label" data-modal-title="ZONING BOARD - ABOUT">NIGHT CORP // ZONING BOARD - ABOUT</span>
                 <button class="terminal-close-btn" data-close-modal="about-modal" aria-label="Close modal">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -289,7 +351,7 @@
     <!-- Parameters Modal -->
     <div id="parameters-modal" class="modal hidden">
         <div class="modal-content nc-terminal parameters-modal-content">
-            <div class="terminal-header">NIGHT CORP // PARAMETERS
+            <div class="terminal-header"><span class="terminal-header-theme-label" data-modal-title="PARAMETERS">NIGHT CORP // PARAMETERS</span>
                 <button class="terminal-close-btn" data-close-modal="parameters-modal" aria-label="Close modal">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -311,7 +373,7 @@
     <!-- BBCode Generator Modal -->
     <div id="bbcode-modal" class="modal hidden">
         <div class="modal-content nc-terminal bbcode-modal-content">
-            <div class="terminal-header">NIGHT CORP // BBCODE GENERATOR
+            <div class="terminal-header"><span class="terminal-header-theme-label" data-modal-title="BBCODE GENERATOR">NIGHT CORP // BBCODE GENERATOR</span>
                 <button class="terminal-close-btn" data-close-modal="bbcode-modal" aria-label="Close modal">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -403,7 +465,6 @@
     </div>
 
     <!-- App Logic -->
-    <script src="assets/js/constants.js"></script>
     <script src="assets/js/utils.js"></script>
     <script src="assets/js/services.js"></script>
     <script src="assets/js/app.js"></script>

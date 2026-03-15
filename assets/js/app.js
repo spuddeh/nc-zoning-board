@@ -51,6 +51,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const closeParametersModalBtn = document.getElementById("close-parameters-modal");
   const themeSelect = document.getElementById("theme-select");
   const headerLogoImg = document.getElementById("header-logo-img");
+  const themedModalHeaderLabels = document.querySelectorAll(".terminal-header-theme-label[data-modal-title]");
   const themes = Array.isArray(NCZ.THEMES) && NCZ.THEMES.length
     ? NCZ.THEMES
     : [{
@@ -80,13 +81,45 @@ document.addEventListener("DOMContentLoaded", () => {
     return themes.find((theme) => theme.className === themeClassName) || themes[0];
   }
 
+  function getStoredThemeId() {
+    try {
+      const storedThemeId = localStorage.getItem(NCZ.THEME_PREFERENCE_KEY);
+      if (!storedThemeId) return null;
+      return themes.some((theme) => theme.id === storedThemeId) ? storedThemeId : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function findActiveThemeClassName() {
+    return Array.from(document.body.classList).find((cls) =>
+      cls.startsWith("theme-")
+    );
+  }
+
+  function getInitialThemeId() {
+    const storedThemeId = getStoredThemeId();
+    if (storedThemeId) return storedThemeId;
+
+    const activeThemeClass = findActiveThemeClassName();
+    return activeThemeClass ? findThemeByClassName(activeThemeClass).id : themes[0].id;
+  }
+
   function applyHeaderThemeBranding(theme) {
     if (!headerLogoImg || !theme) return;
     if (theme.logo) headerLogoImg.src = theme.logo;
     headerLogoImg.alt = theme.logoAlt || theme.label || "Header logo";
   }
 
-  function applyThemeById(themeId) {
+  function applyModalHeaderThemeBranding(theme) {
+    const themePrefix = (theme?.label || "Night Corp").toUpperCase();
+    themedModalHeaderLabels.forEach((label) => {
+      const modalTitle = label.dataset.modalTitle || "";
+      label.textContent = `${themePrefix} // ${modalTitle}`;
+    });
+  }
+
+  function applyThemeById(themeId, { persist = true } = {}) {
     const theme = findThemeById(themeId);
     const targetClass = theme.className || `theme-${theme.id}`;
 
@@ -96,8 +129,19 @@ document.addEventListener("DOMContentLoaded", () => {
     document.body.classList.add(targetClass);
 
     applyHeaderThemeBranding(theme);
+    applyModalHeaderThemeBranding(theme);
     if (themeSelect) themeSelect.value = theme.id;
+
+    if (persist) {
+      try {
+        localStorage.setItem(NCZ.THEME_PREFERENCE_KEY, theme.id);
+      } catch (_) {
+        // Ignore storage write failures (private mode / restricted browsers).
+      }
+    }
   }
+
+  const initialThemeId = getInitialThemeId();
 
   if (themeSelect) {
     themeSelect.innerHTML = "";
@@ -108,25 +152,13 @@ document.addEventListener("DOMContentLoaded", () => {
       themeSelect.appendChild(option);
     });
 
-    const activeThemeClass = Array.from(document.body.classList).find((cls) =>
-      cls.startsWith("theme-")
-    );
-    const activeTheme = activeThemeClass
-      ? findThemeByClassName(activeThemeClass)
-      : themes[0];
-    applyThemeById(activeTheme.id);
+    applyThemeById(initialThemeId, { persist: false });
 
     themeSelect.addEventListener("change", () => {
       applyThemeById(themeSelect.value);
     });
   } else {
-    const activeThemeClass = Array.from(document.body.classList).find((cls) =>
-      cls.startsWith("theme-")
-    );
-    const activeTheme = activeThemeClass
-      ? findThemeByClassName(activeThemeClass)
-      : themes[0];
-    applyHeaderThemeBranding(activeTheme);
+    applyThemeById(initialThemeId, { persist: false });
   }
 
   // BBCode Generator Modal Logic
