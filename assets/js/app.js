@@ -1,8 +1,8 @@
-// HTML escape utility — prevents XSS from user-supplied data (Nexus API, submitted JSON)
-function escapeHtml(text) {
-  const map = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
-  return String(text).replace(/[&<>"']/g, (m) => map[m]);
-}
+/**
+ * NC Zoning Board — Main Application Logic
+ * DOM manipulation, map initialization, event handlers, sidebar, modals, image gallery.
+ * Depends on: constants.js, utils.js, services.js (via NCZ namespace).
+ */
 
 document.addEventListener("DOMContentLoaded", () => {
   // Terminal header close buttons — delegates to each modal's existing close button
@@ -113,12 +113,12 @@ document.addEventListener("DOMContentLoaded", () => {
         bbcodeCopyBtn.textContent = "[ COPIED! ]";
         setTimeout(() => {
           bbcodeCopyBtn.textContent = original;
-        }, COPY_FEEDBACK_MS);
+        }, NCZ.COPY_FEEDBACK_MS);
       }).catch(() => {
         bbcodeCopyBtn.textContent = "[ COPY FAILED ]";
         setTimeout(() => {
           bbcodeCopyBtn.textContent = "[ COPY TO CLIPBOARD ]";
-        }, COPY_FEEDBACK_MS);
+        }, NCZ.COPY_FEEDBACK_MS);
       });
     });
   }
@@ -179,391 +179,6 @@ document.addEventListener("DOMContentLoaded", () => {
   initMap();
 });
 
-const CATEGORY_STYLES = {
-  "location-overhaul": {
-    color: "#00f0ff",
-    label: "Overhaul",
-    class: "cat-location-overhaul",
-  },
-  "new-location": {
-    color: "#ffb300",
-    label: "New Location",
-    class: "cat-new-location",
-  },
-  other: { color: "#8892b0", label: "Other", class: "cat-other" },
-};
-
-const NEXUS_GAME_ID = 3333; // Cyberpunk 2077
-const NEXUS_GQL_ENDPOINT = "https://api.nexusmods.com/v2/graphql";
-const NEXUS_BATCH_SIZE = 50;
-const DESCRIPTION_MAX_LENGTH = 500;
-const COPY_FEEDBACK_MS = 2000;
-const SEARCH_DEBOUNCE_MS = 200;
-const THUMB_CACHE_KEY = "nc_nexus_thumbs";
-const THUMB_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
-const AUTODISCOVERY_CACHE_KEY = "nc_nexus_autodiscovery";
-const AUTODISCOVERY_CACHE_TTL = 10 * 60 * 1000; // 10 minutes
-const PIN_TOOLTIP_MARGIN_PX = 10;
-const PIN_TOOLTIP_GAP_PX = 8;
-const PIN_TOOLTIP_ARROW_SIZE_PX = 6;
-const PIN_TOOLTIP_ARROW_EDGE_PADDING_PX = 12;
-const PIN_POPUP_MARGIN_PX = 12;
-const PIN_POPUP_GAP_PX = 10;
-const PIN_POPUP_ARROW_SIZE_PX = 10;
-const PIN_POPUP_ARROW_EDGE_PADDING_PX = 18;
-const MOBILE_BREAKPOINT = 768;
-const CLUSTER_PANEL_WIDTH_KEY = "nc_cluster_panel_width";
-const CLUSTER_PANEL_DEFAULT_WIDTH = 400;
-const CLUSTER_PANEL_MIN_WIDTH = 260;
-const CLUSTER_PANEL_MAX_WIDTH = 720;
-
-// Read/write a JSON object from localStorage with a TTL check
-function cacheGet(key, ttl) {
-  try {
-    const raw = localStorage.getItem(key);
-    if (!raw) return null;
-    const { ts, data } = JSON.parse(raw);
-    if (Date.now() - ts > ttl) return null;
-    return data;
-  } catch { return null; }
-}
-function cacheSet(key, data) {
-  try { localStorage.setItem(key, JSON.stringify({ ts: Date.now(), data })); }
-  catch { /* quota exceeded — silently skip */ }
-}
-
-// Convert gameId + modId → Nexus UID (composite BigInt key)
-function toNexusUid(modId) {
-  return ((BigInt(NEXUS_GAME_ID) << BigInt(32)) + BigInt(modId)).toString();
-}
-
-// Batch-fetch mod thumbnails from Nexus V2 GraphQL API (no auth needed for public data)
-// NOTE from Nexus Mods (Pickysaurus): The V2 API is technically unsupported, and long-term
-// they intend to move back to REST. This implementation might need an update in the future if V2 is retired.
-async function fetchNexusThumbnails(nexusIds) {
-  const validIds = nexusIds.filter((id) => {
-    if (!id) return false;
-    const lower = id.toLowerCase();
-    if (lower === "wip" || lower === "dummy") return false;
-    return /^\d+$/.test(id); // Must be numeric
-  });
-  if (validIds.length === 0) return {};
-
-  // Return cached thumbnails if still fresh
-  const cached = cacheGet(THUMB_CACHE_KEY, THUMB_CACHE_TTL);
-  if (cached) {
-    // Check if all requested IDs are in the cache — if so, skip the API call
-    const missing = validIds.filter((id) => !cached[id]);
-    if (missing.length === 0) {
-      console.log(`Thumbnails: serving ${validIds.length} from cache`);
-      return cached;
-    }
-    // Only fetch the missing IDs
-    console.log(`Thumbnails: ${validIds.length - missing.length} cached, fetching ${missing.length} new`);
-    const fetched = await fetchNexusThumbnailsFromApi(missing);
-    const merged = { ...cached, ...fetched };
-    cacheSet(THUMB_CACHE_KEY, merged);
-    return merged;
-  }
-
-  const result = await fetchNexusThumbnailsFromApi(validIds);
-  cacheSet(THUMB_CACHE_KEY, result);
-  return result;
-}
-
-async function fetchNexusThumbnailsFromApi(validIds) {
-  const uids = validIds.map((id) => toNexusUid(id));
-  const query = `query modsByUid($uids: [ID!]!, $count: Int!) {
-        modsByUid(uids: $uids, count: $count) {
-            nodes {
-                modId
-                pictureUrl
-                thumbnailUrl
-            }
-        }
-    }`;
-
-  try {
-    const res = await fetch(NEXUS_GQL_ENDPOINT, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ query, variables: { uids, count: validIds.length } }),
-    });
-    const json = await res.json();
-    const nodes = json?.data?.modsByUid?.nodes || [];
-    const thumbMap = {};
-    nodes.forEach((node) => {
-      thumbMap[String(node.modId)] = {
-        pictureUrl: node.pictureUrl,
-        thumbnailUrl: node.thumbnailUrl,
-      };
-    });
-    return thumbMap;
-  } catch (err) {
-    console.warn("Failed to fetch Nexus thumbnails:", err);
-    return {};
-  }
-}
-
-// Parse the [code]NCZoning:...[/code] metadata block from a Nexus mod description.
-// Returns a parsed object or null if the block is missing/invalid.
-function parseNcZoningBlock(description, validTagNames) {
-  if (!description) return null;
-
-  // Normalize HTML line breaks from Nexus API to actual newlines
-  let text = description.replace(/<br\s*\/?>/gi, "\n");
-
-  // Strip outer [spoiler]...[/spoiler] wrapper if present
-  text = text.replace(/\[spoiler\]([\s\S]*?)\[\/spoiler\]/gi, "$1");
-
-  // Extract [code]NCZoning:\n...[/code] block
-  const match = text.match(/\[code\]\s*NCZoning:\s*\n([\s\S]*?)\[\/code\]/i);
-  if (!match) return null;
-
-  const data = {};
-  for (const line of match[1].split("\n")) {
-    const eqIdx = line.indexOf("=");
-    if (eqIdx === -1) continue;
-    const key = line.slice(0, eqIdx).trim().toLowerCase();
-    const value = line.slice(eqIdx + 1).trim();
-    if (key && value) data[key] = value;
-  }
-
-  // coords is required — two comma-separated numbers
-  if (!data.coords) return null;
-  const coordParts = data.coords.split(",").map((s) => parseFloat(s.trim()));
-  if (coordParts.length !== 2 || coordParts.some(isNaN)) return null;
-
-  // category is required
-  const validCategories = ["location-overhaul", "new-location", "other"];
-  if (!data.category || !validCategories.includes(data.category)) return null;
-
-  // tags: filter to known tags only — unknown tags silently dropped
-  const tags = data.tags
-    ? data.tags.split(",").map((t) => t.trim()).filter((t) => validTagNames.has(t))
-    : [];
-
-  // additional authors beyond Nexus uploader
-  const additionalAuthors = data.authors
-    ? data.authors.split(",").map((a) => a.trim()).filter(Boolean)
-    : [];
-
-  return {
-    coordinates: coordParts,
-    category: data.category,
-    tags,
-    credits: data.credits || null,
-    additionalAuthors,
-  };
-}
-
-// Fetch all mods tagged "NCZoning" from Nexus V2 GraphQL, parse their BBCode blocks,
-// and return an array of mod objects ready to merge with the manual mods.json entries.
-// ModsFilter schema: https://graphql.nexusmods.com/#definition-ModsFilter
-// Fields use [BaseFilterValue] = array of { value: ... } objects.
-// "uploader" on the Mod type is a plain string (username), not a nested object.
-async function fetchNexusTaggedMods(existingNexusIds, validTagNames) {
-  // Return cached auto-discovery results if still fresh
-  const cached = cacheGet(AUTODISCOVERY_CACHE_KEY, AUTODISCOVERY_CACHE_TTL);
-  if (cached) {
-    // Re-filter against current manual entries (may have changed since cache was written)
-    const filtered = cached.filter((m) => !existingNexusIds.has(m.nexus_id));
-    console.log(`NCZoning: serving ${filtered.length} auto-discovered mods from cache`);
-    return filtered;
-  }
-
-  const query = `
-    query NCZoningMods($filter: ModsFilter!, $count: Int!, $offset: Int!) {
-      mods(filter: $filter, count: $count, offset: $offset) {
-        nodes {
-          modId
-          name
-          summary
-          description
-          pictureUrl
-          thumbnailUrl
-          uploader {
-            name
-          }
-        }
-        totalCount
-      }
-    }
-  `;
-
-  const COUNT = NEXUS_BATCH_SIZE;
-  let offset = 0;
-  let totalCount = Infinity;
-  const results = [];
-
-  try {
-    while (offset < totalCount) {
-      const res = await fetch(NEXUS_GQL_ENDPOINT, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          query,
-          variables: {
-            filter: {
-              gameId: [{ value: String(NEXUS_GAME_ID) }],
-              tag: [{ value: "NCZoning" }],
-            },
-            count: COUNT,
-            offset,
-          },
-        }),
-      });
-      const json = await res.json();
-
-      if (json.errors) {
-        console.warn("NCZoning API errors:", json.errors);
-      }
-
-      const page = json?.data?.mods;
-      if (!page) {
-        console.warn("NCZoning auto-discovery: no mods page in response", json);
-        break;
-      }
-
-      totalCount = page.totalCount ?? 0;
-      const nodes = page.nodes || [];
-      console.log(`NCZoning: fetched ${nodes.length} mods (offset ${offset}, total ${totalCount})`);
-      if (nodes.length === 0) break;
-
-      for (const node of nodes) {
-        const nexusId = String(node.modId);
-        if (existingNexusIds.has(nexusId)) continue; // manual entry wins
-
-        const parsed = parseNcZoningBlock(node.description, validTagNames);
-        if (!parsed) {
-          console.log(`NCZoning: skipping mod ${nexusId} (${node.name}) — no valid [NCZoning] block found. Description preview:`, (node.description || "").slice(0, 300));
-          continue;
-        }
-
-        const uploaderName = node.uploader?.name || "Unknown";
-        const allAuthors = [uploaderName, ...parsed.additionalAuthors];
-
-        const summary = node.summary || "";
-        const description =
-          summary.length > DESCRIPTION_MAX_LENGTH ? summary.slice(0, DESCRIPTION_MAX_LENGTH - 3) + "..." : summary;
-
-        results.push({
-          id: `nexus-auto-${nexusId}`,
-          name: node.name || "Unknown Mod",
-          authors: allAuthors,
-          ...(parsed.credits ? { credits: parsed.credits } : {}),
-          coordinates: parsed.coordinates,
-          nexus_id: nexusId,
-          description,
-          category: parsed.category,
-          tags: ["nczoning", ...parsed.tags],
-          _source: "nexus-auto",
-          _thumbnailUrl: node.thumbnailUrl || null,
-          _pictureUrl: node.pictureUrl || null,
-        });
-      }
-
-      offset += nodes.length;
-      if (nodes.length < COUNT) break; // last page
-    }
-  } catch (err) {
-    console.warn("NCZoning auto-discovery failed:", err);
-  }
-
-  console.log(`NCZoning: auto-discovery complete — ${results.length} mods added`);
-  cacheSet(AUTODISCOVERY_CACHE_KEY, results);
-  return results;
-}
-
-// Forward: CET (x, y) → Leaflet [lat, lng]
-function cetToLeaflet(cetX, cetY) {
-  const lat = 0.02101335 * cetY - 93.68566;
-  const lng = 0.0208623 * cetX + 132.8016;
-  return [lat, lng];
-}
-
-function clamp(value, min, max) {
-  return Math.min(Math.max(value, min), max);
-}
-
-/**
- * Chooses an anchor side and calculates a clamped box position + arrow anchor.
- * Consumers apply the returned values to their own DOM elements/styles.
- */
-function pickDirectionAndPosition(anchorPoint, size, mapSize, config) {
-  const mapWidth = mapSize.x ?? mapSize.width;
-  const mapHeight = mapSize.y ?? mapSize.height;
-  const directionOrder = config.directionOrder ?? ["top", "bottom", "right", "left"];
-
-  const requiredVertical = size.height + config.gapPx + config.arrowSizePx;
-  const requiredHorizontal = size.width + config.gapPx + config.arrowSizePx;
-
-  const space = {
-    top: anchorPoint.y - config.marginPx,
-    bottom: mapHeight - anchorPoint.y - config.marginPx,
-    left: anchorPoint.x - config.marginPx,
-    right: mapWidth - anchorPoint.x - config.marginPx,
-  };
-
-  let direction = directionOrder.find((dir) => {
-    if (dir === "top" || dir === "bottom") return space[dir] >= requiredVertical;
-    return space[dir] >= requiredHorizontal;
-  });
-
-  if (!direction) {
-    direction = directionOrder.reduce(
-      (best, dir) => (space[dir] > space[best] ? dir : best),
-      directionOrder[0],
-    );
-  }
-
-  let left = anchorPoint.x - (size.width / 2);
-  let top = anchorPoint.y - size.height - config.gapPx - config.arrowSizePx;
-
-  if (direction === "bottom") {
-    top = anchorPoint.y + config.gapPx + config.arrowSizePx;
-  } else if (direction === "left") {
-    left = anchorPoint.x - size.width - config.gapPx - config.arrowSizePx;
-    top = anchorPoint.y - (size.height / 2);
-  } else if (direction === "right") {
-    left = anchorPoint.x + config.gapPx + config.arrowSizePx;
-    top = anchorPoint.y - (size.height / 2);
-  }
-
-  let minLeft = config.marginPx;
-  let maxLeft = mapWidth - config.marginPx - size.width;
-  let minTop = config.marginPx;
-  let maxTop = mapHeight - config.marginPx - size.height;
-
-  if (direction === "right") minLeft += config.arrowSizePx;
-  if (direction === "left") maxLeft -= config.arrowSizePx;
-  if (direction === "bottom") minTop += config.arrowSizePx;
-  if (direction === "top") maxTop -= config.arrowSizePx;
-
-  if (maxLeft < minLeft) {
-    minLeft = maxLeft = Math.max(0, (mapWidth - size.width) / 2);
-  }
-  if (maxTop < minTop) {
-    minTop = maxTop = Math.max(0, (mapHeight - size.height) / 2);
-  }
-
-  left = clamp(left, minLeft, maxLeft);
-  top = clamp(top, minTop, maxTop);
-
-  const arrowX = clamp(
-    anchorPoint.x - left,
-    config.arrowEdgePaddingPx,
-    size.width - config.arrowEdgePaddingPx,
-  );
-  const arrowY = clamp(
-    anchorPoint.y - top,
-    config.arrowEdgePaddingPx,
-    size.height - config.arrowEdgePaddingPx,
-  );
-
-  return { direction, left, top, arrowX, arrowY };
-}
-
 /** Controls pin hover tooltip placement and visibility inside map bounds. */
 function createPinTooltipController(map) {
   // Create one tooltip element we reuse for every marker.
@@ -605,15 +220,15 @@ function createPinTooltipController(map) {
     const mapWidth = container.clientWidth;
     const mapHeight = container.clientHeight;
     const size = measureTooltip();
-    const { direction, left, top, arrowX, arrowY } = pickDirectionAndPosition(
+    const { direction, left, top, arrowX, arrowY } = NCZ.pickDirectionAndPosition(
       point,
       size,
       { x: mapWidth, y: mapHeight },
       {
-        marginPx: PIN_TOOLTIP_MARGIN_PX,
-        gapPx: PIN_TOOLTIP_GAP_PX,
-        arrowSizePx: PIN_TOOLTIP_ARROW_SIZE_PX,
-        arrowEdgePaddingPx: PIN_TOOLTIP_ARROW_EDGE_PADDING_PX,
+        marginPx: NCZ.PIN_TOOLTIP_MARGIN_PX,
+        gapPx: NCZ.PIN_TOOLTIP_GAP_PX,
+        arrowSizePx: NCZ.PIN_TOOLTIP_ARROW_SIZE_PX,
+        arrowEdgePaddingPx: NCZ.PIN_TOOLTIP_ARROW_EDGE_PADDING_PX,
       },
     );
 
@@ -665,15 +280,15 @@ function positionDynamicPopup(map, popup) {
   };
   const mapSize = map.getSize();
   const anchor = map.latLngToContainerPoint(popup.getLatLng());
-  const { direction, left, top, arrowX, arrowY } = pickDirectionAndPosition(
+  const { direction, left, top, arrowX, arrowY } = NCZ.pickDirectionAndPosition(
     anchor,
     size,
     mapSize,
     {
-      marginPx: PIN_POPUP_MARGIN_PX,
-      gapPx: PIN_POPUP_GAP_PX,
-      arrowSizePx: PIN_POPUP_ARROW_SIZE_PX,
-      arrowEdgePaddingPx: PIN_POPUP_ARROW_EDGE_PADDING_PX,
+      marginPx: NCZ.PIN_POPUP_MARGIN_PX,
+      gapPx: NCZ.PIN_POPUP_GAP_PX,
+      arrowSizePx: NCZ.PIN_POPUP_ARROW_SIZE_PX,
+      arrowEdgePaddingPx: NCZ.PIN_POPUP_ARROW_EDGE_PADDING_PX,
     },
   );
 
@@ -816,8 +431,8 @@ async function initMap() {
   function getClusterPanelMaxWidth() {
     const viewportBound = Math.floor(window.innerWidth * 0.7);
     return Math.max(
-      CLUSTER_PANEL_MIN_WIDTH,
-      Math.min(CLUSTER_PANEL_MAX_WIDTH, viewportBound),
+      NCZ.CLUSTER_PANEL_MIN_WIDTH,
+      Math.min(NCZ.CLUSTER_PANEL_MAX_WIDTH, viewportBound),
     );
   }
 
@@ -825,13 +440,13 @@ async function initMap() {
   function clampClusterPanelWidth(width) {
     return Math.min(
       getClusterPanelMaxWidth(),
-      Math.max(CLUSTER_PANEL_MIN_WIDTH, Math.round(width)),
+      Math.max(NCZ.CLUSTER_PANEL_MIN_WIDTH, Math.round(width)),
     );
   }
 
   // Apply panel width (desktop only), and optionally save it in localStorage
   function setClusterPanelWidth(width, persist = true) {
-    if (window.innerWidth < MOBILE_BREAKPOINT) {
+    if (window.innerWidth < NCZ.MOBILE_BREAKPOINT) {
       clusterPanel.style.removeProperty("width");
       return;
     }
@@ -841,7 +456,7 @@ async function initMap() {
 
     if (persist) {
       try {
-        localStorage.setItem(CLUSTER_PANEL_WIDTH_KEY, String(clampedWidth));
+        localStorage.setItem(NCZ.CLUSTER_PANEL_WIDTH_KEY, String(clampedWidth));
       } catch {
         // Ignore storage failures (e.g. private mode/quota)
       }
@@ -882,7 +497,7 @@ async function initMap() {
 
     // Start drag operation when user presses the resize handle
     clusterPanelResizeHandle.addEventListener("mousedown", (event) => {
-      if (window.innerWidth < MOBILE_BREAKPOINT) return;
+      if (window.innerWidth < NCZ.MOBILE_BREAKPOINT) return;
       event.preventDefault();
       event.stopPropagation();
 
@@ -900,7 +515,7 @@ async function initMap() {
 
     // Keep width valid when viewport size changes
     window.addEventListener("resize", () => {
-      if (window.innerWidth < MOBILE_BREAKPOINT) {
+      if (window.innerWidth < NCZ.MOBILE_BREAKPOINT) {
         clusterPanel.style.removeProperty("width");
         return;
       }
@@ -909,19 +524,19 @@ async function initMap() {
       const currentWidth =
         Number.isFinite(inlineWidth) && inlineWidth > 0
           ? inlineWidth
-          : clusterPanel.getBoundingClientRect().width || CLUSTER_PANEL_DEFAULT_WIDTH;
+          : clusterPanel.getBoundingClientRect().width || NCZ.CLUSTER_PANEL_DEFAULT_WIDTH;
       setClusterPanelWidth(currentWidth, false);
     });
 
     // Restore saved width, or use default width on first visit
     const savedWidth = Number.parseInt(
-      localStorage.getItem(CLUSTER_PANEL_WIDTH_KEY),
+      localStorage.getItem(NCZ.CLUSTER_PANEL_WIDTH_KEY),
       10,
     );
     if (Number.isFinite(savedWidth)) {
       setClusterPanelWidth(savedWidth, false);
     } else {
-      setClusterPanelWidth(CLUSTER_PANEL_DEFAULT_WIDTH, false);
+      setClusterPanelWidth(NCZ.CLUSTER_PANEL_DEFAULT_WIDTH, false);
     }
   }
 
@@ -959,15 +574,15 @@ async function initMap() {
     } else {
       childMarkers.forEach((childMarker) => {
         const mod = childMarker.modData;
-        const catStyle = CATEGORY_STYLES[mod.category] || CATEGORY_STYLES.other;
+        const catStyle = NCZ.CATEGORY_STYLES[mod.category] || NCZ.CATEGORY_STYLES.other;
         // Build tag chips shown under author name
         const modTagsHtml = (mod.tags || [])
-          .map((tag) => `<span class="tag-badge">${escapeHtml(tag)}</span>`)
+          .map((tag) => `<span class="tag-badge">${NCZ.escapeHtml(tag)}</span>`)
           .join("");
         // Thumbnail becomes clickable only when full-size image exists
         const isThumbClickable = Boolean(childMarker.modFull);
         const thumbMarkup = childMarker.modThumb
-          ? `<img class="cluster-mod-thumb${isThumbClickable ? " cluster-mod-thumb-clickable" : ""}" src="${escapeHtml(childMarker.modThumb)}" alt="${escapeHtml(mod.name)} thumbnail" referrerpolicy="no-referrer"${isThumbClickable ? ` data-full-src="${escapeHtml(childMarker.modFull)}"` : ""}>`
+          ? `<img class="cluster-mod-thumb${isThumbClickable ? " cluster-mod-thumb-clickable" : ""}" src="${NCZ.escapeHtml(childMarker.modThumb)}" alt="${NCZ.escapeHtml(mod.name)} thumbnail" referrerpolicy="no-referrer"${isThumbClickable ? ` data-full-src="${NCZ.escapeHtml(childMarker.modFull)}"` : ""}>`
           : `<span class="cluster-mod-thumb cluster-mod-thumb-placeholder" aria-hidden="true"></span>`;
 
         const item = document.createElement("li");
@@ -981,13 +596,13 @@ async function initMap() {
           <span class="cluster-mod-layout">
             ${thumbMarkup}
             <span class="cluster-mod-content">
-              <span class="cluster-mod-name">${escapeHtml(mod.name)}</span>
+              <span class="cluster-mod-name">${NCZ.escapeHtml(mod.name)}</span>
               <span class="cluster-mod-separator"></span>
-              <span class="cluster-mod-meta">by ${escapeHtml(mod.authors.join(", "))}</span>
+              <span class="cluster-mod-meta">by ${NCZ.escapeHtml(mod.authors.join(", "))}</span>
               <span class="cluster-mod-tags">
                 ${modTagsHtml}
               </span>
-              <span class="cluster-mod-desc">${escapeHtml(mod.description || "No description provided.")}</span>
+              <span class="cluster-mod-desc">${NCZ.escapeHtml(mod.description || "No description provided.")}</span>
             </span>
           </span>
         `;
@@ -1005,7 +620,7 @@ async function initMap() {
         // Clicking row focuses corresponding marker/popup on the map
         button.addEventListener("click", () => {
           focusMarker(childMarker);
-          if (window.innerWidth < MOBILE_BREAKPOINT) hideClusterPanel();
+          if (window.innerWidth < NCZ.MOBILE_BREAKPOINT) hideClusterPanel();
         });
 
         item.appendChild(button);
@@ -1032,7 +647,7 @@ async function initMap() {
   });
 
   // Auto-hide sidebar on mobile screens
-  if (window.innerWidth < MOBILE_BREAKPOINT) {
+  if (window.innerWidth < NCZ.MOBILE_BREAKPOINT) {
     sidebar.classList.add("hidden");
     sidebarOpen.classList.add("visible");
   }
@@ -1042,14 +657,7 @@ async function initMap() {
 
   // 3. Fetch and Setup Data
   try {
-    // Fetch both mods and tags in parallel
-    const [modsRes, tagsRes] = await Promise.all([
-      fetch("mods.json"),
-      fetch("data/tags.json"),
-    ]);
-
-    const mods = await modsRes.json();
-    const tagsDict = await tagsRes.json();
+    const { mods, tagsDict } = await NCZ.fetchModData();
 
     // Auto-discover mods tagged "NCZoning" on Nexus (manual entries win on conflict)
     const existingNexusIds = new Set(
@@ -1058,7 +666,7 @@ async function initMap() {
         .map((m) => String(m.nexus_id)),
     );
     const validTagNames = new Set(Object.keys(tagsDict));
-    const autoMods = await fetchNexusTaggedMods(existingNexusIds, validTagNames);
+    const autoMods = await NCZ.fetchNexusTaggedMods(existingNexusIds, validTagNames);
     mods.push(...autoMods);
 
     modCountEl.textContent = `(${mods.length})`;
@@ -1075,15 +683,15 @@ async function initMap() {
         manualNexusIds.push(nid);
       }
     }
-    const fetchedThumbs = await fetchNexusThumbnails(manualNexusIds);
+    const fetchedThumbs = await NCZ.fetchNexusThumbnails(manualNexusIds);
     Object.assign(nexusThumbs, fetchedThumbs);
 
     mods
       .sort((a, b) => a.name.localeCompare(b.name))
       .forEach((mod) => {
-        const [lat, lng] = cetToLeaflet(mod.coordinates[0], mod.coordinates[1]);
+        const [lat, lng] = NCZ.cetToLeaflet(mod.coordinates[0], mod.coordinates[1]);
         const catStyle =
-          CATEGORY_STYLES[mod.category] || CATEGORY_STYLES["other"];
+          NCZ.CATEGORY_STYLES[mod.category] || NCZ.CATEGORY_STYLES["other"];
 
         // Custom Marker Icon (Diamond/Square for Night Corp)
         const icon = L.divIcon({
@@ -1128,7 +736,7 @@ async function initMap() {
         const authorsHtml = mod.authors
           .map(
             (author) => `
-                <a href="https://www.nexusmods.com/profile/${encodeURIComponent(author)}/mods?gameId=3333" target="_blank" class="author-link">👤 ${escapeHtml(author)}</a>
+                <a href="https://www.nexusmods.com/profile/${encodeURIComponent(author)}/mods?gameId=3333" target="_blank" class="author-link">\u{1F464} ${NCZ.escapeHtml(author)}</a>
             `,
           )
           .join(" ");
@@ -1139,7 +747,7 @@ async function initMap() {
             const def = tag === "nczoning"
               ? "Sourced automatically from Nexus Mods"
               : tagsDict[tag] || "";
-            return `<span class="tag-badge" title="${escapeHtml(def)}">${escapeHtml(tag)}</span>`;
+            return `<span class="tag-badge" title="${NCZ.escapeHtml(def)}">${NCZ.escapeHtml(tag)}</span>`;
           })
           .join("");
 
@@ -1160,23 +768,23 @@ async function initMap() {
 
         const popupContent = `
                 <div class="custom-popup-content">
-                    <div class="custom-popup-title">${escapeHtml(mod.name)}${nexusAutoBadge}</div>
+                    <div class="custom-popup-title">${NCZ.escapeHtml(mod.name)}${nexusAutoBadge}</div>
                     <div class="custom-popup-authors">${authorsHtml}</div>
-                    ${mod.credits ? `<div class="custom-popup-credits">Credits: ${escapeHtml(mod.credits)}</div>` : ""}
+                    ${mod.credits ? `<div class="custom-popup-credits">Credits: ${NCZ.escapeHtml(mod.credits)}</div>` : ""}
                     <div class="custom-popup-tags">${tagsHtml}</div>
                     ${
                       thumbSrc && fullSrc
                         ? `
                         <div class="custom-popup-images">
-                            <img src="${escapeHtml(thumbSrc)}" class="popup-thumb" referrerpolicy="no-referrer" data-full-src="${escapeHtml(fullSrc)}">
+                            <img src="${NCZ.escapeHtml(thumbSrc)}" class="popup-thumb" referrerpolicy="no-referrer" data-full-src="${NCZ.escapeHtml(fullSrc)}">
                         </div>
                     `
                         : ""
                     }
-                    <div class="custom-popup-desc">${escapeHtml(mod.description || "No description provided.")}</div>
+                    <div class="custom-popup-desc">${NCZ.escapeHtml(mod.description || "No description provided.")}</div>
                     <div class="popup-actions">
-                        <a href="${escapeHtml(nexusUrl)}" target="_blank" class="custom-popup-link">${escapeHtml(nexusLabel)}</a>
-                        ${!mod._source ? `<a href="${escapeHtml(editUrl)}" target="_blank" class="custom-popup-link custom-popup-link-edit">Suggest Edit</a>` : ""}
+                        <a href="${NCZ.escapeHtml(nexusUrl)}" target="_blank" class="custom-popup-link">${NCZ.escapeHtml(nexusLabel)}</a>
+                        ${!mod._source ? `<a href="${NCZ.escapeHtml(editUrl)}" target="_blank" class="custom-popup-link custom-popup-link-edit">Suggest Edit</a>` : ""}
                     </div>
                 </div>
             `;
@@ -1197,18 +805,18 @@ async function initMap() {
           : "";
         li.innerHTML = `
                 <div class="mod-item-header">
-                    <span class="mod-item-name">${escapeHtml(mod.name)}</span>${sidebarBadge}
+                    <span class="mod-item-name">${NCZ.escapeHtml(mod.name)}</span>${sidebarBadge}
                 </div>
-                <span class="mod-item-author">by ${escapeHtml(mod.authors.join(", "))}</span>
+                <span class="mod-item-author">by ${NCZ.escapeHtml(mod.authors.join(", "))}</span>
                 <div class="mod-item-meta">
-                    <span class="mod-item-category badge-${escapeHtml(mod.category)}">${escapeHtml(catStyle.label)}</span>
+                    <span class="mod-item-category badge-${NCZ.escapeHtml(mod.category)}">${NCZ.escapeHtml(catStyle.label)}</span>
                 </div>
             `;
         li.addEventListener("click", (e) => {
           if (e.target.tagName !== "A") {
             focusMarker(marker);
             hideClusterPanel();
-            if (window.innerWidth < MOBILE_BREAKPOINT) sidebar.classList.add("hidden");
+            if (window.innerWidth < NCZ.MOBILE_BREAKPOINT) sidebar.classList.add("hidden");
           }
         });
 
@@ -1245,7 +853,7 @@ async function initMap() {
 
     // Fit map to plotted pins
     const pinBounds = L.latLngBounds(
-      mods.map((mod) => cetToLeaflet(mod.coordinates[0], mod.coordinates[1])),
+      mods.map((mod) => NCZ.cetToLeaflet(mod.coordinates[0], mod.coordinates[1])),
     );
     if (pinBounds.isValid()) {
       map.invalidateSize();
@@ -1255,7 +863,7 @@ async function initMap() {
     // 5. Setup Category Filters
     const activeCategories = new Set(mods.map((m) => m.category));
     activeCategories.forEach((cat) => {
-      const style = CATEGORY_STYLES[cat] || CATEGORY_STYLES["other"];
+      const style = NCZ.CATEGORY_STYLES[cat] || NCZ.CATEGORY_STYLES["other"];
       const btn = document.createElement("button");
       btn.className = "filter-btn active";
       btn.textContent = style.label;
@@ -1340,7 +948,7 @@ async function initMap() {
     let searchDebounce;
     searchInput.addEventListener("input", () => {
       clearTimeout(searchDebounce);
-      searchDebounce = setTimeout(applyFilters, SEARCH_DEBOUNCE_MS);
+      searchDebounce = setTimeout(applyFilters, NCZ.SEARCH_DEBOUNCE_MS);
     });
 
     // Centralized Filter Logic

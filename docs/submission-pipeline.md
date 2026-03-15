@@ -50,10 +50,11 @@ To allow the bot to update this exact discord message later on, the webhook retu
 
 [**.github/workflows/validate-mods.yml**](../.github/workflows/validate-mods.yml)
 
-When the PR is opened, GitHub Actions launches this workflow. It performs two checks:
+When a PR is opened, GitHub Actions launches this workflow. It **always runs** on every PR (so the required status check is always reported), but skips the validation steps if no data files changed.
 
-1. **Schema Validation**: Uses `ajv-cli` to compare the compiled `mods.json` (after a test build) against `mods.schema.json`.
-2. **Tag Validation**: Runs `node scripts/validate_tags.js` to ensure all tags used in the PR exist in the `data/tags.json` registry.
+1. **Change Detection**: Diffs the PR branch against its base — if no `data/locations/`, `data/tags.json`, or `mods.schema.json` files changed, the remaining steps are skipped and the check passes immediately.
+2. **Schema Validation**: Uses `ajv-cli` to compare the compiled `mods.json` (after a test build) against `mods.schema.json`.
+3. **Tag Validation**: Runs `node scripts/validate_tags.js` to ensure all tags used in the PR exist in the `data/tags.json` registry.
 
 ## 🎉 Stage 5: Finalization & Merge
 
