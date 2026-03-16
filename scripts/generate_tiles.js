@@ -14,7 +14,7 @@ const sharp = require('sharp');
 const path = require('path');
 const fs = require('fs');
 
-const INPUT = path.join(__dirname, '..', 'raw maps', '8k', 'night_city.png');
+const INPUT = path.join(__dirname, '..', 'raw maps', '8k', 'night_city_8k_transparent.png');
 const OUTPUT_DIR = path.join(__dirname, '..', 'assets', 'tiles');
 const TILE_SIZE = 256;
 const MAX_ZOOM = 5; // 2^5 = 32 tiles per axis → 32×256 = 8192
