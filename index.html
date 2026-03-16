@@ -120,12 +120,8 @@
         <div id="sidebar">
             <div class="sidebar-section-header" id="sidebar-cat-header">
                 Filter by Category
-                <button id="sidebar-close" aria-label="Close sidebar">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M18 6 6 18" />
-                        <path d="m6 6 12 12" />
-                    </svg>
+                <button id="sidebar-close" class="ui-close-btn" aria-label="Close sidebar">
+                    <span class="ui-close-btn-icon" aria-hidden="true"></span>
                 </button>
             </div>
             <div id="category-filters"></div>
@@ -154,51 +150,27 @@
             </div>
             <ul id="mod-list"></ul>
             <div id="sidebar-footer">
-                <a href="https://discord.gg/sc4yEx2fNf" target="_blank">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linejoin="round"
-                        style="vertical-align: text-bottom; margin-right: 4px;">
-                        <path d="M18.8943 4.34399C17.5183 3.71467 16.057 3.256 14.5317 3C14.3396 3.33067 14.1263 3.77866 13.977 4.13067C12.3546 3.89599 10.7439 3.89599 9.14391 4.13067C8.99457 3.77866 8.77056 3.33067 8.58922 3C7.05325 3.256 5.59191 3.71467 4.22552 4.34399C1.46286 8.41865 0.716188 12.3973 1.08952 16.3226C2.92418 17.6559 4.69486 18.4666 6.4346 19C6.86126 18.424 7.24527 17.8053 7.57594 17.1546C6.9466 16.92 6.34927 16.632 5.77327 16.2906C5.9226 16.184 6.07194 16.0667 6.21061 15.9493C9.68793 17.5387 13.4543 17.5387 16.889 15.9493C17.0383 16.0667 17.177 16.184 17.3263 16.2906C16.7503 16.632 16.153 16.92 15.5236 17.1546C15.8543 17.8053 16.2383 18.424 16.665 19C18.4036 18.4666 20.185 17.6559 22.01 16.3226C22.4687 11.7787 21.2836 7.83202 18.8943 4.34399ZM8.05593 13.9013C7.01058 13.9013 6.15725 12.952 6.15725 11.7893C6.15725 10.6267 6.98925 9.67731 8.05593 9.67731C9.11191 9.67731 9.97588 10.6267 9.95454 11.7893C9.95454 12.952 9.11191 13.9013 8.05593 13.9013ZM15.065 13.9013C14.0196 13.9013 13.1652 12.952 13.1652 11.7893C13.1652 10.6267 13.9983 9.67731 15.065 9.67731C16.121 9.67731 16.985 10.6267 16.9636 11.7893C16.9636 12.952 16.1317 13.9013 15.065 13.9013Z" />
-                    </svg>
-                    Join the Locations Hub Discord
-                </a>
-                <button id="bbcode-sidebar-btn" class="sidebar-submit-btn">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                <a id="sidebar-open-bbcode-link" href="#" class="terminal-link">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                        style="vertical-align: text-bottom; margin-right: 4px;">
+                        style="vertical-align: text-bottom; margin-right: 6px;">
                         <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0Z"></path>
                         <circle cx="12" cy="10" r="3"></circle>
-                    </svg>
-                    Submit a New Mod Location
-                </button>
-                <a href="https://github.com/spuddeh/nc-zoning-board/issues/new?template=bug_report.yml" target="_blank">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                        style="vertical-align: text-bottom; margin-right: 4px;">
-                        <rect width="8" height="14" x="8" y="6" rx="4"></rect>
-                        <path d="m19 7-3 2"></path>
-                        <path d="m5 7 3 2"></path>
-                        <path d="m19 17-3-2"></path>
-                        <path d="m5 17 3-2"></path>
-                        <path d="M20 12h-4"></path>
-                        <path d="M4 12h4"></path>
-                        <path d="m10 6-1-4"></path>
-                        <path d="m14 6 1-4"></path>
-                    </svg>
-                    Report a Bug
-                </a>
+                    </svg>Submit a New Mod Location</a>
+                <a href="https://discord.gg/sc4yEx2fNf" target="_blank" class="terminal-link">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linejoin="round"
+                        style="vertical-align: text-bottom; margin-right: 6px;">
+                        <path d="M18.8943 4.34399C17.5183 3.71467 16.057 3.256 14.5317 3C14.3396 3.33067 14.1263 3.77866 13.977 4.13067C12.3546 3.89599 10.7439 3.89599 9.14391 4.13067C8.99457 3.77866 8.77056 3.33067 8.58922 3C7.05325 3.256 5.59191 3.71467 4.22552 4.34399C1.46286 8.41865 0.716188 12.3973 1.08952 16.3226C2.92418 17.6559 4.69486 18.4666 6.4346 19C6.86126 18.424 7.24527 17.8053 7.57594 17.1546C6.9466 16.92 6.34927 16.632 5.77327 16.2906C5.9226 16.184 6.07194 16.0667 6.21061 15.9493C9.68793 17.5387 13.4543 17.5387 16.889 15.9493C17.0383 16.0667 17.177 16.184 17.3263 16.2906C16.7503 16.632 16.153 16.92 15.5236 17.1546C15.8543 17.8053 16.2383 18.424 16.665 19C18.4036 18.4666 20.185 17.6559 22.01 16.3226C22.4687 11.7787 21.2836 7.83202 18.8943 4.34399ZM8.05593 13.9013C7.01058 13.9013 6.15725 12.952 6.15725 11.7893C6.15725 10.6267 6.98925 9.67731 8.05593 9.67731C9.11191 9.67731 9.97588 10.6267 9.95454 11.7893C9.95454 12.952 9.11191 13.9013 8.05593 13.9013ZM15.065 13.9013C14.0196 13.9013 13.1652 12.952 13.1652 11.7893C13.1652 10.6267 13.9983 9.67731 15.065 9.67731C16.121 9.67731 16.985 10.6267 16.9636 11.7893C16.9636 12.952 16.1317 13.9013 15.065 13.9013Z" />
+                    </svg>Join the Locations Hub Discord</a>
             </div>
         </div>
         <div id="cluster-panel" class="cluster-panel-closed" aria-live="polite">
             <div id="cluster-panel-resize-handle" aria-hidden="true"></div>
             <div class="sidebar-section-header" id="cluster-panel-header">
                 <span id="cluster-panel-title">Cluster Contents <span id="cluster-panel-count"></span></span>
-                <button id="cluster-panel-close" aria-label="Close cluster panel">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M18 6 6 18" />
-                        <path d="m6 6 12 12" />
-                    </svg>
+                <button id="cluster-panel-close" class="ui-close-btn" aria-label="Close cluster panel">
+                    <span class="ui-close-btn-icon" aria-hidden="true"></span>
                 </button>
             </div>
             <ul id="cluster-mod-list"></ul>
@@ -217,11 +189,8 @@
     <div id="welcome-modal" class="modal">
         <div class="modal-content nc-terminal">
             <div class="terminal-header"><span class="terminal-header-theme-label" data-modal-title="INTERNAL ACCESS">NIGHT CORP // INTERNAL ACCESS</span>
-                <button class="terminal-close-btn" data-close-modal="welcome-modal" aria-label="Close modal">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M18 6 6 18" /><path d="m6 6 12 12" />
-                    </svg>
+                <button class="terminal-close-btn ui-close-btn ui-close-btn-reverse" data-close-modal="welcome-modal" aria-label="Close modal">
+                    <span class="ui-close-btn-icon" aria-hidden="true"></span>
                 </button>
             </div>
             <div class="terminal-body">
@@ -242,11 +211,8 @@
     <div id="about-modal" class="modal hidden">
         <div class="modal-content nc-terminal">
             <div class="terminal-header"><span class="terminal-header-theme-label" data-modal-title="ZONING BOARD - ABOUT">NIGHT CORP // ZONING BOARD - ABOUT</span>
-                <button class="terminal-close-btn" data-close-modal="about-modal" aria-label="Close modal">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M18 6 6 18" /><path d="m6 6 12 12" />
-                    </svg>
+                <button class="terminal-close-btn ui-close-btn ui-close-btn-reverse" data-close-modal="about-modal" aria-label="Close modal">
+                    <span class="ui-close-btn-icon" aria-hidden="true"></span>
                 </button>
             </div>
             <div class="terminal-body">
@@ -261,9 +227,8 @@
                     community.</p>
                 <hr style="border: 0; border-top: 1px solid var(--dark-accent); margin: 15px 0;">
                 <div class="about-links">
-                    <a href="https://github.com/spuddeh/nc-zoning-board/issues/new?template=mod_submission.yml"
-                        target="_blank" class="terminal-link">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                    <a id="about-open-bbcode-link" href="#" class="terminal-link">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                             style="vertical-align: text-bottom; margin-right: 6px;">
                             <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0Z"></path>
@@ -271,7 +236,7 @@
                         </svg>Submit a New Mod Location</a>
                     <a href="https://github.com/spuddeh/nc-zoning-board/issues/new?template=bug_report.yml"
                         target="_blank" class="terminal-link">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                             style="vertical-align: text-bottom; margin-right: 6px;">
                             <rect width="8" height="14" x="8" y="6" rx="4"></rect>
@@ -282,14 +247,14 @@
                         </svg>Report a Bug</a>
                     <a href="https://github.com/spuddeh/nc-zoning-board/issues/new?template=feedback.yml"
                         target="_blank" class="terminal-link">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                             style="vertical-align: text-bottom; margin-right: 6px;">
                             <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path>
                         </svg>General Feedback</a>
                     <a href="https://github.com/spuddeh/nc-zoning-board/issues/new?template=feature_request.yml"
                         target="_blank" class="terminal-link">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                             style="vertical-align: text-bottom; margin-right: 6px;">
                             <path d="M10 10v.2A3 3 0 0 1 8.9 16v0H5v0h0a3 3 0 0 1-3-3v0a3 3 0 0 1 3-3h0v0h1.2a2 2 0 0 0 2-2z"></path>
@@ -298,7 +263,7 @@
                             <path d="M10 14v-.2A3 3 0 0 0 8.9 8v0H5v0h0a3 3 0 0 0-3 3v0a3 3 0 0 0 3 3h0v0h1.2a2 2 0 0 1 2 2z"></path>
                         </svg>Suggest a Feature</a>
                     <a href="https://discord.gg/sc4yEx2fNf" target="_blank" class="terminal-link">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2" stroke-linejoin="round"
                             style="vertical-align: text-bottom; margin-right: 6px;">
                             <path d="M18.8943 4.34399C17.5183 3.71467 16.057 3.256 14.5317 3C14.3396 3.33067 14.1263 3.77866 13.977 4.13067C12.3546 3.89599 10.7439 3.89599 9.14391 4.13067C8.99457 3.77866 8.77056 3.33067 8.58922 3C7.05325 3.256 5.59191 3.71467 4.22552 4.34399C1.46286 8.41865 0.716188 12.3973 1.08952 16.3226C2.92418 17.6559 4.69486 18.4666 6.4346 19C6.86126 18.424 7.24527 17.8053 7.57594 17.1546C6.9466 16.92 6.34927 16.632 5.77327 16.2906C5.9226 16.184 6.07194 16.0667 6.21061 15.9493C9.68793 17.5387 13.4543 17.5387 16.889 15.9493C17.0383 16.0667 17.177 16.184 17.3263 16.2906C16.7503 16.632 16.153 16.92 15.5236 17.1546C15.8543 17.8053 16.2383 18.424 16.665 19C18.4036 18.4666 20.185 17.6559 22.01 16.3226C22.4687 11.7787 21.2836 7.83202 18.8943 4.34399ZM8.05593 13.9013C7.01058 13.9013 6.15725 12.952 6.15725 11.7893C6.15725 10.6267 6.98925 9.67731 8.05593 9.67731C9.11191 9.67731 9.97588 10.6267 9.95454 11.7893C9.95454 12.952 9.11191 13.9013 8.05593 13.9013ZM15.065 13.9013C14.0196 13.9013 13.1652 12.952 13.1652 11.7893C13.1652 10.6267 13.9983 9.67731 15.065 9.67731C16.121 9.67731 16.985 10.6267 16.9636 11.7893C16.9636 12.952 16.1317 13.9013 15.065 13.9013Z" />
@@ -314,18 +279,15 @@
     <div id="parameters-modal" class="modal hidden">
         <div class="modal-content nc-terminal parameters-modal-content">
             <div class="terminal-header"><span class="terminal-header-theme-label" data-modal-title="PARAMETERS">NIGHT CORP // PARAMETERS</span>
-                <button class="terminal-close-btn" data-close-modal="parameters-modal" aria-label="Close modal">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M18 6 6 18" /><path d="m6 6 12 12" />
-                    </svg>
+                <button class="terminal-close-btn ui-close-btn ui-close-btn-reverse" data-close-modal="parameters-modal" aria-label="Close modal">
+                    <span class="ui-close-btn-icon" aria-hidden="true"></span>
                 </button>
             </div>
             <div class="terminal-body parameters-modal-body">
                 <h3 class="parameters-section-title">Appearance</h3>
                 <div class="parameters-section">
                     <label class="parameters-label" for="theme-select">Theme</label>
-                    <select id="theme-select" class="parameters-select"></select>
+                    <select id="theme-select"></select>
                 </div>
                 <button id="close-parameters-modal" class="terminal-btn parameters-close-btn">[ CLOSE ]</button>
             </div>
@@ -336,11 +298,8 @@
     <div id="bbcode-modal" class="modal hidden">
         <div class="modal-content nc-terminal bbcode-modal-content">
             <div class="terminal-header"><span class="terminal-header-theme-label" data-modal-title="BBCODE GENERATOR">NIGHT CORP // BBCODE GENERATOR</span>
-                <button class="terminal-close-btn" data-close-modal="bbcode-modal" aria-label="Close modal">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M18 6 6 18" /><path d="m6 6 12 12" />
-                    </svg>
+                <button class="terminal-close-btn ui-close-btn ui-close-btn-reverse" data-close-modal="bbcode-modal" aria-label="Close modal">
+                    <span class="ui-close-btn-icon" aria-hidden="true"></span>
                 </button>
             </div>
             <div class="terminal-body bbcode-modal-body">
@@ -416,7 +375,7 @@
     <div id="image-modal" class="hidden">
         <div class="modal-overlay"></div>
         <div class="image-modal-content">
-            <button id="close-image-modal" class="close-btn">&times;</button>
+            <button id="close-image-modal">&times;</button>
             <div class="image-container">
                 <img id="modal-image" src="" alt="Mod Image">
                 <button id="prev-image" class="nav-btn">&lsaquo;</button>
