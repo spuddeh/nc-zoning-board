@@ -854,11 +854,14 @@ async function initMap() {
         // Build Link based on nexus_id
         const nexus_id_lower = String(mod.nexus_id).toLowerCase();
         let nexusUrl = `https://www.nexusmods.com/cyberpunk2077/mods/${mod.nexus_id}`;
+        let nexusLabel = "View on Nexus";
 
         if (nexus_id_lower === "wip") {
           nexusUrl = "https://www.nexusmods.com/games/cyberpunk2077";
+          nexusLabel = "Status: WIP";
         } else if (nexus_id_lower === "dummy") {
           nexusUrl = "https://www.nexusmods.com/games/cyberpunk2077";
+          nexusLabel = "Status: Dummy/Test";
         }
 
         // Build Authors HTML
@@ -912,7 +915,7 @@ async function initMap() {
                     }
                     <div class="custom-popup-desc">${NCZ.escapeHtml(mod.description || "No description provided.")}</div>
                     <div class="popup-actions">
-                        <a href="${NCZ.escapeHtml(nexusUrl)}" target="_blank" class="ui-popup-action-link ui-popup-action-link-nexus">View on Nexus</a>
+                        <a href="${NCZ.escapeHtml(nexusUrl)}" target="_blank" class="ui-popup-action-link ui-popup-action-link-nexus">${NCZ.escapeHtml(nexusLabel)}</a>
                         ${!mod._source ? `<a href="${NCZ.escapeHtml(editUrl)}" target="_blank" class="ui-popup-action-link ui-popup-action-link-edit tertiary" aria-label="Suggest Edit" title="Suggest Edit"><span class="ui-popup-action-link-icon" aria-hidden="true"></span></a>` : ""}
                     </div>
                 </div>
