@@ -92,7 +92,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function findActiveThemeClassName() {
-    return Array.from(document.body.classList).find((cls) =>
+    return Array.from(document.documentElement.classList).find((cls) =>
       cls.startsWith("theme-")
     );
   }
@@ -122,11 +122,12 @@ document.addEventListener("DOMContentLoaded", () => {
   function applyThemeById(themeId, { persist = true } = {}) {
     const theme = findThemeById(themeId);
     const targetClass = theme.className || `theme-${theme.id}`;
+    const root = document.documentElement;
 
-    Array.from(document.body.classList)
+    Array.from(root.classList)
       .filter((cls) => cls.startsWith("theme-"))
-      .forEach((cls) => document.body.classList.remove(cls));
-    document.body.classList.add(targetClass);
+      .forEach((cls) => root.classList.remove(cls));
+    root.classList.add(targetClass);
 
     applyHeaderThemeBranding(theme);
     applyModalHeaderThemeBranding(theme);

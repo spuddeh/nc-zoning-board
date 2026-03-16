@@ -43,7 +43,7 @@
 
             const selectedThemeClass = selectedTheme.className || `theme-${selectedTheme.id}`;
 
-            // Expose early theme details so header logo can be applied immediately on body parse.
+            // Expose early theme details so header logo can be applied immediately during initial parse.
             window.__NCZ_THEME_BOOTSTRAP = {
                 id: selectedTheme.id,
                 className: selectedThemeClass,
@@ -75,11 +75,12 @@
     <script>
         (() => {
             const bootstrap = window.__NCZ_THEME_BOOTSTRAP;
-            if (!bootstrap || !bootstrap.className || !document.body) return;
-            Array.from(document.body.classList)
+            const root = document.documentElement;
+            if (!bootstrap || !bootstrap.className || !root) return;
+            Array.from(root.classList)
                 .filter((cls) => cls.startsWith("theme-"))
-                .forEach((cls) => document.body.classList.remove(cls));
-            document.body.classList.add(bootstrap.className);
+                .forEach((cls) => root.classList.remove(cls));
+            root.classList.add(bootstrap.className);
         })();
     </script>
 
