@@ -55,7 +55,6 @@
 
     /* Decorative scanline colors */
     --scanline-dark: rgba(18, 16, 16, 0);
-    --scanline-shadow: rgba(0, 0, 0, 0.1);
     --scanline-red: rgba(255, 0, 0, 0.03);
     --scanline-green: rgba(0, 255, 0, 0.01);
     --scanline-blue: rgba(0, 0, 255, 0.03);
@@ -68,16 +67,6 @@
     --font-body: 'Rajdhani', sans-serif;
 
     /* Relative color tints derived from active theme base colors */
-    --primary-05: rgb(from var(--primary) r g b / 0.05);
-    --primary-10: rgb(from var(--primary) r g b / 0.1);
-    --primary-20: rgb(from var(--primary) r g b / 0.2);
-    --primary-30: rgb(from var(--primary) r g b / 0.3);
-    --primary-40: rgb(from var(--primary) r g b / 0.4);
-    --primary-50: rgb(from var(--primary) r g b / 0.5);
-    --primary-60: rgb(from var(--primary) r g b / 0.6);
-    --primary-80: rgb(from var(--primary) r g b / 0.8);
-    --primary-90: rgb(from var(--primary) r g b / 0.9);
-    --primary-95: rgb(from var(--primary) r g b / 0.95);
 
     --secondary-05: rgb(from var(--secondary) r g b / 0.05);
     --secondary-10: rgb(from var(--secondary) r g b / 0.1);
@@ -85,20 +74,15 @@
     --secondary-30: rgb(from var(--secondary) r g b / 0.3);
     --secondary-40: rgb(from var(--secondary) r g b / 0.4);
     --secondary-50: rgb(from var(--secondary) r g b / 0.5);
-    --secondary-60: rgb(from var(--secondary) r g b / 0.6);
 
     --tertiary-05: rgb(from var(--tertiary) r g b / 0.05);
-    --tertiary-10: rgb(from var(--tertiary) r g b / 0.1);
-    --tertiary-20: rgb(from var(--tertiary) r g b / 0.2);
     --tertiary-30: rgb(from var(--tertiary) r g b / 0.3);
     --tertiary-40: rgb(from var(--tertiary) r g b / 0.4);
-    --tertiary-50: rgb(from var(--tertiary) r g b / 0.5);
-    --tertiary-60: rgb(from var(--tertiary) r g b / 0.6);
 
     --gray-40: rgb(from var(--gray) r g b / 0.4);
 }
 
-body.theme-night-corp {
+html.theme-night-corp {
     --primary: #0a192f;
     --secondary: #00f0ff;
     --tertiary: #ffb300;
@@ -137,7 +121,7 @@ body.theme-night-corp {
     --cluster-xlarge-inner: rgba(238, 26, 26, 0.65);
 }
 
-body.theme-arasaka {
+html.theme-arasaka {
     --primary: #110d0e;
     --secondary: #e60000;
     --tertiary: #ffb300;
@@ -176,7 +160,7 @@ body.theme-arasaka {
     --cluster-xlarge-inner: rgba(238, 26, 26, 0.65);
 }
 
-body.theme-militech {
+html.theme-militech {
     --primary: #2c3023;
     --secondary: #fac901;
     --tertiary: #ee6b00;
@@ -215,7 +199,7 @@ body.theme-militech {
     --cluster-xlarge-inner: rgba(238, 26, 26, 0.65);
 }
 
-body.theme-aldecaldos {
+html.theme-aldecaldos {
     --primary: #101518;
     --secondary: #dd612c;
     --tertiary: #be8f27;
