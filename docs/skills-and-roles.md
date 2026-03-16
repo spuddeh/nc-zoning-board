@@ -13,7 +13,7 @@ Here are the main areas where we could use extra hands:
 - **UX & Design:** Hover states, transitions, Cyberpunk aesthetic, custom pin icons
 - **Coordinate system maths:** CET ↔ Leaflet transform calibration
 - **SVG / GeoJSON:** Converting district polygons into Leaflet overlays
-- **Spatial logic:** Pin conflict detection, clustering nearby mods
+- **Spatial logic:** Pin clustering, coordinate transforms
 
 ### DevOps / Automation
 
@@ -44,7 +44,7 @@ If you want to take "ownership" of a specific part of the project, here's how th
 - Custom & colour-coded pin icons
 - Mobile layout and touch optimisation
 - District polygon overlays
-- Pin clustering and conflict detection
+- Pin clustering and coordinate transforms
 - Coordinate transform calibration
 
 ---

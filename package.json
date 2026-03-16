@@ -1,7 +1,7 @@
 {
   "name": "cp2077-location-mods-map",
   "version": "1.0.0",
-  "description": "**An interactive web map and coordinate registry for Cyberpunk 2077 location modders to claim spaces and prevent overlap.**",
+  "description": "**An interactive web map and coordinate registry for Cyberpunk 2077 location mods — helping the community track what's been built and where.**",
   "main": "index.js",
   "scripts": {
     "build": "node scripts/build_mods.js",

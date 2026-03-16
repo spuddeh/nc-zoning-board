@@ -1,6 +1,6 @@
 # NC Zoning Board
 
-**An interactive web map and coordinate registry for Cyberpunk 2077 location mods — helping mod authors find open spaces and avoid overlap.**
+**An interactive web map and coordinate registry for Cyberpunk 2077 location mods — helping the community track what's been built and where.**
 
 🌍 **[View the Live Map](https://spuddeh.github.io/nc-zoning-board/)**
 
@@ -8,7 +8,7 @@
 
 As the CP2077 modding community grows, so does the number of custom locations, apartments, and overhauled zones. This repository is a centralized registry where mod authors can **register their in-game coordinates** to help the community track what's been built and where.
 
-The live interactive map displays all registered mods on an 8k Night City map, allowing authors to find empty spaces or coordinate with adjacent builds. By registering a valid Nexus ID, the application will automatically fetch and display the mod's official thumbnail and promotional image using the free Nexus Mods GraphQL API.
+The live interactive map displays all registered mods on an 8k Night City map, allowing authors to see what's been built and coordinate with other projects. By registering a valid Nexus ID, the application will automatically fetch and display the mod's official thumbnail and promotional image using the free Nexus Mods GraphQL API.
 
 > [!NOTE]
 > The NC Zoning Board was originally envisioned and spearheaded by **[Kaoziun](https://www.nexusmods.com/profile/Kaoziun/mods?gameId=3333)**.
