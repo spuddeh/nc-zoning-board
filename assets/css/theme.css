@@ -5,7 +5,7 @@
     --ui-radius-sm: 4px;
 
     /* Spacing scale */
-    --space-xxs: 4px;
+    --space-2xs: 4px;
     --space-xs: 6px;
     --space-sm: 8px;
     --space-md: 10px;
@@ -273,4 +273,37 @@ body {
 }
 ::-webkit-scrollbar-thumb:hover {
     background: var(--secondary);
+}
+
+/* Generic form fields */
+input:not([type="checkbox"]):not([type="radio"]),
+select,
+textarea {
+    width: 100%;
+    background: var(--black-30);
+    border: var(--ui-border-thin) solid var(--gray);
+    color: var(--white);
+    padding: var(--space-sm) var(--space-md);
+    font-family: var(--font-body);
+    font-size: var(--text-md);
+    outline: none;
+    transition: var(--transition-fast);
+
+    &:focus {
+        border-color: var(--secondary);
+        box-shadow: 0 0 var(--space-sm) var(--secondary-30);
+    }
+}
+
+select option {
+    background-color: var(--primary);
+    color: var(--white);
+}
+
+input[type="checkbox"] {
+    accent-color: var(--secondary);
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+    flex-shrink: 0;
 }

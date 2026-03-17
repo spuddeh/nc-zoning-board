@@ -36,6 +36,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const aboutBtn = document.getElementById("about-btn");
   const aboutModal = document.getElementById("about-modal");
   const closeAboutBtn = document.getElementById("close-about-modal");
+  const aboutOpenBbcodeLink = document.getElementById("about-open-bbcode-link");
+  const sidebarOpenBbcodeLink = document.getElementById("sidebar-open-bbcode-link");
 
   aboutBtn.addEventListener("click", () => {
     aboutModal.classList.remove("hidden");
@@ -164,7 +166,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // BBCode Generator Modal Logic
   const bbcodeBtn = document.getElementById("bbcode-btn");
-  const bbcodeSidebarBtn = document.getElementById("bbcode-sidebar-btn");
   const bbcodeModal = document.getElementById("bbcode-modal");
   const closeBbcodeModalBtn = document.getElementById("close-bbcode-modal");
 
@@ -175,8 +176,22 @@ document.addEventListener("DOMContentLoaded", () => {
     bbcodeModal.classList.add("hidden");
   }
 
+  if (aboutOpenBbcodeLink) {
+    aboutOpenBbcodeLink.addEventListener("click", (event) => {
+      event.preventDefault();
+      aboutModal.classList.add("hidden");
+      openBbcodeModal();
+    });
+  }
+
+  if (sidebarOpenBbcodeLink) {
+    sidebarOpenBbcodeLink.addEventListener("click", (event) => {
+      event.preventDefault();
+      openBbcodeModal();
+    });
+  }
+
   if (bbcodeBtn) bbcodeBtn.addEventListener("click", openBbcodeModal);
-  if (bbcodeSidebarBtn) bbcodeSidebarBtn.addEventListener("click", openBbcodeModal);
   if (closeBbcodeModalBtn) closeBbcodeModalBtn.addEventListener("click", closeBbcodeModal);
 
   const bbcodeGenerateBtn = document.getElementById("bbcode-generate-btn");
@@ -853,7 +868,7 @@ async function initMap() {
         const authorsHtml = mod.authors
           .map(
             (author) => `
-                <a href="https://www.nexusmods.com/profile/${encodeURIComponent(author)}/mods?gameId=3333" target="_blank" class="author-link">\u{1F464} ${NCZ.escapeHtml(author)}</a>
+                <a href="https://www.nexusmods.com/profile/${encodeURIComponent(author)}/mods?gameId=3333" target="_blank" class="ui-popup-action-link small"><img src="assets/img/nexus-mods_favicon.ico" class="ui-popup-action-link-icon" alt="" aria-hidden="true"> ${NCZ.escapeHtml(author)}</a>
             `,
           )
           .join(" ");
@@ -880,7 +895,7 @@ async function initMap() {
         marker.modFull = fullSrc;
 
         const nexusAutoBadge = mod._source === "nexus-auto"
-          ? ` <span class="nexus-auto-badge" title="Sourced automatically from Nexus Mods">[ N ]</span>`
+          ? ` <span class="nexus-auto-badge" title="Sourced automatically from Nexus Mods" aria-hidden="true"></span>`
           : "";
 
         const popupContent = `
@@ -900,8 +915,8 @@ async function initMap() {
                     }
                     <div class="custom-popup-desc">${NCZ.escapeHtml(mod.description || "No description provided.")}</div>
                     <div class="popup-actions">
-                        <a href="${NCZ.escapeHtml(nexusUrl)}" target="_blank" class="custom-popup-link">${NCZ.escapeHtml(nexusLabel)}</a>
-                        ${!mod._source ? `<a href="${NCZ.escapeHtml(editUrl)}" target="_blank" class="custom-popup-link custom-popup-link-edit">Suggest Edit</a>` : ""}
+                        <a href="${NCZ.escapeHtml(nexusUrl)}" target="_blank" class="ui-popup-action-link ui-popup-action-link-nexus">${NCZ.escapeHtml(nexusLabel)}</a>
+                        ${!mod._source ? `<a href="${NCZ.escapeHtml(editUrl)}" target="_blank" class="ui-popup-action-link ui-popup-action-link-edit tertiary" aria-label="Suggest Edit" title="Suggest Edit"><span class="ui-popup-action-link-icon" aria-hidden="true"></span></a>` : ""}
                     </div>
                 </div>
             `;
@@ -918,7 +933,7 @@ async function initMap() {
         li.dataset.tags = (mod.tags || []).join(",");
         li.dataset.authors = mod.authors.join(",");
         const sidebarBadge = mod._source === "nexus-auto"
-          ? ` <span class="nexus-auto-badge" title="Sourced automatically from Nexus Mods">[ N ]</span>`
+          ? ` <span class="nexus-auto-badge" title="Sourced automatically from Nexus Mods" aria-hidden="true"></span>`
           : "";
         li.innerHTML = `
                 <div class="mod-item-header">
@@ -1218,8 +1233,28 @@ document.addEventListener("DOMContentLoaded", () => {
 // Keyboard navigation
 document.addEventListener("keydown", (e) => {
   const imageModal = document.getElementById("image-modal");
-  if (!imageModal || imageModal.classList.contains("hidden")) return;
-  if (e.key === "Escape") closeGallery();
+  const isImageModalOpen = imageModal && !imageModal.classList.contains("hidden");
+
+  if (e.key === "Escape") {
+    if (isImageModalOpen) {
+      closeGallery();
+      return;
+    }
+
+    const visibleModal = document.querySelector(".modal:not(.hidden)");
+    if (visibleModal) {
+      visibleModal.classList.add("hidden");
+      if (visibleModal.id === "welcome-modal") {
+        sessionStorage.setItem("nc_zoning_board_visited", "true");
+      }
+      return;
+    }
+
+    document.querySelector(".leaflet-popup-close-button")?.click();
+    return;
+  }
+
+  if (!isImageModalOpen) return;
   if (e.key === "ArrowLeft" && currentGallery.length > 1) {
     currentIndex =
       (currentIndex - 1 + currentGallery.length) % currentGallery.length;
