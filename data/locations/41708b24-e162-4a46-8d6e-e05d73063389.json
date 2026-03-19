@@ -1,0 +1,20 @@
+{
+    "id": "41708b24-e162-4a46-8d6e-e05d73063389",
+    "name": "Kabuki Slums",
+    "authors": [
+        "bigpoppajuan"
+    ],
+    "credits": "",
+    "coordinates": [
+        -1033.4761,
+        1739.1152
+    ],
+    "nexus_id": "24416",
+    "description": "This adds a new player home with working interactions, I think it fits the vibe quite well.",
+    "category": "new-location",
+    "tags": [
+        "apartment",
+        "entropism",
+        "streetkid"
+    ]
+}
