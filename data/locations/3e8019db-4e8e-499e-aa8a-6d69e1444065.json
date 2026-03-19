@@ -1,0 +1,18 @@
+{
+    "id": "3e8019db-4e8e-499e-aa8a-6d69e1444065",
+    "name": "H10 Wooden Floor",
+    "authors": [
+        "VasilisaW"
+    ],
+    "credits": "",
+    "coordinates": [
+        -1382.787,
+        1270.6815
+    ],
+    "nexus_id": "27555",
+    "description": "Floor repair in apartment H10 and some other improvements.",
+    "category": "location-overhaul",
+    "tags": [
+        "apartment"
+    ]
+}
