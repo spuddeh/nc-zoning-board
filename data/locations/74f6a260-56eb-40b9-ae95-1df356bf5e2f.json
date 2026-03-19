@@ -1,0 +1,18 @@
+{
+    "id": "74f6a260-56eb-40b9-ae95-1df356bf5e2f",
+    "name": "H10 Apartment - Open Bedroom Window",
+    "authors": [
+        "YouCutDream"
+    ],
+    "credits": "",
+    "coordinates": [
+        -1382.787,
+        1270.6815
+    ],
+    "nexus_id": "24845",
+    "description": "Adds an interactable windows to H10's bedroom.",
+    "category": "location-overhaul",
+    "tags": [
+        "apartment"
+    ]
+}
