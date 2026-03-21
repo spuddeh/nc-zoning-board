@@ -37,12 +37,6 @@ NCZ.cetToLeaflet = function (cetX, cetY) {
   return [lat, lng];
 };
 
-// Inverse: Leaflet [lat, lng] → estimated CET (x, y), rounded to 2 dp
-NCZ.leafletToCet = function (lat, lng) {
-  const cetX = (lng - 132.8016) / 0.0208623;
-  const cetY = (lat + 93.68566) / 0.02101335;
-  return [Math.round(cetX * 100) / 100, Math.round(cetY * 100) / 100];
-};
 
 NCZ.clamp = function (value, min, max) {
   return Math.min(Math.max(value, min), max);

@@ -47,11 +47,7 @@ document.addEventListener("DOMContentLoaded", () => {
     aboutModal.classList.add("hidden");
   });
 
-  // Inject RECENTLY_UPDATED_DAYS into welcome modal
-  const recentlyUpdatedDaysLabel = document.getElementById("recently-updated-days-label");
-  if (recentlyUpdatedDaysLabel) recentlyUpdatedDaysLabel.textContent = NCZ.RECENTLY_UPDATED_DAYS;
-
-  // Parameters Modal Logic
+// Parameters Modal Logic
   const parametersBtn = document.getElementById("parameters-btn");
   const parametersModal = document.getElementById("parameters-modal");
   const closeParametersModalBtn = document.getElementById("close-parameters-modal");
@@ -517,7 +513,6 @@ async function initMap() {
 
   function repositionActivePopup() {
     if (!activePopup) return;
-    if (activePopup.options.className === "ncz-coord-probe-popup") return;
     positionDynamicPopup(map, activePopup);
   }
 
@@ -533,21 +528,6 @@ async function initMap() {
   map.on("popupopen", (e) => {
     pinTooltip.hide();
     activePopup = e.popup;
-    if (activePopup.options.className === "ncz-coord-probe-popup") {
-      const copyBtn = activePopup.getElement()?.querySelector(".coord-probe-copy");
-      if (copyBtn) {
-        copyBtn.addEventListener("click", () => {
-          navigator.clipboard
-            .writeText(`X: ${copyBtn.dataset.cx}, Y: ${copyBtn.dataset.cy}`)
-            .then(() => {
-              copyBtn.textContent = "[ Copied! ]";
-              setTimeout(() => { copyBtn.textContent = "[ Copy ]"; }, NCZ.COPY_FEEDBACK_MS);
-            })
-            .catch(() => {});
-        });
-      }
-      return;
-    }
     repositionActivePopup();
     scheduleActivePopupReposition();
     const popupImages = activePopup.getElement()?.querySelectorAll("img") || [];
@@ -809,59 +789,6 @@ async function initMap() {
     sidebar.classList.add("hidden");
     sidebarOpen.classList.add("visible");
   }
-
-  // Coordinate Probe — click anywhere on the map to read estimated CET coords
-  let coordProbePopup = null;
-
-  function handleCoordProbeClick(e) {
-    if (e.originalEvent?.target?.closest?.(".leaflet-marker-icon, .leaflet-marker-shadow")) return;
-    hideClusterPanel();
-    const [cetX, cetY] = NCZ.leafletToCet(e.latlng.lat, e.latlng.lng);
-    coordProbePopup = L.popup({ className: "ncz-coord-probe-popup", closeButton: true })
-      .setLatLng(e.latlng)
-      .setContent(
-        `<div class="coord-probe-content">` +
-        `<div class="coord-probe-title">~ ESTIMATED CET COORDS ~</div>` +
-        `<div class="coord-probe-values">` +
-        `<span class="coord-probe-label">X</span><span class="coord-probe-value">${cetX}</span>` +
-        `<span class="coord-probe-label">Y</span><span class="coord-probe-value">${cetY}</span>` +
-        `</div>` +
-        `<div class="coord-probe-note">Coordinates are approximate</div>` +
-        `<button class="coord-probe-copy terminal-btn" data-cx="${cetX}" data-cy="${cetY}">[ Copy ]</button>` +
-        `</div>`
-      )
-      .openOn(map);
-  }
-
-  function applyCoordProbe() {
-    const toggle = document.getElementById("coord-probe-toggle");
-    const enabled = toggle?.checked ?? false;
-    if (enabled) {
-      map.on("click", handleCoordProbeClick);
-      map.getContainer().classList.add("coord-probe-active");
-    } else {
-      map.off("click", handleCoordProbeClick);
-      map.getContainer().classList.remove("coord-probe-active");
-      if (coordProbePopup) {
-        map.closePopup(coordProbePopup);
-        coordProbePopup = null;
-      }
-    }
-  }
-
-  // Coord Probe — restore saved state and persist on change
-  const coordProbeToggle = document.getElementById("coord-probe-toggle");
-  if (coordProbeToggle) {
-    try {
-      coordProbeToggle.checked = localStorage.getItem(NCZ.COORD_PROBE_KEY) === "true";
-    } catch (_) {}
-    coordProbeToggle.addEventListener("change", () => {
-      try { localStorage.setItem(NCZ.COORD_PROBE_KEY, String(coordProbeToggle.checked)); } catch (_) {}
-      applyCoordProbe();
-    });
-  }
-
-  applyCoordProbe();
 
   map.on("click", hideClusterPanel);
   map.on("zoomstart", hideClusterPanel);
