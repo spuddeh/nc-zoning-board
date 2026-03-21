@@ -907,10 +907,6 @@ async function initMap() {
 
         const popupContent = `
                 <div class="custom-popup-content">
-                    <div class="custom-popup-title">${NCZ.escapeHtml(mod.name)}${nexusAutoBadge}${updatedBadge}</div>
-                    <div class="custom-popup-authors">${authorsHtml}</div>
-                    ${mod.credits ? `<div class="custom-popup-credits">Credits: ${NCZ.escapeHtml(mod.credits)}</div>` : ""}
-                    <div class="custom-popup-tags">${tagsHtml}</div>
                     ${
                       thumbSrc && fullSrc
                         ? `
@@ -920,6 +916,10 @@ async function initMap() {
                     `
                         : ""
                     }
+                    <div class="custom-popup-title">${NCZ.escapeHtml(mod.name)}${nexusAutoBadge}${updatedBadge}</div>
+                    <div class="custom-popup-authors">${authorsHtml}</div>
+                    ${mod.credits ? `<div class="custom-popup-credits">Credits: ${NCZ.escapeHtml(mod.credits)}</div>` : ""}
+                    <div class="custom-popup-tags">${tagsHtml}</div>
                     <div class="custom-popup-desc">${NCZ.escapeHtml(mod.description || "No description provided.")}</div>
                     <div class="popup-actions">
                         <a href="${NCZ.escapeHtml(nexusUrl)}" target="_blank" class="ui-popup-action-link ui-popup-action-link-nexus">${NCZ.escapeHtml(nexusLabel)}</a>

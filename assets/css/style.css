@@ -614,7 +614,7 @@ body.cluster-panel-resizing * {
 
 .leaflet-container a.leaflet-popup-close-button {
     top: .5rem;
-    right: .5rem;
+    right: .25rem;
     color: var(--gray) !important;
     font-size: 0 !important;
     line-height: 0 !important;
@@ -815,25 +815,21 @@ body.cluster-panel-resizing * {
     }
 
     .custom-popup-images {
-        display: flex;
-        gap: var(--space-sm);
-        margin: var(--space-md) 0;
-        overflow-x: auto;
-        padding-bottom: 5px;
+        margin: 0 0 var(--space-md);
     }
 
     .popup-thumb {
-        width: 80px;
-        height: 50px;
+        display: block;
+        width: 100%;
+        height: 180px;
         object-fit: cover;
         border: var(--ui-border-thin) solid var(--gray);
         cursor: pointer;
         transition: var(--transition-fast);
-        flex-shrink: 0;
 
         &:hover {
             border-color: var(--secondary);
-            transform: scale(1.05);
+            filter: brightness(1.07);
         }
     }
 
