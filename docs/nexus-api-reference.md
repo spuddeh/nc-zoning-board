@@ -31,6 +31,7 @@ query modsByUid($uids: [ID!]!, $count: Int!) {
       modId
       pictureUrl
       thumbnailUrl
+      updatedAt
     }
   }
 }
@@ -56,6 +57,7 @@ Where `3333` is the game ID for Cyberpunk 2077.
 - `modId` — The numeric Nexus mod ID
 - `pictureUrl` — URL to the featured image (full resolution)
 - `thumbnailUrl` — URL to a thumbnail version of the featured image
+- `updatedAt` — ISO 8601 timestamp of the mod's last update on Nexus; used to drive the recently-updated badge
 
 **Pagination:** None. All UIDs are sent in a single request.
 
@@ -88,6 +90,7 @@ query NCZoningMods($filter: ModsFilter!, $count: Int!, $offset: Int!) {
       description
       pictureUrl
       thumbnailUrl
+      updatedAt
       uploader {
         name
       }
@@ -110,6 +113,7 @@ query NCZoningMods($filter: ModsFilter!, $count: Int!, $offset: Int!) {
 - `description` — Full mod description; parsed for `[NCZoning]` metadata block
 - `pictureUrl` — Featured image URL (full resolution)
 - `thumbnailUrl` — Featured image thumbnail URL
+- `updatedAt` — ISO 8601 timestamp of the mod's last update on Nexus; used to drive the recently-updated badge
 - `uploader.name` — Nexus username of the mod author (used as first author)
 - `totalCount` — Total number of mods matching the filter (used for pagination loop)
 
@@ -137,6 +141,7 @@ The Nexus API does not document pagination for the `mods` query, but it supports
 4. Construct authors array: Nexus uploader name + any additional authors from the block
 5. Truncate `summary` to 500 characters for the popup description
 6. Prepend `"nczoning"` tag automatically (identifies auto-discovered mods in the UI)
+7. Store `updatedAt` as `_updatedAt` on the mod object — if within `NCZ.RECENTLY_UPDATED_DAYS` days, an `UPDATED` badge is shown in the popup, sidebar, and cluster flyout
 
 **Implementation:** [`fetchNexusTaggedMods()` in services.js](../assets/js/services.js)
 
