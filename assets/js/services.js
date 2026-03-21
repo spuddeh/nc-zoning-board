@@ -45,6 +45,7 @@ NCZ.fetchNexusThumbnailsFromApi = async function (validIds) {
                 modId
                 pictureUrl
                 thumbnailUrl
+                updatedAt
             }
         }
     }`;
@@ -62,6 +63,7 @@ NCZ.fetchNexusThumbnailsFromApi = async function (validIds) {
       thumbMap[String(node.modId)] = {
         pictureUrl: node.pictureUrl,
         thumbnailUrl: node.thumbnailUrl,
+        updatedAt: node.updatedAt || null,
       };
     });
     return thumbMap;
@@ -96,6 +98,7 @@ NCZ.fetchNexusTaggedMods = async function (existingNexusIds, validTagNames) {
           description
           pictureUrl
           thumbnailUrl
+          updatedAt
           uploader {
             name
           }
@@ -174,6 +177,7 @@ NCZ.fetchNexusTaggedMods = async function (existingNexusIds, validTagNames) {
           _source: "nexus-auto",
           _thumbnailUrl: node.thumbnailUrl || null,
           _pictureUrl: node.pictureUrl || null,
+          _updatedAt: node.updatedAt || null,
         });
       }
 

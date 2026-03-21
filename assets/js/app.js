@@ -47,7 +47,7 @@ document.addEventListener("DOMContentLoaded", () => {
     aboutModal.classList.add("hidden");
   });
 
-  // Parameters Modal Logic
+// Parameters Modal Logic
   const parametersBtn = document.getElementById("parameters-btn");
   const parametersModal = document.getElementById("parameters-modal");
   const closeParametersModalBtn = document.getElementById("close-parameters-modal");
@@ -437,6 +437,12 @@ function positionDynamicPopup(map, popup) {
   popupEl.classList.add(`ncz-popup-${direction}`);
 }
 
+function isRecentlyUpdated(mod) {
+  if (!mod._updatedAt) return false;
+  const cutoff = Date.now() - NCZ.RECENTLY_UPDATED_DAYS * 86400000;
+  return new Date(mod._updatedAt).getTime() > cutoff;
+}
+
 async function initMap() {
   // 1. Setup Map
   const map = L.map("map", {
@@ -728,7 +734,7 @@ async function initMap() {
           <span class="cluster-mod-layout">
             ${thumbMarkup}
             <span class="cluster-mod-content">
-              <span class="cluster-mod-name">${NCZ.escapeHtml(mod.name)}</span>
+              <span class="cluster-mod-name">${NCZ.escapeHtml(mod.name)}${isRecentlyUpdated(mod) ? ` <span class="badge-updated" title="Updated on Nexus within the last ${NCZ.RECENTLY_UPDATED_DAYS} days">UPDATED</span>` : ""}</span>
               <span class="cluster-mod-separator"></span>
               <span class="cluster-mod-meta">by ${NCZ.escapeHtml(mod.authors.join(", "))}</span>
               <span class="cluster-mod-tags">
@@ -894,13 +900,19 @@ async function initMap() {
         marker.modThumb = thumbSrc;
         marker.modFull = fullSrc;
 
+        // Apply updatedAt for manual mods (auto-discovered mods already have _updatedAt set)
+        if (!mod._updatedAt && nexusThumb?.updatedAt) mod._updatedAt = nexusThumb.updatedAt;
+
         const nexusAutoBadge = mod._source === "nexus-auto"
           ? ` <span class="nexus-auto-badge" title="Sourced automatically from Nexus Mods" aria-hidden="true"></span>`
+          : "";
+        const updatedBadge = isRecentlyUpdated(mod)
+          ? ` <span class="badge-updated" title="Updated on Nexus within the last ${NCZ.RECENTLY_UPDATED_DAYS} days">UPDATED</span>`
           : "";
 
         const popupContent = `
                 <div class="custom-popup-content">
-                    <div class="custom-popup-title">${NCZ.escapeHtml(mod.name)}${nexusAutoBadge}</div>
+                    <div class="custom-popup-title">${NCZ.escapeHtml(mod.name)}${nexusAutoBadge}${updatedBadge}</div>
                     <div class="custom-popup-authors">${authorsHtml}</div>
                     ${mod.credits ? `<div class="custom-popup-credits">Credits: ${NCZ.escapeHtml(mod.credits)}</div>` : ""}
                     <div class="custom-popup-tags">${tagsHtml}</div>
@@ -930,14 +942,17 @@ async function initMap() {
         const li = document.createElement("li");
         li.className = "mod-item";
         li.dataset.category = mod.category;
-        li.dataset.tags = (mod.tags || []).join(",");
+        li.dataset.tags = [...(mod.tags || []), ...(isRecentlyUpdated(mod) ? ["updated"] : [])].join(",");
         li.dataset.authors = mod.authors.join(",");
         const sidebarBadge = mod._source === "nexus-auto"
           ? ` <span class="nexus-auto-badge" title="Sourced automatically from Nexus Mods" aria-hidden="true"></span>`
           : "";
+        const sidebarUpdatedBadge = isRecentlyUpdated(mod)
+          ? ` <span class="badge-updated" title="Updated on Nexus within the last ${NCZ.RECENTLY_UPDATED_DAYS} days">UPDATED</span>`
+          : "";
         li.innerHTML = `
                 <div class="mod-item-header">
-                    <span class="mod-item-name">${NCZ.escapeHtml(mod.name)}</span>${sidebarBadge}
+                    <span class="mod-item-name">${NCZ.escapeHtml(mod.name)}</span>${sidebarBadge}${sidebarUpdatedBadge}
                 </div>
                 <span class="mod-item-author">by ${NCZ.escapeHtml(mod.authors.join(", "))}</span>
                 <div class="mod-item-meta">
@@ -1029,6 +1044,17 @@ async function initMap() {
     const usedTags = new Set();
     mods.forEach((mod) => (mod.tags || []).forEach((t) => usedTags.add(t)));
 
+    // Prepend synthetic "updated" button if any mod is recently updated
+    if (mods.some(isRecentlyUpdated)) {
+      const btn = document.createElement("button");
+      btn.className = "tag-filter-btn";
+      btn.textContent = "updated";
+      btn.title = `Updated on Nexus within the last ${NCZ.RECENTLY_UPDATED_DAYS} days`;
+      btn.dataset.tag = "updated";
+      btn.addEventListener("click", () => { btn.classList.toggle("active"); applyFilters(); });
+      tagsFilterContainer.appendChild(btn);
+    }
+
     Array.from(usedTags)
       .sort((a, b) => {
         if (a === "nczoning") return -1;
@@ -1110,7 +1136,7 @@ async function initMap() {
         const matchesCategory = activeCats.includes(mod.category);
         const matchesTags =
           activeTags.length === 0 ||
-          activeTags.some((t) => (mod.tags || []).includes(t));
+          activeTags.some((t) => t === "updated" ? isRecentlyUpdated(mod) : (mod.tags || []).includes(t));
         const matchesAuthor =
           activeAuthors.length === 0 ||
           activeAuthors.some((a) => mod.authors.includes(a));

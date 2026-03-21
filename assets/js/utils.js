@@ -37,6 +37,7 @@ NCZ.cetToLeaflet = function (cetX, cetY) {
   return [lat, lng];
 };
 
+
 NCZ.clamp = function (value, min, max) {
   return Math.min(Math.max(value, min), max);
 };
