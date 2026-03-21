@@ -1641,37 +1641,35 @@ body::before {
 	transition: stroke-dashoffset 0.3s ease-out, stroke-opacity 0.3s ease-in;
 }
 
-.marker-cluster-small {
-	background-color: var(--cluster-small-bg);
+.marker-cluster-step {
+    --cluster-hue: 120;
+	background-color: hsl(
+        var(--cluster-hue)
+        var(--cluster-bg-saturation)
+        var(--cluster-bg-lightness)
+        / var(--cluster-bg-alpha)
+    );
 
     div {
-        background-color: var(--cluster-small-inner);
+        background-color: hsl(
+            var(--cluster-hue)
+            var(--cluster-inner-saturation)
+            var(--cluster-inner-lightness)
+            / var(--cluster-inner-alpha)
+        );
     }
 }
 
-.marker-cluster-medium {
-	background-color: var(--cluster-medium-bg);
-
-    div {
-        background-color: var(--cluster-medium-inner);
-    }
-}
-
-.marker-cluster-large {
-	background-color: var(--cluster-large-bg);
-
-    div {
-        background-color: var(--cluster-large-inner);
-    }
-}
-
-.marker-cluster-xlarge {
-	background-color: var(--cluster-xlarge-bg);
-
-    div {
-        background-color: var(--cluster-xlarge-inner);
-    }
-}
+.marker-cluster-step-0 { --cluster-hue: 96; }
+.marker-cluster-step-1 { --cluster-hue: 72; }
+.marker-cluster-step-2 { --cluster-hue: 48; }
+.marker-cluster-step-3 { --cluster-hue: 24; }
+.marker-cluster-step-4 { --cluster-hue: 360; }
+.marker-cluster-step-5 { --cluster-hue: 342; }
+.marker-cluster-step-6 { --cluster-hue: 324; }
+.marker-cluster-step-7 { --cluster-hue: 306; }
+.marker-cluster-step-8 { --cluster-hue: 288; }
+.marker-cluster-step-9 { --cluster-hue: 270; }
 
 .marker-cluster {
 	background-clip: padding-box;
