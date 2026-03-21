@@ -47,6 +47,10 @@ document.addEventListener("DOMContentLoaded", () => {
     aboutModal.classList.add("hidden");
   });
 
+  // Inject RECENTLY_UPDATED_DAYS into welcome modal
+  const recentlyUpdatedDaysLabel = document.getElementById("recently-updated-days-label");
+  if (recentlyUpdatedDaysLabel) recentlyUpdatedDaysLabel.textContent = NCZ.RECENTLY_UPDATED_DAYS;
+
   // Parameters Modal Logic
   const parametersBtn = document.getElementById("parameters-btn");
   const parametersModal = document.getElementById("parameters-modal");
@@ -437,6 +441,12 @@ function positionDynamicPopup(map, popup) {
   popupEl.classList.add(`ncz-popup-${direction}`);
 }
 
+function isRecentlyUpdated(mod) {
+  if (!mod._updatedAt) return false;
+  const cutoff = Date.now() - NCZ.RECENTLY_UPDATED_DAYS * 86400000;
+  return new Date(mod._updatedAt).getTime() > cutoff;
+}
+
 async function initMap() {
   // 1. Setup Map
   const map = L.map("map", {
@@ -507,6 +517,7 @@ async function initMap() {
 
   function repositionActivePopup() {
     if (!activePopup) return;
+    if (activePopup.options.className === "ncz-coord-probe-popup") return;
     positionDynamicPopup(map, activePopup);
   }
 
@@ -522,6 +533,21 @@ async function initMap() {
   map.on("popupopen", (e) => {
     pinTooltip.hide();
     activePopup = e.popup;
+    if (activePopup.options.className === "ncz-coord-probe-popup") {
+      const copyBtn = activePopup.getElement()?.querySelector(".coord-probe-copy");
+      if (copyBtn) {
+        copyBtn.addEventListener("click", () => {
+          navigator.clipboard
+            .writeText(`X: ${copyBtn.dataset.cx}, Y: ${copyBtn.dataset.cy}`)
+            .then(() => {
+              copyBtn.textContent = "[ Copied! ]";
+              setTimeout(() => { copyBtn.textContent = "[ Copy ]"; }, NCZ.COPY_FEEDBACK_MS);
+            })
+            .catch(() => {});
+        });
+      }
+      return;
+    }
     repositionActivePopup();
     scheduleActivePopupReposition();
     const popupImages = activePopup.getElement()?.querySelectorAll("img") || [];
@@ -728,7 +754,7 @@ async function initMap() {
           <span class="cluster-mod-layout">
             ${thumbMarkup}
             <span class="cluster-mod-content">
-              <span class="cluster-mod-name">${NCZ.escapeHtml(mod.name)}</span>
+              <span class="cluster-mod-name">${NCZ.escapeHtml(mod.name)}${isRecentlyUpdated(mod) ? ` <span class="badge-updated" title="Updated on Nexus within the last ${NCZ.RECENTLY_UPDATED_DAYS} days">UPDATED</span>` : ""}</span>
               <span class="cluster-mod-separator"></span>
               <span class="cluster-mod-meta">by ${NCZ.escapeHtml(mod.authors.join(", "))}</span>
               <span class="cluster-mod-tags">
@@ -783,6 +809,59 @@ async function initMap() {
     sidebar.classList.add("hidden");
     sidebarOpen.classList.add("visible");
   }
+
+  // Coordinate Probe — click anywhere on the map to read estimated CET coords
+  let coordProbePopup = null;
+
+  function handleCoordProbeClick(e) {
+    if (e.originalEvent?.target?.closest?.(".leaflet-marker-icon, .leaflet-marker-shadow")) return;
+    hideClusterPanel();
+    const [cetX, cetY] = NCZ.leafletToCet(e.latlng.lat, e.latlng.lng);
+    coordProbePopup = L.popup({ className: "ncz-coord-probe-popup", closeButton: true })
+      .setLatLng(e.latlng)
+      .setContent(
+        `<div class="coord-probe-content">` +
+        `<div class="coord-probe-title">~ ESTIMATED CET COORDS ~</div>` +
+        `<div class="coord-probe-values">` +
+        `<span class="coord-probe-label">X</span><span class="coord-probe-value">${cetX}</span>` +
+        `<span class="coord-probe-label">Y</span><span class="coord-probe-value">${cetY}</span>` +
+        `</div>` +
+        `<div class="coord-probe-note">Coordinates are approximate</div>` +
+        `<button class="coord-probe-copy terminal-btn" data-cx="${cetX}" data-cy="${cetY}">[ Copy ]</button>` +
+        `</div>`
+      )
+      .openOn(map);
+  }
+
+  function applyCoordProbe() {
+    const toggle = document.getElementById("coord-probe-toggle");
+    const enabled = toggle?.checked ?? false;
+    if (enabled) {
+      map.on("click", handleCoordProbeClick);
+      map.getContainer().classList.add("coord-probe-active");
+    } else {
+      map.off("click", handleCoordProbeClick);
+      map.getContainer().classList.remove("coord-probe-active");
+      if (coordProbePopup) {
+        map.closePopup(coordProbePopup);
+        coordProbePopup = null;
+      }
+    }
+  }
+
+  // Coord Probe — restore saved state and persist on change
+  const coordProbeToggle = document.getElementById("coord-probe-toggle");
+  if (coordProbeToggle) {
+    try {
+      coordProbeToggle.checked = localStorage.getItem(NCZ.COORD_PROBE_KEY) === "true";
+    } catch (_) {}
+    coordProbeToggle.addEventListener("change", () => {
+      try { localStorage.setItem(NCZ.COORD_PROBE_KEY, String(coordProbeToggle.checked)); } catch (_) {}
+      applyCoordProbe();
+    });
+  }
+
+  applyCoordProbe();
 
   map.on("click", hideClusterPanel);
   map.on("zoomstart", hideClusterPanel);
@@ -894,13 +973,19 @@ async function initMap() {
         marker.modThumb = thumbSrc;
         marker.modFull = fullSrc;
 
+        // Apply updatedAt for manual mods (auto-discovered mods already have _updatedAt set)
+        if (!mod._updatedAt && nexusThumb?.updatedAt) mod._updatedAt = nexusThumb.updatedAt;
+
         const nexusAutoBadge = mod._source === "nexus-auto"
           ? ` <span class="nexus-auto-badge" title="Sourced automatically from Nexus Mods" aria-hidden="true"></span>`
+          : "";
+        const updatedBadge = isRecentlyUpdated(mod)
+          ? ` <span class="badge-updated" title="Updated on Nexus within the last ${NCZ.RECENTLY_UPDATED_DAYS} days">UPDATED</span>`
           : "";
 
         const popupContent = `
                 <div class="custom-popup-content">
-                    <div class="custom-popup-title">${NCZ.escapeHtml(mod.name)}${nexusAutoBadge}</div>
+                    <div class="custom-popup-title">${NCZ.escapeHtml(mod.name)}${nexusAutoBadge}${updatedBadge}</div>
                     <div class="custom-popup-authors">${authorsHtml}</div>
                     ${mod.credits ? `<div class="custom-popup-credits">Credits: ${NCZ.escapeHtml(mod.credits)}</div>` : ""}
                     <div class="custom-popup-tags">${tagsHtml}</div>
@@ -930,14 +1015,17 @@ async function initMap() {
         const li = document.createElement("li");
         li.className = "mod-item";
         li.dataset.category = mod.category;
-        li.dataset.tags = (mod.tags || []).join(",");
+        li.dataset.tags = [...(mod.tags || []), ...(isRecentlyUpdated(mod) ? ["updated"] : [])].join(",");
         li.dataset.authors = mod.authors.join(",");
         const sidebarBadge = mod._source === "nexus-auto"
           ? ` <span class="nexus-auto-badge" title="Sourced automatically from Nexus Mods" aria-hidden="true"></span>`
           : "";
+        const sidebarUpdatedBadge = isRecentlyUpdated(mod)
+          ? ` <span class="badge-updated" title="Updated on Nexus within the last ${NCZ.RECENTLY_UPDATED_DAYS} days">UPDATED</span>`
+          : "";
         li.innerHTML = `
                 <div class="mod-item-header">
-                    <span class="mod-item-name">${NCZ.escapeHtml(mod.name)}</span>${sidebarBadge}
+                    <span class="mod-item-name">${NCZ.escapeHtml(mod.name)}</span>${sidebarBadge}${sidebarUpdatedBadge}
                 </div>
                 <span class="mod-item-author">by ${NCZ.escapeHtml(mod.authors.join(", "))}</span>
                 <div class="mod-item-meta">
@@ -1029,6 +1117,17 @@ async function initMap() {
     const usedTags = new Set();
     mods.forEach((mod) => (mod.tags || []).forEach((t) => usedTags.add(t)));
 
+    // Prepend synthetic "updated" button if any mod is recently updated
+    if (mods.some(isRecentlyUpdated)) {
+      const btn = document.createElement("button");
+      btn.className = "tag-filter-btn";
+      btn.textContent = "updated";
+      btn.title = `Updated on Nexus within the last ${NCZ.RECENTLY_UPDATED_DAYS} days`;
+      btn.dataset.tag = "updated";
+      btn.addEventListener("click", () => { btn.classList.toggle("active"); applyFilters(); });
+      tagsFilterContainer.appendChild(btn);
+    }
+
     Array.from(usedTags)
       .sort((a, b) => {
         if (a === "nczoning") return -1;
@@ -1110,7 +1209,7 @@ async function initMap() {
         const matchesCategory = activeCats.includes(mod.category);
         const matchesTags =
           activeTags.length === 0 ||
-          activeTags.some((t) => (mod.tags || []).includes(t));
+          activeTags.some((t) => t === "updated" ? isRecentlyUpdated(mod) : (mod.tags || []).includes(t));
         const matchesAuthor =
           activeAuthors.length === 0 ||
           activeAuthors.some((a) => mod.authors.includes(a));

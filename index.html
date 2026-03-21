@@ -202,6 +202,7 @@
                     cognitive stabilization and urban harmony.</p>
                 <p class="warning-text">CAUTION: This map is in ACTIVE ALPHA. Expect data shifts and interface
                     instabilities.</p>
+                <p>Mods updated within the last <span id="recently-updated-days-label">X</span> days are marked with an <span class="badge-updated">UPDATED</span> badge. Use the <strong>updated</strong> filter in the sidebar to show only recent entries.</p>
                 <button id="close-modal" class="terminal-btn">I ACKNOWLEDGE</button>
             </div>
         </div>
@@ -289,6 +290,12 @@
                     <label class="parameters-label" for="theme-select">Theme</label>
                     <select id="theme-select"></select>
                 </div>
+                <h3 class="parameters-section-title">Tools</h3>
+                <div class="parameters-section parameters-section--row">
+                    <label class="parameters-label" for="coord-probe-toggle">Coordinate Probe</label>
+                    <input type="checkbox" id="coord-probe-toggle">
+                </div>
+                <p class="parameters-hint">Click anywhere on the map to read estimated CET coordinates.</p>
                 <button id="close-parameters-modal" class="terminal-btn parameters-close-btn">[ CLOSE ]</button>
             </div>
         </div>
