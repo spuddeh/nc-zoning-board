@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### 2026-03-21
+
+- **UI**:
+  - **Recently Updated badge** — mods updated on Nexus within the last 7 days now display an `UPDATED` badge in the popup title, sidebar entry, and cluster flyout panel. Tooltip reads "Updated on Nexus within the last N days" (N driven by `NCZ.RECENTLY_UPDATED_DAYS` constant).
+  - **"updated" filter tag** — a synthetic `updated` filter tag is prepended to the sidebar tag list (before `nczoning`) whenever at least one recently updated mod is present. Selecting it shows only recently updated mods.
+  - **Welcome modal disclaimer** — replaced the updated-badge explanation with a clear disclaimer that this map is a visibility tool, not a reservation system. Mod authors retain full creative freedom over any location.
+- **API**:
+  - `updatedAt` is now fetched in both the `modsByUid` (manual mods) and `NCZoningMods` (auto-discovery) GraphQL queries.
+  - Manual mods receive `updatedAt` from the thumbnail fetch; auto-discovered mods receive it from the discovery query.
+- **Constants**:
+  - Added `NCZ.RECENTLY_UPDATED_DAYS` — controls the badge and filter threshold (default: 7 days).
+
 ### 2026-03-15 (refactor & CI)
 
 - **Refactor**:

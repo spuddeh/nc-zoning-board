@@ -27,6 +27,17 @@ Tags are used to describe the aesthetic, function, or intended audience of a loc
 
 ---
 
+## Synthetic Tags
+
+Synthetic tags are applied automatically by the map system. They are **not** in `data/tags.json`, cannot be manually assigned, and will not pass schema validation if added to a location file.
+
+| Tag | Applied by | Description |
+| --- | --- | --- |
+| `nczoning` | Auto-discovery (`fetchNexusTaggedMods`) | Applied to every mod sourced automatically from Nexus Mods. Appears as a filter tag and as a badge on the popup and sidebar entry. |
+| `updated` | `app.js` filter setup | A virtual filter that surfaces any mod whose Nexus `updatedAt` timestamp falls within `NCZ.RECENTLY_UPDATED_DAYS` days. Not stored on the mod object — evaluated live by `isRecentlyUpdated()`. |
+
+---
+
 ## Adding a Tag
 
 1. **`data/tags.json`** — Add the new key and a concise definition sentence.
