@@ -1,0 +1,19 @@
+{
+    "id": "9f092594-d88f-4e57-94e5-3d680f1b8bc3",
+    "name": "Badlands Garage Safehouse (Militech)",
+    "authors": [
+        "Chivved"
+    ],
+    "credits": "",
+    "coordinates": [
+        3631.5356,
+        -922.85297
+    ],
+    "nexus_id": "24436",
+    "description": "Militech presence reported. Kill any hostiles found on arrival, and claim the place as your own.",
+    "category": "location-overhaul",
+    "tags": [
+        "corpo",
+        "neomilitarism"
+    ]
+}
