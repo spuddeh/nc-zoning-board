@@ -483,18 +483,13 @@ async function initMap() {
     maxClusterRadius: 40,
     iconCreateFunction: function (cluster) {
       const count = cluster.getChildCount();
-      let sizeClass = "xlarge";
-      if (count < 10) {
-        sizeClass = "small";
-      } else if (count < 25) {
-        sizeClass = "medium";
-      } else if (count < 50) {
-        sizeClass = "large";
-      }
+      // Color ramp uses 10 steps across a bounded 0..100 count range.
+      const boundedCount = Math.max(0, Math.min(count, 100));
+      const colorStep = Math.round(boundedCount / 11);
 
       return L.divIcon({
         html: `<div><span>${count}</span></div>`,
-        className: `marker-cluster marker-cluster-${sizeClass}`,
+        className: `marker-cluster marker-cluster-step marker-cluster-step-${colorStep}`,
         iconSize: L.point(40, 40),
       });
     },

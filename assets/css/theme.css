@@ -80,6 +80,14 @@
     --tertiary-40: rgb(from var(--tertiary) r g b / 0.4);
 
     --gray-40: rgb(from var(--gray) r g b / 0.4);
+
+    /* Cluster colors (10 steps, 0..100 count range) */
+    --cluster-bg-saturation: 84%;
+    --cluster-bg-lightness: 64%;
+    --cluster-bg-alpha: 0.6;
+    --cluster-inner-saturation: 100%;
+    --cluster-inner-lightness: 46%;
+    --cluster-inner-alpha: 0.65;
 }
 
 html.theme-night-corp {
@@ -110,15 +118,6 @@ html.theme-night-corp {
     --category-other: var(--gray);
     --category-other-glow: var(--gray-40);
 
-    /* Theme cluster size colors */
-    --cluster-small-bg: rgba(181, 226, 140, 0.6);
-    --cluster-small-inner: rgba(110, 204, 57, 0.65);
-    --cluster-medium-bg: rgba(241, 211, 87, 0.6);
-    --cluster-medium-inner: rgba(240, 194, 12, 0.65);
-    --cluster-large-bg: rgba(253, 156, 115, 0.6);
-    --cluster-large-inner: rgba(241, 128, 23, 0.65);
-    --cluster-xlarge-bg: rgba(243, 86, 86, 0.6);
-    --cluster-xlarge-inner: rgba(238, 26, 26, 0.65);
 }
 
 html.theme-arasaka {
@@ -149,15 +148,6 @@ html.theme-arasaka {
     --category-other: var(--gray);
     --category-other-glow: var(--gray-40);
 
-    /* Theme cluster size colors */
-    --cluster-small-bg: rgba(181, 226, 140, 0.6);
-    --cluster-small-inner: rgba(110, 204, 57, 0.65);
-    --cluster-medium-bg: rgba(241, 211, 87, 0.6);
-    --cluster-medium-inner: rgba(240, 194, 12, 0.65);
-    --cluster-large-bg: rgba(253, 156, 115, 0.6);
-    --cluster-large-inner: rgba(241, 128, 23, 0.65);
-    --cluster-xlarge-bg: rgba(243, 86, 86, 0.6);
-    --cluster-xlarge-inner: rgba(238, 26, 26, 0.65);
 }
 
 html.theme-militech {
@@ -188,15 +178,6 @@ html.theme-militech {
     --category-other: var(--gray);
     --category-other-glow: var(--gray-40);
 
-    /* Theme cluster size colors */
-    --cluster-small-bg: rgba(181, 226, 140, 0.6);
-    --cluster-small-inner: rgba(110, 204, 57, 0.65);
-    --cluster-medium-bg: rgba(241, 211, 87, 0.6);
-    --cluster-medium-inner: rgba(240, 194, 12, 0.65);
-    --cluster-large-bg: rgba(253, 156, 115, 0.6);
-    --cluster-large-inner: rgba(241, 128, 23, 0.65);
-    --cluster-xlarge-bg: rgba(243, 86, 86, 0.6);
-    --cluster-xlarge-inner: rgba(238, 26, 26, 0.65);
 }
 
 html.theme-aldecaldos {
@@ -227,15 +208,6 @@ html.theme-aldecaldos {
     --category-other: var(--gray);
     --category-other-glow: var(--gray-40);
 
-    /* Theme cluster size colors */
-    --cluster-small-bg: rgba(181, 226, 140, 0.6);
-    --cluster-small-inner: rgba(110, 204, 57, 0.65);
-    --cluster-medium-bg: rgba(241, 211, 87, 0.6);
-    --cluster-medium-inner: rgba(240, 194, 12, 0.65);
-    --cluster-large-bg: rgba(253, 156, 115, 0.6);
-    --cluster-large-inner: rgba(241, 128, 23, 0.65);
-    --cluster-xlarge-bg: rgba(243, 86, 86, 0.6);
-    --cluster-xlarge-inner: rgba(238, 26, 26, 0.65);
 }
 
 /* Global reset */
