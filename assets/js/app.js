@@ -405,6 +405,15 @@ function positionDynamicPopup(map, popup) {
 
   popupEl.classList.add("ncz-dynamic-popup");
 
+  const imageEl = popupEl.querySelector(".custom-popup-header.has-image .popup-thumb");
+  const titleEl = popupEl.querySelector(".custom-popup-title");
+  const imageHeight = imageEl ? Math.ceil(imageEl.getBoundingClientRect().height) : 0;
+  const titleHeight = titleEl ? Math.ceil(titleEl.getBoundingClientRect().height) : 0;
+  const gradientTopStopPx = imageHeight + titleHeight;
+  const gradientBottomStopPx = gradientTopStopPx + 20;
+  popupEl.style.setProperty("--ncz-popup-gradient-top-stop", `${gradientTopStopPx}px`);
+  popupEl.style.setProperty("--ncz-popup-gradient-bottom-stop", `${gradientBottomStopPx}px`);
+
   // Read popup size and marker anchor position.
   const size = {
     width: Math.max(1, Math.ceil(wrapperEl.offsetWidth)),
@@ -729,7 +738,7 @@ async function initMap() {
           <span class="cluster-mod-layout">
             ${thumbMarkup}
             <span class="cluster-mod-content">
-              <span class="cluster-mod-name">${NCZ.escapeHtml(mod.name)}${isRecentlyUpdated(mod) ? ` <span class="badge-updated" title="Updated on Nexus within the last ${NCZ.RECENTLY_UPDATED_DAYS} days">UPDATED</span>` : ""}</span>
+              <span class="cluster-mod-name">${NCZ.escapeHtml(mod.name)}${isRecentlyUpdated(mod) ? ` <span class="badge-updated" title="Updated on Nexus within the last ${NCZ.RECENTLY_UPDATED_DAYS} days">${NCZ.UPDATED_LABEL}</span>` : ""}</span>
               <span class="cluster-mod-separator"></span>
               <span class="cluster-mod-meta">by ${NCZ.escapeHtml(mod.authors.join(", "))}</span>
               <span class="cluster-mod-tags">
@@ -901,36 +910,52 @@ async function initMap() {
         const nexusAutoBadge = mod._source === "nexus-auto"
           ? ` <span class="nexus-auto-badge" title="Sourced automatically from Nexus Mods" aria-hidden="true"></span>`
           : "";
-        const updatedBadge = isRecentlyUpdated(mod)
-          ? ` <span class="badge-updated" title="Updated on Nexus within the last ${NCZ.RECENTLY_UPDATED_DAYS} days">UPDATED</span>`
+        const hasPopupImage = Boolean(thumbSrc && fullSrc);
+        const updatedPopupBadge = isRecentlyUpdated(mod)
+          ? ` <span class="badge-updated" title="Updated on Nexus within the last ${NCZ.RECENTLY_UPDATED_DAYS} days">${NCZ.UPDATED_LABEL}</span>`
           : "";
+        const creditNames = (mod.credits || "")
+          .split(",")
+          .map((name) => name.trim())
+          .filter(Boolean);
+        const creditsHtml = creditNames
+          .map((name) => `<span class="custom-popup-credit-name">${NCZ.escapeHtml(name)}</span>`)
+          .join(", ");
 
         const popupContent = `
-                <div class="custom-popup-content">
+                <div class="custom-popup-content" style="--popup-title-accent: ${catStyle.color};">
+                    <span class="popup-category-badge">${NCZ.escapeHtml(catStyle.label)}</span>
+                    ${updatedPopupBadge}
                     ${
-                      thumbSrc && fullSrc
+                      hasPopupImage
                         ? `
-                        <div class="custom-popup-images">
-                            <img src="${NCZ.escapeHtml(thumbSrc)}" class="popup-thumb" referrerpolicy="no-referrer" data-full-src="${NCZ.escapeHtml(fullSrc)}">
-                        </div>
-                    `
+                            <div class="custom-popup-header has-image">
+                            <div class="custom-popup-images">
+                                <img src="${NCZ.escapeHtml(thumbSrc)}" class="popup-thumb" referrerpolicy="no-referrer" data-full-src="${NCZ.escapeHtml(fullSrc)}">
+                            </div>
+                            </div>
+                        `
                         : ""
                     }
-                    <div class="custom-popup-title">${NCZ.escapeHtml(mod.name)}${nexusAutoBadge}${updatedBadge}</div>
-                    <div class="custom-popup-authors">${authorsHtml}</div>
-                    ${mod.credits ? `<div class="custom-popup-credits">Credits: ${NCZ.escapeHtml(mod.credits)}</div>` : ""}
-                    <div class="custom-popup-tags">${tagsHtml}</div>
-                    <div class="custom-popup-desc">${NCZ.escapeHtml(mod.description || "No description provided.")}</div>
-                    <div class="popup-actions">
-                        <a href="${NCZ.escapeHtml(nexusUrl)}" target="_blank" class="ui-popup-action-link ui-popup-action-link-nexus">${NCZ.escapeHtml(nexusLabel)}</a>
-                        ${!mod._source ? `<a href="${NCZ.escapeHtml(editUrl)}" target="_blank" class="ui-popup-action-link ui-popup-action-link-edit tertiary" aria-label="Suggest Edit" title="Suggest Edit"><span class="ui-popup-action-link-icon" aria-hidden="true"></span></a>` : ""}
+                    <div class="custom-popup-title">${NCZ.escapeHtml(mod.name)}${nexusAutoBadge}</div>
+                    <div class="custom-popup-body">
+                        <div class="custom-popup-authors">${authorsHtml}</div>
+                        ${mod.credits ? `<div class="custom-popup-credits">Credits: ${creditsHtml || NCZ.escapeHtml(mod.credits)}</div>` : ""}
+                        <div class="custom-popup-desc">${NCZ.escapeHtml(mod.description || "No description provided.")}</div>
+                        ${tagsHtml ? `<div class="custom-popup-tags">${tagsHtml}</div>` : ""}
+                        <div class="popup-actions">
+                            <a href="${NCZ.escapeHtml(nexusUrl)}" target="_blank" class="ui-popup-action-link ui-popup-action-link-nexus">${NCZ.escapeHtml(nexusLabel)}</a>
+                            ${!mod._source ? `<a href="${NCZ.escapeHtml(editUrl)}" target="_blank" class="ui-popup-action-link ui-popup-action-link-edit tertiary" aria-label="Suggest Edit" title="Suggest Edit"><span class="ui-popup-action-link-icon" aria-hidden="true"></span></a>` : ""}
+                        </div>
                     </div>
                 </div>
             `;
         marker.bindPopup(popupContent, {
           autoPan: false,
           offset: [0, 0],
-          className: "ncz-dynamic-popup",
+          minWidth: 360,
+          maxWidth: 360,
+          className: `ncz-dynamic-popup popup-${catStyle.class}`,
         });
 
         // Add to Sidebar
@@ -943,7 +968,7 @@ async function initMap() {
           ? ` <span class="nexus-auto-badge" title="Sourced automatically from Nexus Mods" aria-hidden="true"></span>`
           : "";
         const sidebarUpdatedBadge = isRecentlyUpdated(mod)
-          ? ` <span class="badge-updated" title="Updated on Nexus within the last ${NCZ.RECENTLY_UPDATED_DAYS} days">UPDATED</span>`
+          ? ` <span class="badge-updated" title="Updated on Nexus within the last ${NCZ.RECENTLY_UPDATED_DAYS} days">${NCZ.UPDATED_LABEL}</span>`
           : "";
         li.innerHTML = `
                 <div class="mod-item-header">
@@ -1043,7 +1068,7 @@ async function initMap() {
     if (mods.some(isRecentlyUpdated)) {
       const btn = document.createElement("button");
       btn.className = "tag-filter-btn";
-      btn.textContent = "updated";
+      btn.textContent = NCZ.UPDATED_LABEL;
       btn.title = `Updated on Nexus within the last ${NCZ.RECENTLY_UPDATED_DAYS} days`;
       btn.dataset.tag = "updated";
       btn.addEventListener("click", () => { btn.classList.toggle("active"); applyFilters(); });
