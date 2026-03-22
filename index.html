@@ -127,26 +127,36 @@
             <div id="category-filters"></div>
 
             <div class="sidebar-section-header collapsible collapsed" data-collapse-target="tag-filters">
-                Filter by Tags
+                <span>Filter by Tags<span id="tag-filter-count" class="filter-selected-count"></span></span>
                 <svg class="collapse-chevron" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"
                     fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <polyline points="6 9 12 15 18 9"></polyline>
                 </svg>
             </div>
-            <div id="tag-filters" class="filter-collapsed"></div>
+            <div id="tag-filters" class="filter-collapsed">
+                <button type="button" id="clear-tag-filters" class="filter-clear-btn" hidden>Clear all</button>
+            </div>
 
             <div class="sidebar-section-header collapsible collapsed" data-collapse-target="author-filters">
-                Author Filters
+                <span>Author Filters<span id="author-filter-count" class="filter-selected-count"></span></span>
                 <svg class="collapse-chevron" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"
                     fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <polyline points="6 9 12 15 18 9"></polyline>
                 </svg>
             </div>
-            <div id="author-filters" class="filter-collapsed"></div>
+            <div id="author-filters" class="filter-collapsed">
+                <button type="button" id="clear-author-filters" class="filter-clear-btn" hidden>Clear all</button>
+            </div>
 
             <div class="sidebar-section-header">Locations <span id="mod-count"></span></div>
             <div class="sidebar-search-container">
-                <input type="text" id="mod-search" placeholder="Search locations..." aria-label="Search locations">
+                <div class="sidebar-search-input-wrap">
+                    <input type="text" id="mod-search" placeholder="Search locations..." aria-label="Search locations">
+                    <button type="button" id="mod-search-clear" class="sidebar-search-clear-btn ui-close-btn"
+                        aria-label="Clear search" title="Clear search" hidden>
+                        <span class="ui-close-btn-icon" aria-hidden="true"></span>
+                    </button>
+                </div>
             </div>
             <ul id="mod-list"></ul>
             <div id="sidebar-footer">

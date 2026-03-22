@@ -559,6 +559,10 @@ async function initMap() {
   const modListEl = document.getElementById("mod-list");
   const filterContainer = document.getElementById("category-filters");
   const authorFilterContainer = document.getElementById("author-filters");
+  const tagFilterCountEl = document.getElementById("tag-filter-count");
+  const authorFilterCountEl = document.getElementById("author-filter-count");
+  const clearTagFiltersBtn = document.getElementById("clear-tag-filters");
+  const clearAuthorFiltersBtn = document.getElementById("clear-author-filters");
   const sidebar = document.getElementById("sidebar");
   const sidebarClose = document.getElementById("sidebar-close");
   const sidebarOpen = document.getElementById("sidebar-open");
@@ -1061,6 +1065,26 @@ async function initMap() {
 
     // Add Tags filter UI (targets static #tag-filters div in HTML)
     const tagsFilterContainer = document.getElementById("tag-filters");
+    function clearActiveTagLikeFilters(container) {
+      container.querySelectorAll(".tag-filter-btn.active").forEach((btn) => {
+        btn.classList.remove("active");
+      });
+    }
+
+    if (clearTagFiltersBtn) {
+      clearTagFiltersBtn.addEventListener("click", () => {
+        clearActiveTagLikeFilters(tagsFilterContainer);
+        applyFilters();
+      });
+    }
+
+    if (clearAuthorFiltersBtn) {
+      clearAuthorFiltersBtn.addEventListener("click", () => {
+        clearActiveTagLikeFilters(authorFilterContainer);
+        applyFilters();
+      });
+    }
+
     const usedTags = new Set();
     mods.forEach((mod) => (mod.tags || []).forEach((t) => usedTags.add(t)));
 
@@ -1123,11 +1147,38 @@ async function initMap() {
 
     // 7. Setup Text Search (debounced to avoid excessive re-filtering)
     const searchInput = document.getElementById("mod-search");
+    const searchClearBtn = document.getElementById("mod-search-clear");
     let searchDebounce;
+    function updateSearchClearButtonVisibility() {
+      if (!searchClearBtn) return;
+      searchClearBtn.hidden = searchInput.value.length === 0;
+    }
+
+    function clearSearchQuery() {
+      if (searchInput.value.length === 0) return;
+      searchInput.value = "";
+      updateSearchClearButtonVisibility();
+      clearTimeout(searchDebounce);
+      applyFilters();
+      searchInput.focus();
+    }
+
     searchInput.addEventListener("input", () => {
+      updateSearchClearButtonVisibility();
       clearTimeout(searchDebounce);
       searchDebounce = setTimeout(applyFilters, NCZ.SEARCH_DEBOUNCE_MS);
     });
+    searchInput.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape") return;
+      if (searchInput.value.length === 0) return;
+      event.preventDefault();
+      clearSearchQuery();
+    });
+
+    if (searchClearBtn) {
+      searchClearBtn.addEventListener("click", clearSearchQuery);
+    }
+    updateSearchClearButtonVisibility();
 
     // Centralized Filter Logic
     function applyFilters() {
@@ -1141,6 +1192,10 @@ async function initMap() {
       const activeAuthors = Array.from(
         authorFilterContainer.querySelectorAll(".tag-filter-btn.active"),
       ).map((b) => b.dataset.author);
+      if (tagFilterCountEl) tagFilterCountEl.textContent = activeTags.length > 0 ? ` (${activeTags.length})` : "";
+      if (authorFilterCountEl) authorFilterCountEl.textContent = activeAuthors.length > 0 ? ` (${activeAuthors.length})` : "";
+      if (clearTagFiltersBtn) clearTagFiltersBtn.hidden = activeTags.length === 0;
+      if (clearAuthorFiltersBtn) clearAuthorFiltersBtn.hidden = activeAuthors.length === 0;
 
       // Clear current cluster group
       markerClusterGroup.clearLayers();
