@@ -1301,23 +1301,37 @@ h1 {
     opacity: 0.8;
 }
 
-#about-btn,
-#parameters-btn {
+.header-action-btn {
+    --header-btn-color: var(--secondary);
     background: transparent;
-    border: var(--ui-border-thin) solid var(--secondary);
-    color: var(--secondary);
+    border: var(--ui-border-thin) solid var(--header-btn-color);
+    color: var(--header-btn-color);
     font-family: var(--font-heading);
     font-size: var(--text-2xs);
-    padding: 2px var(--space-sm);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-2xs) var(--space-sm);
     cursor: pointer;
     letter-spacing: 1px;
+    white-space: nowrap;
     transition: var(--transition-fast);
     opacity: 1;
 
     &:hover {
-        background: var(--secondary);
+        background: var(--header-btn-color);
         color: var(--primary);
     }
+
+    svg {
+        width: 14px;
+        height: 14px;
+        flex-shrink: 0;
+    }
+}
+
+.header-action-btn-tertiary {
+    --header-btn-color: var(--tertiary);
 }
 
 .status-label {
@@ -1477,24 +1491,6 @@ body::before {
 }
 
 /* ── BBCode Header Button ─────────────────────────────────────────── */
-#bbcode-btn {
-    background: transparent;
-    border: var(--ui-border-thin) solid var(--tertiary);
-    color: var(--tertiary);
-    font-family: var(--font-heading);
-    font-size: var(--text-2xs);
-    padding: 2px var(--space-sm);
-    cursor: pointer;
-    letter-spacing: 1px;
-    transition: var(--transition-fast);
-    opacity: 1;
-
-    &:hover {
-        background: var(--tertiary);
-        color: var(--primary);
-    }
-}
-
 .parameters-modal-content {
     max-width: 420px;
     width: 95%;

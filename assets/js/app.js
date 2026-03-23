@@ -566,6 +566,7 @@ async function initMap() {
   const sidebar = document.getElementById("sidebar");
   const sidebarClose = document.getElementById("sidebar-close");
   const sidebarOpen = document.getElementById("sidebar-open");
+  const discoverLocationBtn = document.getElementById("discover-location-btn");
   // Cluster menu DOM references
   const clusterPanel = document.getElementById("cluster-panel");
   const clusterPanelResizeHandle = document.getElementById("cluster-panel-resize-handle");
@@ -697,6 +698,28 @@ async function initMap() {
 
   function focusMarker(marker) {
     markerClusterGroup.zoomToShowLayer(marker, () => marker.openPopup());
+  }
+
+  function focusRandomVisibleMarker() {
+    const visibleMarkers = allMarkers.filter((marker) => markerClusterGroup.hasLayer(marker));
+    if (visibleMarkers.length === 0) {
+      alert("No visible locations match the current filters.");
+      return;
+    }
+
+    const randomIndex = Math.floor(Math.random() * visibleMarkers.length);
+    const randomMarker = visibleMarkers[randomIndex];
+    focusMarker(randomMarker);
+    hideClusterPanel();
+
+    if (window.innerWidth < NCZ.MOBILE_BREAKPOINT) {
+      sidebar.classList.add("hidden");
+      sidebarOpen.classList.add("visible");
+    }
+  }
+
+  if (discoverLocationBtn) {
+    discoverLocationBtn.addEventListener("click", focusRandomVisibleMarker);
   }
 
   markerClusterGroup.on("clusterclick", (a) => {
