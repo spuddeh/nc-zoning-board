@@ -405,7 +405,7 @@ function positionDynamicPopup(map, popup) {
 
   popupEl.classList.add("ncz-dynamic-popup");
 
-  const imageEl = popupEl.querySelector(".custom-popup-header.has-image .popup-thumb");
+  const imageEl = popupEl.querySelector(".custom-popup-header.has-image");
   const titleEl = popupEl.querySelector(".custom-popup-title");
   const imageHeight = imageEl ? Math.ceil(imageEl.getBoundingClientRect().height) : 0;
   const titleHeight = titleEl ? Math.ceil(titleEl.getBoundingClientRect().height) : 0;
@@ -533,6 +533,9 @@ async function initMap() {
   const pinTooltip = createPinTooltipController(map);
   let activePopup = null;
   let popupRepositionFrame = null;
+  let focusedMarker = null;
+  let isZoomTransitioning = false;
+  let focusedRestoreFrame = null;
 
   function repositionActivePopup() {
     if (!activePopup) return;
@@ -548,9 +551,49 @@ async function initMap() {
     });
   }
 
+  function restoreFocusedPopupIfVisible() {
+    if (!focusedMarker) return;
+    if (!markerClusterGroup.hasLayer(focusedMarker)) return;
+    const visibleParent = markerClusterGroup.getVisibleParent(focusedMarker);
+    if (!visibleParent) return;
+
+    if (visibleParent === focusedMarker) {
+      if (!focusedMarker.isPopupOpen()) {
+        focusedMarker.openPopup();
+      }
+      return;
+    }
+
+    // Keep focused markers visible even when they are clustered by re-spiderfying
+    // their current cluster once zoom animations have settled.
+    if (typeof visibleParent.spiderfy !== "function" || markerClusterGroup._inZoomAnimation) return;
+    if (markerClusterGroup._spiderfied === visibleParent) return;
+
+    const targetCluster = visibleParent;
+    const targetMarker = focusedMarker;
+    markerClusterGroup.once("spiderfied", (event) => {
+      if (event.cluster !== targetCluster) return;
+      if (focusedMarker !== targetMarker) return;
+      scheduleFocusedPopupRestore();
+    });
+    targetCluster.spiderfy();
+  }
+
+  function scheduleFocusedPopupRestore() {
+    if (!focusedMarker || focusedRestoreFrame !== null) return;
+    focusedRestoreFrame = requestAnimationFrame(() => {
+      focusedRestoreFrame = null;
+      restoreFocusedPopupIfVisible();
+    });
+  }
+
   map.on("popupopen", (e) => {
     pinTooltip.hide();
     activePopup = e.popup;
+    const popupSource = e.popup?._source;
+    if (popupSource?.modData) {
+      focusedMarker = popupSource;
+    }
     repositionActivePopup();
     scheduleActivePopupReposition();
     const popupImages = activePopup.getElement()?.querySelectorAll("img") || [];
@@ -560,8 +603,22 @@ async function initMap() {
       }
     });
   });
-  map.on("popupclose", () => {
+  map.on("popupclose", (e) => {
     activePopup = null;
+    const popupSource = e.popup?._source;
+    const isZoomRelatedClose =
+      isZoomTransitioning ||
+      Boolean(map._animatingZoom) ||
+      Boolean(markerClusterGroup._inZoomAnimation);
+    if (
+      focusedMarker &&
+      popupSource === focusedMarker &&
+      !isZoomRelatedClose &&
+      map.hasLayer(focusedMarker)
+    ) {
+      // Manual close on a visible marker clears focused state.
+      focusedMarker = null;
+    }
     if (popupRepositionFrame !== null) {
       cancelAnimationFrame(popupRepositionFrame);
       popupRepositionFrame = null;
@@ -585,6 +642,7 @@ async function initMap() {
   const sidebar = document.getElementById("sidebar");
   const sidebarClose = document.getElementById("sidebar-close");
   const sidebarOpen = document.getElementById("sidebar-open");
+  const discoverLocationBtn = document.getElementById("discover-location-btn");
   // Cluster menu DOM references
   const clusterPanel = document.getElementById("cluster-panel");
   const clusterPanelResizeHandle = document.getElementById("cluster-panel-resize-handle");
@@ -715,7 +773,30 @@ async function initMap() {
   }
 
   function focusMarker(marker) {
+    focusedMarker = marker;
     markerClusterGroup.zoomToShowLayer(marker, () => marker.openPopup());
+  }
+
+  function focusRandomVisibleMarker() {
+    const visibleMarkers = allMarkers.filter((marker) => markerClusterGroup.hasLayer(marker));
+    if (visibleMarkers.length === 0) {
+      alert("No visible locations match the current filters.");
+      return;
+    }
+
+    const randomIndex = Math.floor(Math.random() * visibleMarkers.length);
+    const randomMarker = visibleMarkers[randomIndex];
+    focusMarker(randomMarker);
+    hideClusterPanel();
+
+    if (window.innerWidth < NCZ.MOBILE_BREAKPOINT) {
+      sidebar.classList.add("hidden");
+      sidebarOpen.classList.add("visible");
+    }
+  }
+
+  if (discoverLocationBtn) {
+    discoverLocationBtn.addEventListener("click", focusRandomVisibleMarker);
   }
 
   markerClusterGroup.on("clusterclick", (a) => {
@@ -818,7 +899,15 @@ async function initMap() {
   }
 
   map.on("click", hideClusterPanel);
-  map.on("zoomstart", hideClusterPanel);
+  map.on("zoomstart", () => {
+    isZoomTransitioning = true;
+    hideClusterPanel();
+  });
+  map.on("zoomend", () => {
+    isZoomTransitioning = false;
+    scheduleFocusedPopupRestore();
+  });
+  markerClusterGroup.on("animationend", scheduleFocusedPopupRestore);
 
   // 3. Fetch and Setup Data
   try {
@@ -1272,6 +1361,12 @@ async function initMap() {
 
       // Update visible mod count
       modCountEl.textContent = `(${visibleMarkers.length}/${mods.length})`;
+
+      if (focusedMarker && !markerClusterGroup.hasLayer(focusedMarker)) {
+        focusedMarker = null;
+      } else {
+        scheduleFocusedPopupRestore();
+      }
     }
   } catch (error) {
     console.error("Error loading mod data:", error);
