@@ -69,6 +69,15 @@ NCZ.DESCRIPTION_MAX_LENGTH = 500;
 NCZ.COPY_FEEDBACK_MS = 2000;
 NCZ.SEARCH_DEBOUNCE_MS = 200;
 
+// CET <-> Leaflet transform calibration
+NCZ.CET_TO_LEAFLET_X_SCALE = 0.0208623;
+NCZ.CET_TO_LEAFLET_Y_SCALE = 0.02101335;
+NCZ.CET_TO_LEAFLET_X_OFFSET = 132.8016;
+NCZ.CET_TO_LEAFLET_Y_OFFSET = -93.68566;
+// Set this if you want to calibrate CET units to physical meters.
+// Default assumes 1 CET unit ~= 1 meter.
+NCZ.CET_UNITS_PER_METER = 1;
+
 // LocalStorage cache keys & TTLs
 NCZ.THEME_PREFERENCE_KEY = "nc_theme_id";
 NCZ.RECENTLY_UPDATED_DAYS = 7;

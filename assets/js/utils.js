@@ -32,9 +32,19 @@ NCZ.toNexusUid = function (modId) {
 
 // Forward: CET (x, y) → Leaflet [lat, lng]
 NCZ.cetToLeaflet = function (cetX, cetY) {
-  const lat = 0.02101335 * cetY - 93.68566;
-  const lng = 0.0208623 * cetX + 132.8016;
+  const lat = (NCZ.CET_TO_LEAFLET_Y_SCALE * cetY) + NCZ.CET_TO_LEAFLET_Y_OFFSET;
+  const lng = (NCZ.CET_TO_LEAFLET_X_SCALE * cetX) + NCZ.CET_TO_LEAFLET_X_OFFSET;
   return [lat, lng];
+};
+
+// Leaflet lat/lng distance converted to calibrated meters via the CET transform.
+NCZ.leafletDistanceMeters = function (a, b) {
+  const deltaLng = b.lng - a.lng;
+  const deltaLat = b.lat - a.lat;
+  const deltaCetX = deltaLng / NCZ.CET_TO_LEAFLET_X_SCALE;
+  const deltaCetY = deltaLat / NCZ.CET_TO_LEAFLET_Y_SCALE;
+  const distanceCetUnits = Math.hypot(deltaCetX, deltaCetY);
+  return distanceCetUnits / NCZ.CET_UNITS_PER_METER;
 };
 
 
