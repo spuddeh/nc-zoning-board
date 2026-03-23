@@ -405,7 +405,7 @@ function positionDynamicPopup(map, popup) {
 
   popupEl.classList.add("ncz-dynamic-popup");
 
-  const imageEl = popupEl.querySelector(".custom-popup-header.has-image .popup-thumb");
+  const imageEl = popupEl.querySelector(".custom-popup-header.has-image");
   const titleEl = popupEl.querySelector(".custom-popup-title");
   const imageHeight = imageEl ? Math.ceil(imageEl.getBoundingClientRect().height) : 0;
   const titleHeight = titleEl ? Math.ceil(titleEl.getBoundingClientRect().height) : 0;
