@@ -72,6 +72,7 @@ NCZ.SEARCH_DEBOUNCE_MS = 200;
 // LocalStorage cache keys & TTLs
 NCZ.THEME_PREFERENCE_KEY = "nc_theme_id";
 NCZ.RECENTLY_UPDATED_DAYS = 7;
+NCZ.UPDATED_LABEL = "RECENTLY UPDATED";
 NCZ.THUMB_CACHE_KEY = "nc_nexus_thumbs";
 NCZ.THUMB_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
 NCZ.AUTODISCOVERY_CACHE_KEY = "nc_nexus_autodiscovery";

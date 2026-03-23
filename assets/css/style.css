@@ -298,6 +298,25 @@ body.cluster-panel-resizing * {
     width: 100%;
 }
 
+.sidebar-search-input-wrap {
+    position: relative;
+}
+
+#mod-search {
+    padding-right: 2rem;
+}
+
+.sidebar-search-clear-btn {
+    position: absolute;
+    top: 50%;
+    right: var(--space-sm);
+    transform: translateY(-50%);
+
+    &[hidden] {
+        display: none;
+    }
+}
+
 
 
 #category-filters {
@@ -1022,6 +1041,13 @@ body.cluster-panel-resizing * {
     letter-spacing: 0;
 }
 
+.filter-selected-count {
+    font-family: var(--font-body);
+    font-size: var(--text-xs);
+    opacity: 0.8;
+    letter-spacing: 0;
+}
+
 
 /* Tag & Author Filters Section */
 #tag-filters, #author-filters {
@@ -1035,6 +1061,30 @@ body.cluster-panel-resizing * {
         overflow: hidden;
         padding-top: 0;
         padding-bottom: 0;
+    }
+}
+
+.filter-clear-btn {
+    flex: 0 0 100%;
+    justify-self: flex-start;
+    width: fit-content;
+    background: transparent;
+    border: var(--ui-border-thin) solid var(--text-dim);
+    color: var(--text-dim);
+    padding: 2px var(--space-xs);
+    font-family: var(--font-body);
+    font-size: var(--text-xs);
+    border-radius: var(--ui-radius-sm);
+    cursor: pointer;
+    transition: var(--transition-fast);
+
+    &:hover {
+        border-color: var(--secondary);
+        color: var(--secondary);
+    }
+
+    &[hidden] {
+        display: none;
     }
 }
 
