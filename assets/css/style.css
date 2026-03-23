@@ -1307,7 +1307,7 @@ h1 {
     border: var(--ui-border-thin) solid var(--header-btn-color);
     color: var(--header-btn-color);
     font-family: var(--font-heading);
-    font-size: var(--text-2xs);
+    font-size: var(--text-xs);
     display: inline-flex;
     align-items: center;
     gap: var(--space-xs);
@@ -1324,14 +1324,23 @@ h1 {
     }
 
     svg {
-        width: 14px;
-        height: 14px;
+        width: 18px;
+        height: 18px;
         flex-shrink: 0;
+    }
+
+    span {
+        font-weight: bold;
     }
 }
 
 .header-action-btn-tertiary {
     --header-btn-color: var(--tertiary);
+}
+
+#about-btn {
+    font-size: var(--text-md);
+    line-height: 18px;
 }
 
 .status-label {
