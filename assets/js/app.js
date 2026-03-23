@@ -470,6 +470,24 @@ async function initMap() {
   const southWest = map.unproject([0, 8192], maxZoom);
   const northEast = map.unproject([8192, 0], maxZoom);
   const mapBounds = new L.LatLngBounds(southWest, northEast);
+  const panEdgeFraction = 0.5; // Let each map edge travel about halfway toward screen center.
+
+  function updatePannableBounds() {
+    const size = map.getSize();
+    const scaleToMaxZoom = map.getZoomScale(maxZoom, map.getZoom());
+    const padX = size.x * panEdgeFraction * scaleToMaxZoom;
+    const padY = size.y * panEdgeFraction * scaleToMaxZoom;
+    const mapSouthWestPoint = map.project(mapBounds.getSouthWest(), maxZoom);
+    const mapNorthEastPoint = map.project(mapBounds.getNorthEast(), maxZoom);
+
+    const pannableSouthWest = L.point(mapSouthWestPoint.x - padX, mapSouthWestPoint.y + padY);
+    const pannableNorthEast = L.point(mapNorthEastPoint.x + padX, mapNorthEastPoint.y - padY);
+    const pannableBounds = L.latLngBounds(
+      map.unproject(pannableSouthWest, maxZoom),
+      map.unproject(pannableNorthEast, maxZoom),
+    );
+    map.setMaxBounds(pannableBounds);
+  }
 
   L.tileLayer("assets/tiles/{z}/{x}/{y}.png", {
     minZoom: 0,
@@ -482,7 +500,8 @@ async function initMap() {
 
   map.invalidateSize();
   map.fitBounds(mapBounds);
-  map.setMaxBounds(mapBounds);
+  updatePannableBounds();
+  map.on("zoomend resize", updatePannableBounds);
 
   // 2. State & UI Elements
   const markerClusterGroup = L.markerClusterGroup({
