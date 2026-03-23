@@ -453,15 +453,30 @@ function isRecentlyUpdated(mod) {
 }
 
 async function initMap() {
+  const calibratedSimpleCrs = L.extend({}, L.CRS.Simple, {
+    distance(latlngA, latlngB) {
+      return NCZ.leafletDistanceMeters(latlngA, latlngB);
+    },
+  });
+
   // 1. Setup Map
   const map = L.map("map", {
-    crs: L.CRS.Simple,
+    crs: calibratedSimpleCrs,
     minZoom: 0,
     maxZoom: 8,
     maxBoundsViscosity: 1.0,
     attributionControl: false,
     zoomControl: false, // Disable default top-left zoom control
   });
+
+  // Add distance scale line control (Leaflet native control class: .leaflet-control-scale-line).
+  L.control.scale({
+    position: "bottomright",
+    metric: true,
+    imperial: false,
+    maxWidth: 160,
+    updateWhenIdle: true,
+  }).addTo(map);
 
   // Add zoom control manually to the bottom right
   L.control.zoom({ position: "bottomright" }).addTo(map);
