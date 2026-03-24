@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### 2026-03-23
+
+- **UI** (contributed by [@Akiway](https://github.com/Akiway)):
+  - **Map scale indicator** — a Leaflet scale bar is displayed bottom-right (metric only). The scale is calibrated to in-game distances by overriding `L.CRS.Simple`'s `distance()` method with the inverse CET coordinate transform.
+  - **"Discover a location" button** — new header button picks a random visible (post-filter) marker and zooms to it, opening its popup. Hides the sidebar on mobile when triggered.
+  - **Focused pin persistence** — when the active popup's marker gets clustered on zoom-out, the cluster auto-spiderfies to keep the popup visible. Focus clears on manual close or when the marker is filtered out.
+  - **Header button polish** — `#about-btn`, `#parameters-btn`, and `#bbcode-btn` now share a `.header-action-btn` base class with inline SVG icons and bold text. Submit button uses `.header-action-btn-tertiary` for the amber colour variant.
+  - **Map pannable bounds** — `maxBounds` now extends 50% of the viewport past each edge so pins near the border can be panned to centre. Bounds recalculate on zoom and resize.
+  - **Filter clear buttons** — "Clear all" buttons in the Tag and Author filter sections, visible only when filters are active.
+  - **Active filter counts** — section headers show `(N)` beside "Filter by Tags" and "Author Filters" when filters are selected.
+  - **Search clear button** — an × button inside the search input clears it; pressing Escape also clears the field.
+  - **Popup height fix** — `positionDynamicPopup` now measures the full `.custom-popup-header.has-image` element (previously `.popup-thumb` only) for accurate arrow placement.
+- **Constants**:
+  - CET→Leaflet transform coefficients extracted to named constants (`NCZ.CET_TO_LEAFLET_X_SCALE`, `NCZ.CET_TO_LEAFLET_Y_SCALE`, `NCZ.CET_TO_LEAFLET_X_OFFSET`, `NCZ.CET_TO_LEAFLET_Y_OFFSET`, `NCZ.CET_UNITS_PER_METER`).
+  - Added `NCZ.UPDATED_LABEL` (`"RECENTLY UPDATED"`) — corrected badge text from `UPDATED`, applied across popup, sidebar, cluster panel, and filter tag.
+- **Utils**:
+  - Added `NCZ.leafletDistanceMeters()` — converts a Leaflet lat/lng pair to in-game meters using the inverse CET transform.
+
+### 2026-03-22
+
+- **UI** (contributed by [@Akiway](https://github.com/Akiway)):
+  - **Popup redesign** — mod popups have been fully restyled:
+    - Category-coloured border gradient: the popup frame fades from the category colour at the image/title boundary to the base secondary colour below.
+    - Category badge floated top-left outside the frame; RECENTLY UPDATED badge floated top-right.
+    - Thumbnail now `object-fit: contain` inside a max-height container — fills popup width without cropping.
+    - Title accent underline and glow text-shadow both driven by `--popup-title-accent` (set to the category colour).
+    - Tags moved below description with a dark background band.
+    - Credits names individually coloured in amber via `.custom-popup-credit-name`.
+    - Nexus link is flex-grow; Edit button is flex-shrink-0.
+    - Popup `className` now includes `popup-cat-{category}` for per-category CSS targeting.
+
 ### 2026-03-21
 
 - **UI**:
