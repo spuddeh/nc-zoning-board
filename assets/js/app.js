@@ -817,11 +817,18 @@ async function initMap() {
   markerClusterGroup.on("clusterclick", (a) => {
     if (a.originalEvent) L.DomEvent.stop(a.originalEvent);
 
-    // Collect mods from clicked cluster and sort by name
+    // Collect mods from clicked cluster and sort by last updated
     const childMarkers = a.layer
       .getAllChildMarkers()
       .slice()
-      .sort((left, right) => left.modData.name.localeCompare(right.modData.name));
+      .sort((left, right) => {
+        const tsA = left.modData._updatedAt ? new Date(left.modData._updatedAt).getTime() : null;
+        const tsB = right.modData._updatedAt ? new Date(right.modData._updatedAt).getTime() : null;
+        if (tsA !== null && tsB !== null) return tsB - tsA;
+        if (tsA !== null) return -1;
+        if (tsB !== null) return 1;
+        return left.modData.name.localeCompare(right.modData.name);
+      });
 
     // Rebuild cluster menu list for this cluster
     clusterModList.innerHTML = "";
@@ -955,9 +962,15 @@ async function initMap() {
     const fetchedThumbs = await NCZ.fetchNexusThumbnails(manualNexusIds);
     Object.assign(nexusThumbs, fetchedThumbs);
 
-    mods
-      .sort((a, b) => a.name.localeCompare(b.name))
-      .forEach((mod) => {
+    // Backfill _updatedAt for manual Nexus mods before sorting
+    for (const mod of mods) {
+      if (!mod._updatedAt) {
+        const thumb = nexusThumbs[String(mod.nexus_id)];
+        if (thumb?.updatedAt) mod._updatedAt = thumb.updatedAt;
+      }
+    }
+
+    NCZ.sortModsByUpdated(mods).forEach((mod) => {
         const [lat, lng] = NCZ.cetToLeaflet(mod.coordinates[0], mod.coordinates[1]);
         const catStyle =
           NCZ.CATEGORY_STYLES[mod.category] || NCZ.CATEGORY_STYLES["other"];
@@ -1030,9 +1043,6 @@ async function initMap() {
         const fullSrc = nexusThumb?.pictureUrl || null;
         marker.modThumb = thumbSrc;
         marker.modFull = fullSrc;
-
-        // Apply updatedAt for manual mods (auto-discovered mods already have _updatedAt set)
-        if (!mod._updatedAt && nexusThumb?.updatedAt) mod._updatedAt = nexusThumb.updatedAt;
 
         const nexusAutoBadge = mod._source === "nexus-auto"
           ? ` <span class="nexus-auto-badge" title="Sourced automatically from Nexus Mods" aria-hidden="true"></span>`
