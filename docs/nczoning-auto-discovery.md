@@ -122,7 +122,9 @@ Either action will cause the mod to be skipped on the next page load. There is n
 
 ## Conflict Resolution
 
-If a mod has both an auto-discovered entry (via this system) and a manually submitted entry (via GitHub), the **manual entry always wins**. The auto-discovered version is silently discarded.
+If a mod has both an auto-discovered entry (via this system) and a manually submitted entry (via GitHub), the **manual entry always wins** for mod data (name, authors, coordinates, description, category, tags).
+
+However, the auto-discovery response's image and timestamp metadata (`thumbnailUrl`, `pictureUrl`, `updatedAt`) is preserved and applied to the manual entry. This means a manually registered mod that is also tagged NCZoning will still receive its thumbnail and recently-updated badge from Nexus without needing a separate API call.
 
 This means maintainers can always override an auto-discovered pin with a corrected manual submission without any extra steps.
 
