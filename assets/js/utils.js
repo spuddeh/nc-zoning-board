@@ -184,15 +184,13 @@ NCZ.parseNcZoningBlock = function (description, validTagNames) {
   };
 };
 
-// Sort mods by Nexus updatedAt descending.
+// Comparator for Array.sort — orders mods by Nexus updatedAt descending.
 // Mods with no Nexus date (WIP/Dummy) fall to end, sorted alphabetically.
-NCZ.sortModsByUpdated = function (mods) {
-  return mods.sort((a, b) => {
-    const tsA = a._updatedAt ? new Date(a._updatedAt).getTime() : null;
-    const tsB = b._updatedAt ? new Date(b._updatedAt).getTime() : null;
-    if (tsA !== null && tsB !== null) return tsB - tsA;
-    if (tsA !== null) return -1;
-    if (tsB !== null) return 1;
-    return a.name.localeCompare(b.name);
-  });
+NCZ.sortModsByUpdated = function (a, b) {
+  const tsA = a._updatedAt ? new Date(a._updatedAt).getTime() : null;
+  const tsB = b._updatedAt ? new Date(b._updatedAt).getTime() : null;
+  if (tsA !== null && tsB !== null) return tsB - tsA;
+  if (tsA !== null) return -1;
+  if (tsB !== null) return 1;
+  return a.name.localeCompare(b.name);
 };

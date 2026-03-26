@@ -821,14 +821,7 @@ async function initMap() {
     const childMarkers = a.layer
       .getAllChildMarkers()
       .slice()
-      .sort((left, right) => {
-        const tsA = left.modData._updatedAt ? new Date(left.modData._updatedAt).getTime() : null;
-        const tsB = right.modData._updatedAt ? new Date(right.modData._updatedAt).getTime() : null;
-        if (tsA !== null && tsB !== null) return tsB - tsA;
-        if (tsA !== null) return -1;
-        if (tsB !== null) return 1;
-        return left.modData.name.localeCompare(right.modData.name);
-      });
+      .sort((left, right) => NCZ.sortModsByUpdated(left.modData, right.modData));
 
     // Rebuild cluster menu list for this cluster
     clusterModList.innerHTML = "";
@@ -974,7 +967,7 @@ async function initMap() {
       }
     }
 
-    NCZ.sortModsByUpdated(mods).forEach((mod) => {
+    mods.sort(NCZ.sortModsByUpdated).forEach((mod) => {
         const [lat, lng] = NCZ.cetToLeaflet(mod.coordinates[0], mod.coordinates[1]);
         const catStyle =
           NCZ.CATEGORY_STYLES[mod.category] || NCZ.CATEGORY_STYLES["other"];
