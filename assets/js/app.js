@@ -817,11 +817,11 @@ async function initMap() {
   markerClusterGroup.on("clusterclick", (a) => {
     if (a.originalEvent) L.DomEvent.stop(a.originalEvent);
 
-    // Collect mods from clicked cluster and sort by name
+    // Collect mods from clicked cluster and sort by last updated
     const childMarkers = a.layer
       .getAllChildMarkers()
       .slice()
-      .sort((left, right) => left.modData.name.localeCompare(right.modData.name));
+      .sort((left, right) => NCZ.sortModsByUpdated(left.modData, right.modData));
 
     // Rebuild cluster menu list for this cluster
     clusterModList.innerHTML = "";
@@ -935,7 +935,7 @@ async function initMap() {
         .map((m) => String(m.nexus_id)),
     );
     const validTagNames = new Set(Object.keys(tagsDict));
-    const autoMods = await NCZ.fetchNexusTaggedMods(existingNexusIds, validTagNames);
+    const { mods: autoMods, meta: autoMeta } = await NCZ.fetchNexusTaggedMods(existingNexusIds, validTagNames);
     mods.push(...autoMods);
 
     modCountEl.textContent = `(${mods.length})`;
@@ -948,16 +948,26 @@ async function initMap() {
       const nid = String(mod.nexus_id);
       if (mod._thumbnailUrl || mod._pictureUrl) {
         nexusThumbs[nid] = { pictureUrl: mod._pictureUrl, thumbnailUrl: mod._thumbnailUrl };
-      } else if (nid && !["wip", "dummy"].includes(nid.toLowerCase())) {
+      } else if (nid && !["wip", "dummy"].includes(nid.toLowerCase()) && !autoMeta[nid]) {
         manualNexusIds.push(nid);
       }
     }
     const fetchedThumbs = await NCZ.fetchNexusThumbnails(manualNexusIds);
     Object.assign(nexusThumbs, fetchedThumbs);
+    // Fill in metadata from auto-discovery for manual mods that are NCZoning-tagged
+    for (const [id, data] of Object.entries(autoMeta)) {
+      if (!nexusThumbs[id]) nexusThumbs[id] = data;
+    }
 
-    mods
-      .sort((a, b) => a.name.localeCompare(b.name))
-      .forEach((mod) => {
+    // Backfill _updatedAt for manual Nexus mods before sorting
+    for (const mod of mods) {
+      if (!mod._updatedAt) {
+        const thumb = nexusThumbs[String(mod.nexus_id)];
+        if (thumb?.updatedAt) mod._updatedAt = thumb.updatedAt;
+      }
+    }
+
+    mods.sort(NCZ.sortModsByUpdated).forEach((mod) => {
         const [lat, lng] = NCZ.cetToLeaflet(mod.coordinates[0], mod.coordinates[1]);
         const catStyle =
           NCZ.CATEGORY_STYLES[mod.category] || NCZ.CATEGORY_STYLES["other"];
@@ -1030,9 +1040,6 @@ async function initMap() {
         const fullSrc = nexusThumb?.pictureUrl || null;
         marker.modThumb = thumbSrc;
         marker.modFull = fullSrc;
-
-        // Apply updatedAt for manual mods (auto-discovered mods already have _updatedAt set)
-        if (!mod._updatedAt && nexusThumb?.updatedAt) mod._updatedAt = nexusThumb.updatedAt;
 
         const nexusAutoBadge = mod._source === "nexus-auto"
           ? ` <span class="nexus-auto-badge" title="Sourced automatically from Nexus Mods" aria-hidden="true"></span>`
