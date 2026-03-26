@@ -942,7 +942,7 @@ async function initMap() {
         .map((m) => String(m.nexus_id)),
     );
     const validTagNames = new Set(Object.keys(tagsDict));
-    const autoMods = await NCZ.fetchNexusTaggedMods(existingNexusIds, validTagNames);
+    const { mods: autoMods, meta: autoMeta } = await NCZ.fetchNexusTaggedMods(existingNexusIds, validTagNames);
     mods.push(...autoMods);
 
     modCountEl.textContent = `(${mods.length})`;
@@ -955,12 +955,16 @@ async function initMap() {
       const nid = String(mod.nexus_id);
       if (mod._thumbnailUrl || mod._pictureUrl) {
         nexusThumbs[nid] = { pictureUrl: mod._pictureUrl, thumbnailUrl: mod._thumbnailUrl };
-      } else if (nid && !["wip", "dummy"].includes(nid.toLowerCase())) {
+      } else if (nid && !["wip", "dummy"].includes(nid.toLowerCase()) && !autoMeta[nid]) {
         manualNexusIds.push(nid);
       }
     }
     const fetchedThumbs = await NCZ.fetchNexusThumbnails(manualNexusIds);
     Object.assign(nexusThumbs, fetchedThumbs);
+    // Fill in metadata from auto-discovery for manual mods that are NCZoning-tagged
+    for (const [id, data] of Object.entries(autoMeta)) {
+      if (!nexusThumbs[id]) nexusThumbs[id] = data;
+    }
 
     // Backfill _updatedAt for manual Nexus mods before sorting
     for (const mod of mods) {

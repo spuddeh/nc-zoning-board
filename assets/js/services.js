@@ -83,9 +83,11 @@ NCZ.fetchNexusTaggedMods = async function (existingNexusIds, validTagNames) {
   const cached = NCZ.cacheGet(NCZ.AUTODISCOVERY_CACHE_KEY, NCZ.AUTODISCOVERY_CACHE_TTL);
   if (cached) {
     // Re-filter against current manual entries (may have changed since cache was written)
-    const filtered = cached.filter((m) => !existingNexusIds.has(m.nexus_id));
+    const cachedMods = Array.isArray(cached) ? cached : cached.mods;
+    const cachedMeta = Array.isArray(cached) ? {} : (cached.meta || {});
+    const filtered = cachedMods.filter((m) => !existingNexusIds.has(m.nexus_id));
     console.log(`NCZoning: serving ${filtered.length} auto-discovered mods from cache`);
-    return filtered;
+    return { mods: filtered, meta: cachedMeta };
   }
 
   const query = `
@@ -112,6 +114,7 @@ NCZ.fetchNexusTaggedMods = async function (existingNexusIds, validTagNames) {
   let offset = 0;
   let totalCount = Infinity;
   const results = [];
+  const meta = {}; // Metadata for manually-registered mods also tagged NCZoning
 
   try {
     while (offset < totalCount) {
@@ -149,7 +152,15 @@ NCZ.fetchNexusTaggedMods = async function (existingNexusIds, validTagNames) {
 
       for (const node of nodes) {
         const nexusId = String(node.modId);
-        if (existingNexusIds.has(nexusId)) continue; // manual entry wins
+        if (existingNexusIds.has(nexusId)) {
+          // Manual entry wins for mod data, but preserve API metadata for backfilling _updatedAt
+          meta[nexusId] = {
+            pictureUrl: node.pictureUrl || null,
+            thumbnailUrl: node.thumbnailUrl || null,
+            updatedAt: node.updatedAt || null,
+          };
+          continue;
+        }
 
         const parsed = NCZ.parseNcZoningBlock(node.description, validTagNames);
         if (!parsed) {
@@ -189,8 +200,8 @@ NCZ.fetchNexusTaggedMods = async function (existingNexusIds, validTagNames) {
   }
 
   console.log(`NCZoning: auto-discovery complete — ${results.length} mods added`);
-  NCZ.cacheSet(NCZ.AUTODISCOVERY_CACHE_KEY, results);
-  return results;
+  NCZ.cacheSet(NCZ.AUTODISCOVERY_CACHE_KEY, { mods: results, meta });
+  return { mods: results, meta };
 };
 
 // Fetch mod registry (mods.json) and tag definitions (tags.json) in parallel.
