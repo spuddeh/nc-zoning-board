@@ -128,6 +128,19 @@ body.cluster-panel-resizing * {
     }
 }
 
+#map-container .map-action-btn {
+    position: absolute;
+    bottom: var(--space-md);
+    left: var(--space-md);
+    z-index: 999;
+    background-color: var(--primary);
+
+    &:hover {
+        background-color: var(--secondary);
+        color: var(--primary);
+    }
+}
+
 #sidebar-cat-header {
     margin: 0;
     border-bottom: var(--ui-border-thin) solid var(--dark-accent);
