@@ -1897,8 +1897,8 @@ body::before {
             pointer-events: none;
             background: radial-gradient(
                 circle at center,
-                var(--overlay-dark) 0%,
-                var(--black-30) 45%,
+                var(--overlay-dark) 40%,
+                var(--black-50) 45%,
                 transparent 78%
             );
             z-index: -1;
@@ -1907,5 +1907,9 @@ body::before {
 
     span {
         line-height: var(--lh-cluster-count);
+        text-shadow: 1px 1px var(--color-black);
+        font-weight: bold;
+        font-size: 15px;
+        color: var(--color-white);
     }
 }
