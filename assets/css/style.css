@@ -1528,6 +1528,11 @@ body::before {
     }
 }
 
+.terminal-link-logo {
+    vertical-align: text-bottom;
+    margin-right: 6px;
+}
+
 .hidden {
     display: none !important;
 }
