@@ -16,6 +16,8 @@
 !/docs/
 !/package.json
 !/package-lock.json
+!/robots.txt
+!/sitemap.xml
 
 # Ignore system and agent files
 .agent/
