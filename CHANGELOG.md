@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 2026-03-27
 
+- **UI** (contributed by [@Akiway](https://github.com/Akiway)):
+  - **Ko-Fi donation link** — "Buy us a coffee" link added to the sidebar footer and about modal, pointing to [ko-fi.com/nczoning](https://ko-fi.com/nczoning). Rendered with the Ko-Fi logo as an inline image.
+  - **Discover button repositioned** — the "Discover a location" button is now anchored to the bottom-left of the map container. On desktop it dynamically offsets its `left` position by the sidebar's current pixel width when the sidebar is visible, and resets when the sidebar is hidden. Position updates on sidebar open/close and window resize.
+  - **Cluster pin contrast** — cluster count badges now use bold white text with a text-shadow and a larger solid background area, improving legibility against varied map tile backgrounds.
 - **UI**:
   - **Sidebar sort by last updated** — the mod list and cluster panel now sort by Nexus `updatedAt` descending (most recently updated first) instead of alphabetically. Mods with no Nexus timestamp (WIP/Dummy) fall to the end and sort alphabetically among themselves. Prevents gaming the list order by prefixing mod names with special characters.
 - **Utils**:
@@ -102,7 +106,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Strengthened negative coordinate guidance in both X and Y coordinate fields with warning emoji and clearer instructions.
   - Changed X coordinate placeholder to show a negative example (`-500`).
 
-### 2026-03-13
+### 2026-03-13 (BBCode modal)
 
 - **UI**:
   - Added step-by-step instructions to the BBCode Generator modal (Acquire Coordinates, Configure Metadata, Tag Your Mod, Deploy Block) replacing the single warning line.
