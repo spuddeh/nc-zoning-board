@@ -665,6 +665,20 @@ async function initMap() {
   const clusterPanelCount = document.getElementById("cluster-panel-count");
   const clusterModList = document.getElementById("cluster-mod-list");
 
+  function updateDiscoverButtonPosition() {
+    if (!discoverLocationBtn || !sidebar) return;
+
+    const isDesktop = window.innerWidth >= NCZ.MOBILE_BREAKPOINT;
+    const isSidebarVisible = isDesktop && !sidebar.classList.contains("hidden");
+
+    if (isSidebarVisible) {
+      const sidebarWidth = Math.round(sidebar.getBoundingClientRect().width);
+      discoverLocationBtn.style.left = `calc(${sidebarWidth}px + var(--space-md))`;
+    } else {
+      discoverLocationBtn.style.left = "var(--space-md)";
+    }
+  }
+
   // Compute the maximum allowed cluster menu width for current viewport
   function getClusterPanelMaxWidth() {
     const viewportBound = Math.floor(window.innerWidth * 0.7);
@@ -808,6 +822,8 @@ async function initMap() {
       sidebar.classList.add("hidden");
       sidebarOpen.classList.add("visible");
     }
+
+    updateDiscoverButtonPosition();
   }
 
   if (discoverLocationBtn) {
@@ -899,12 +915,14 @@ async function initMap() {
   sidebarClose.addEventListener("click", () => {
     sidebar.classList.add("hidden");
     sidebarOpen.classList.add("visible");
+    updateDiscoverButtonPosition();
   });
 
   // Open Sidebar
   sidebarOpen.addEventListener("click", () => {
     sidebar.classList.remove("hidden");
     sidebarOpen.classList.remove("visible");
+    updateDiscoverButtonPosition();
   });
 
   // Auto-hide sidebar on mobile screens
@@ -912,6 +930,9 @@ async function initMap() {
     sidebar.classList.add("hidden");
     sidebarOpen.classList.add("visible");
   }
+
+  updateDiscoverButtonPosition();
+  window.addEventListener("resize", updateDiscoverButtonPosition);
 
   map.on("click", hideClusterPanel);
   map.on("zoomstart", () => {
