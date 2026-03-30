@@ -100,7 +100,6 @@ Built by modders, for modders. A huge thanks to everyone who's contributed:
 - **Locations Hub Council & community** — Testing, ideas, and support
 
 Want to help? See **[CONTRIBUTING.md](CONTRIBUTING.md)** — we'd love to have you!
->>>>>>> 03a2472749d56b0c4fcf0c4eb991ef336d4e6941
 
 ## License
 
