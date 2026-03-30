@@ -2,6 +2,8 @@
 
 **An interactive web map and coordinate registry for Cyberpunk 2077 location mods — helping the community track what's been built and where.**
 
+> ⚠️ **Fan Content Disclaimer:** This is an unofficial fan project not approved or endorsed by CD PROJEKT RED. See [ASSETS.md](ASSETS.md) for licensing details and game asset attribution.
+
 🌍 **[View the Live Map](https://nczoning.net/)**
 
 ## What is This?
@@ -101,6 +103,10 @@ Built by modders, for modders. A huge thanks to everyone who's contributed:
 
 Want to help? See **[CONTRIBUTING.md](CONTRIBUTING.md)** — we'd love to have you!
 
-## License
+## Licensing
 
-ISC
+**Software Code:** MIT License (see [`LICENSE`](LICENSE) file)
+
+**Game Assets:** Subject to CD PROJEKT RED's Fan Content Policy (see [`ASSETS.md`](ASSETS.md) for details)
+
+This project is non-commercial and free. Game data and assets are used under CD PROJEKT RED's fan content terms, which require attribution and prohibit commercial use.
