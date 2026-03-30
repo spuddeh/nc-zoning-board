@@ -2,7 +2,7 @@
 
 **An interactive web map and coordinate registry for Cyberpunk 2077 location mods — helping the community track what's been built and where.**
 
-🌍 **[View the Live Map](https://spuddeh.github.io/nc-zoning-board/)**
+🌍 **[View the Live Map](https://nczoning.net/)**
 
 ## What is This?
 
@@ -17,7 +17,7 @@ The live interactive map displays all registered mods on an 8k Night City map, a
 
 ### Viewing the Map
 
-Just visit the [Live Map](https://spuddeh.github.io/nc-zoning-board/) — no setup needed.
+Just visit the [Live Map](https://nczoning.net/) — no setup needed.
 
 ### Join the Community
 
