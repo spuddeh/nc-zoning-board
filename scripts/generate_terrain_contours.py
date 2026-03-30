@@ -30,32 +30,15 @@ OUTPUT_DIR = os.path.join(SCRIPT_DIR, "output")
 DATA_DIR   = os.path.join(REPO_DIR, "data")
 
 # ---------------------------------------------------------------------------
-# Constants — identical to cp2077_extract_footprints.py
+# Constants — imported from shared map_constants.py
 # ---------------------------------------------------------------------------
-IMG_SIZE  = 8192
-WORLD_MIN_X = -6366.06
-WORLD_MAX_X =  5903.00
-WORLD_MIN_Y = -7724.25
-WORLD_MAX_Y =  4458.49
+from map_constants import (
+    WORLD_MIN_X, WORLD_MAX_X, WORLD_MIN_Y, WORLD_MAX_Y,
+    IMG_SIZE, cet_to_pixel, cet_to_leaflet,
+)
 
 CONTOUR_GRID     = 512   # grid resolution for height interpolation
 N_CONTOUR_LEVELS = 12
-
-
-# ---------------------------------------------------------------------------
-# Coordinate helpers
-# ---------------------------------------------------------------------------
-
-def cet_to_pixel(cet_x, cet_y):
-    px = (cet_x - WORLD_MIN_X) / (WORLD_MAX_X - WORLD_MIN_X) * IMG_SIZE
-    py = (WORLD_MAX_Y - cet_y) / (WORLD_MAX_Y - WORLD_MIN_Y) * IMG_SIZE
-    return px, py
-
-
-def cet_to_leaflet(cet_x, cet_y):
-    lat = 0.02101335 * cet_y - 93.68566
-    lng = 0.02086230 * cet_x + 132.80160
-    return lat, lng
 
 
 # ---------------------------------------------------------------------------

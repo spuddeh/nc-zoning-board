@@ -36,20 +36,18 @@ OUTPUT_DIR = os.path.join(SCRIPT_DIR, "output")
 DATA_DIR   = os.path.join(REPO_DIR, "data")
 
 # ---------------------------------------------------------------------------
-# Constants
+# Constants — imported from shared map_constants.py
 # ---------------------------------------------------------------------------
-IMG_SIZE = 8192
+from map_constants import (
+    WORLD_MIN_X, WORLD_MAX_X, WORLD_MIN_Y, WORLD_MAX_Y, WORLD_WIDTH, WORLD_HEIGHT,
+    IMG_SIZE, cet_to_pixel, cet_to_leaflet,
+    TERRAIN_BASE_COLOR, WATER_COLOR as MC_WATER_COLOR, BACKGROUND_COLOR,
+)
 
-# World extents -- identical to cp2077_extract_footprints.py
-WORLD_MIN_X = -6366.06
-WORLD_MAX_X =  5903.00
-WORLD_MIN_Y = -7724.25
-WORLD_MAX_Y =  4458.49
-
-# Colors sourced from game material files (3dmap_terrain.Material.json, 3dmap_water.Material.json)
-TERRAIN_BASE = (86,  108, 136)   # BaseColorScale from 3dmap_terrain.Material.json
-WATER_COLOR  = (28,  179, 191)   # Color from 3dmap_water.Material.json
-BG_COLOR     = (10,   22,  35)   # Dark navy fallback for areas outside the mesh
+# Local aliases for colors (used extensively below)
+TERRAIN_BASE = TERRAIN_BASE_COLOR
+WATER_COLOR  = MC_WATER_COLOR
+BG_COLOR     = BACKGROUND_COLOR
 
 # Sea level: read at runtime from 3dmap_water.glb (flat plane, all Y = -1.0).
 # Used to split terrain faces into land (height > sea level) and sea floor (height <= sea level).
@@ -69,21 +67,8 @@ N_CONTOUR_LEVELS = 12
 
 
 # ---------------------------------------------------------------------------
-# Coordinate helpers
+# Coordinate helpers — imported from map_constants.py (cet_to_pixel, cet_to_leaflet)
 # ---------------------------------------------------------------------------
-
-def cet_to_pixel(cet_x, cet_y):
-    """CET world coords -> 8k pixel coords. Y is flipped (north = top of image)."""
-    px = (cet_x - WORLD_MIN_X) / (WORLD_MAX_X - WORLD_MIN_X) * IMG_SIZE
-    py = (WORLD_MAX_Y - cet_y) / (WORLD_MAX_Y - WORLD_MIN_Y) * IMG_SIZE
-    return px, py
-
-
-def cet_to_leaflet(cet_x, cet_y):
-    """CET world coords -> Leaflet [lat, lng]. Same formula as assets/js/utils.js."""
-    lat = 0.02101335 * cet_y - 93.68566
-    lng = 0.02086230 * cet_x + 132.80160
-    return lat, lng
 
 
 # ---------------------------------------------------------------------------

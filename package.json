@@ -22,5 +22,9 @@
   "homepage": "https://github.com/spuddeh/nc-zoning-board#readme",
   "dependencies": {
     "sharp": "^0.34.5"
+  },
+  "devDependencies": {
+    "puppeteer": "^24.40.0",
+    "three": "^0.183.2"
   }
 }

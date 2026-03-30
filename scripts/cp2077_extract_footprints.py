@@ -57,31 +57,14 @@ JSON_OUT    = os.path.join(DATA_DIR, "buildings.json")
 
 
 # ── WORLD EXTENT ───────────────────────────────────────────────────────────────
-# Set these after running --analyze and reviewing the scatter plot.
-# Leave as None to have --analyze compute them from district bounds automatically.
-# Once set, run without --analyze to produce full output.
-
-# Derived from the existing cetToLeaflet formula by inverting at the four tile corners
-# (lat in [-256, 0], lng in [0, 256]) so that buildings.png matches the existing
-# night_city_8k_transparent.png layout exactly.
-#
-#   cetX = (lng - 132.80160) / 0.02086230
-#   cetY = (lat + 93.68566)  / 0.02101335
-#
-# lng=0   -> WORLD_MIN_X = -132.80160 / 0.02086230 = -6366.06
-# lng=256 -> WORLD_MAX_X = (256 - 132.80160) / 0.02086230 = 5903.00
-# lat=0   -> WORLD_MAX_Y = 93.68566 / 0.02101335 = 4458.49
-# lat=-256-> WORLD_MIN_Y = (-256 + 93.68566) / 0.02101335 = -7724.25
-
-WORLD_MIN_X = -6366.06
-WORLD_MAX_X =  5903.00
-WORLD_MIN_Y = -7724.25
-WORLD_MAX_Y =  4458.49
+# Imported from shared map_constants.py (derived from TweakDB WorldMap.DefaultSettings)
+from map_constants import (
+    WORLD_MIN_X, WORLD_MAX_X, WORLD_MIN_Y, WORLD_MAX_Y,
+    IMG_SIZE, cet_to_pixel, cet_to_leaflet,
+)
 
 
 # ── CONFIG ─────────────────────────────────────────────────────────────────────
-
-IMG_SIZE    = 8192   # Output PNG/SVG canvas size in pixels
 MIN_AREA_SQ = 50.0   # Skip instances with footprint area < this (sq game units)
 
 
@@ -853,54 +836,109 @@ def render_district_borders(trigger_polygons, wbounds, svg_output_dir=None):
     Render district boundary outlines from trigger polygon data onto an
     8k×8k RGBA PIL Image and optionally write an SVG file.
 
+    Two-tier rendering:
+      - District borders: thick solid lines (width=3, alpha=180)
+      - Subdistrict borders: thin dashed lines (width=1, alpha=100), same color
+
+    District data comes from trigger_polygons (flat dict, already loaded).
+    Subdistrict data is loaded from data/subdistricts.json if it exists.
+
     These are the actual game trigger area boundaries — much cleaner than the
     3dmap_roads_borders.glb mesh (which is just road surface geometry).
     """
     from PIL import Image, ImageDraw
 
+    # subdistricts.json uses "dogtown" / "ncx_morro_rock" as IDs, but
+    # DISTRICT_COLORS uses "ep1_dogtown" / "ep1_spaceport" — map them here.
+    SUBDIST_ID_TO_COLOR_KEY = {
+        "dogtown":        "ep1_dogtown",
+        "ncx_morro_rock": "ep1_spaceport",
+    }
+
+    subdist_path = os.path.join(DATA_DIR, "subdistricts.json")
+    subdist_data = None
+    if os.path.exists(subdist_path):
+        with open(subdist_path, "r") as f:
+            subdist_data = json.load(f)
+
     border_img = Image.new("RGBA", (IMG_SIZE, IMG_SIZE), (0, 0, 0, 0))
     draw = ImageDraw.Draw(border_img)
 
-    svg_polys = []
+    svg_groups = []
 
     for dk, polygon in trigger_polygons.items():
         hex_color = DISTRICT_COLORS.get(dk, "#ffffff")
         r = int(hex_color[1:3], 16)
         g = int(hex_color[3:5], 16)
         b = int(hex_color[5:7], 16)
-        outline_rgba = (r, g, b, 180)
+        district_rgba = (r, g, b, 180)
 
         # Convert world coords to pixel coords
         pixel_pts = [world_to_pixel(wx, wy, wbounds) for wx, wy in polygon]
 
         # Draw outlined polygon (no fill, just border)
-        draw.polygon(pixel_pts, fill=None, outline=outline_rgba)
+        draw.polygon(pixel_pts, fill=None, outline=district_rgba)
         # Draw again with thicker lines
         for i in range(len(pixel_pts)):
             p0 = pixel_pts[i]
             p1 = pixel_pts[(i + 1) % len(pixel_pts)]
-            draw.line([p0, p1], fill=outline_rgba, width=3)
+            draw.line([p0, p1], fill=district_rgba, width=3)
 
         if svg_output_dir:
             pts_str = " ".join(f"{px:.1f},{py:.1f}" for px, py in pixel_pts)
-            svg_polys.append(
+            group_lines = [
+                f'  <g id="{dk}">',
                 f'    <polygon points="{pts_str}" fill="none" '
-                f'stroke="{hex_color}" stroke-width="3" stroke-opacity="0.7" '
-                f'id="{dk}"/>'
-            )
+                f'stroke="{hex_color}" stroke-width="3" stroke-opacity="0.7"/>',
+            ]
 
-    if svg_output_dir and svg_polys:
+            # Subdistrict borders within this district group
+            if subdist_data:
+                for dist_entry in subdist_data["districts"]:
+                    color_key = SUBDIST_ID_TO_COLOR_KEY.get(dist_entry["id"], dist_entry["id"])
+                    if color_key != dk:
+                        continue
+                    for sub in dist_entry.get("subdistricts", []):
+                        sub_pts = [world_to_pixel(wx, wy, wbounds) for wx, wy in sub["polygon"]]
+                        sub_pts_str = " ".join(f"{px:.1f},{py:.1f}" for px, py in sub_pts)
+                        group_lines.append(
+                            f'    <polygon points="{sub_pts_str}" fill="none" '
+                            f'stroke="{hex_color}" stroke-width="1.5" '
+                            f'stroke-dasharray="18,10" stroke-opacity="0.45" '
+                            f'id="{sub["id"]}"/>'
+                        )
+
+            group_lines.append("  </g>")
+            svg_groups.append("\n".join(group_lines))
+
+    # PIL subdistrict lines (drawn after districts so they render on top)
+    if subdist_data:
+        for dist_entry in subdist_data["districts"]:
+            color_key = SUBDIST_ID_TO_COLOR_KEY.get(dist_entry["id"], dist_entry["id"])
+            hex_color = DISTRICT_COLORS.get(color_key, "#ffffff")
+            r = int(hex_color[1:3], 16)
+            g = int(hex_color[3:5], 16)
+            b = int(hex_color[5:7], 16)
+            sub_rgba = (r, g, b, 100)
+            for sub in dist_entry.get("subdistricts", []):
+                sub_pts = [world_to_pixel(wx, wy, wbounds) for wx, wy in sub["polygon"]]
+                for i in range(len(sub_pts)):
+                    p0 = sub_pts[i]
+                    p1 = sub_pts[(i + 1) % len(sub_pts)]
+                    draw.line([p0, p1], fill=sub_rgba, width=1)
+
+    if svg_output_dir and svg_groups:
         svg_content = (
             f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {IMG_SIZE} {IMG_SIZE}">\n'
-            f'  <g>\n'
-            + "\n".join(svg_polys)
-            + "\n  </g>\n</svg>\n"
+            + "\n".join(svg_groups)
+            + "\n</svg>\n"
         )
         svg_file = os.path.join(svg_output_dir, "district_borders.svg")
         with open(svg_file, "w", encoding="utf-8") as f:
             f.write(svg_content)
         size_kb = os.path.getsize(svg_file) / 1024
-        print(f"  District borders SVG -> {svg_file} ({size_kb:.1f} KB)")
+        sub_count = sum(len(d.get("subdistricts", [])) for d in subdist_data["districts"]) if subdist_data else 0
+        print(f"  District borders SVG -> {svg_file} ({size_kb:.1f} KB, {len(trigger_polygons)} districts, {sub_count} subdistricts)")
 
     return border_img
 
