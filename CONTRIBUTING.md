@@ -31,7 +31,7 @@ For a permanent, manually curated entry. See **[docs/adding-mods.md](docs/adding
 
 ### Getting Started
 
-```powershell
+```bash
 # Fork the repo on GitHub, then clone your fork
 git clone https://github.com/YOUR_USERNAME/nc-zoning-board.git
 cd nc-zoning-board
@@ -52,38 +52,51 @@ data/
   locations/            # Individual mod JSON files
   tags.json             # Global tag registry
 mods.json               # Compiled mod registry (Git ignored)
-mods.schema.json        # JSON Schema for validation (Array version)
+mods.schema.json        # JSON Schema for validation
 scripts/
   build_mods.js         # Compiles data/locations/*.json -> mods.json
   validate_tags.js      # Validates used tags against tags.json
   generate_tiles.js     # Map tile generator (Node.js + sharp)
-docs/                   # Architecture, coordinate system, roadmap
+docs/                   # Architecture, guides, coordinate system
 .github/
   workflows/            # CI/CD — validation, submission, deployment
   ISSUE_TEMPLATE/       # Mod submission form
 ```
 
-### Before You Open a PR
+### Before Opening a PR
 
-- **Data Integrity:** run `node scripts/build_mods.js` and ensure it passes.
-- **Validation:** run `node scripts/validate_tags.js` and `npx ajv validate -s mods.schema.json -d mods.json`.
-- **Map/coordinate changes:** verify pins still appear in the correct locations
-- **Keep PRs focused** — one feature or fix per PR
+Just do a quick sanity check:
+
+- Run `node scripts/build_mods.js` to compile data
+- Run `node scripts/validate_tags.js` to check tag validity
+- If you changed map/coordinate stuff, verify pins still render correctly
+- Keep it focused — one feature or fix per PR
+
+If something breaks, let us know! We can debug together.
 
 ---
 
 ## 🤝 Ways to Help
 
-This is a community passion project. If you've got skills and want to help out, we'd love the extra hands! Here are the main areas where we could use some help:
+This is a community passion project built by modders helping each other. If you've got some spare time and want to contribute — great! No pressure if you can't. Here are the areas where help would be awesome:
 
-| Area | Skills | Example Tasks |
-| --- | --- | --- |
-| 🖥️ **Frontend** | HTML/CSS/JS, Leaflet, SVG/GeoJSON, spatial maths | District overlays, pin clustering, sidebar, search, custom pin icons |
-| ⚙️ **DevOps & Tools** | GitHub Actions, Node.js | Submission workflows, tile generation, Discord webhooks |
-| 🎨 **Design** | Icon design, dark theme UI | Custom pin icon set, UI polish |
-| ✍️ **Documentation** | Markdown, Git basics | Keeping docs/ current, writing contributor guides |
+### 🖥️ Frontend & Web
 
-If you're interested in helping out with any of these, just open an issue or ping a maintainer.
+Like building websites? We're working on district overlays, improving pin clustering, custom Cyberpunk-themed icons, and general UI polish. You'd work with Leaflet.js and vanilla JS/CSS.
+
+### ⚙️ DevOps & Automation
+
+Comfortable with GitHub Actions? We maintain the submission workflow, tile generation, deployment pipeline, and Discord webhook integrations. Node.js + YAML.
+
+### 🎨 Design & Polish
+
+Into icon design or dark-theme UI? We'd love Cyberpunk-style custom pins, visual consistency, and overall aesthetic improvements.
+
+### ✍️ Documentation & Writing
+
+Help keep docs/ current, write guides for new contributors, or clarify existing docs. Markdown + basic Git knowledge.
+
+**Want to help?** Join the **[Locations Hub Discord](https://discord.gg/sc4yEx2fNf)** and say hi in the general channel — we'd love to chat about what you're interested in!
 
 ---
 

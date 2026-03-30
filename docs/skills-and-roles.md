@@ -1,8 +1,8 @@
 # NC Zoning Board — How You Can Help
 
-This is a passion project built by and for the Cyberpunk 2077 modding community. We don't have a formal hierarchy or a hiring board—if you see something that needs doing and you have the skills, jump in!
+This is a passion project built by and for the Cyberpunk 2077 modding community. No hierarchy, no job titles, no obligations — just modders helping modders. If you see something interesting and want to help, jump in! No experience required either — we're happy to learn together.
 
-Here are the main areas where we could use extra hands:
+Here are the main areas where help would be awesome:
 
 ## 🛠️ Areas of Interest
 
@@ -28,59 +28,42 @@ Here are the main areas where we could use extra hands:
 
 ---
 
-## 🤝 Project Areas
+## 🤝 Interest Areas
 
-If you want to take "ownership" of a specific part of the project, here's how things are generally split up:
+Depending on what excites you, here are some natural areas where people tend to focus:
 
-### 🖥️ Frontend Developer
->
-> Owns the site UI, map rendering, and coordinate system.
+### 🖥️ Website & UI Work
 
-**Needs:** HTML/CSS/JS, Leaflet.js, responsive design, spatial logic
+Like working on interactive web stuff? The frontend is where a lot of the magic happens. We're actively building **district overlays** and **building/road/metro overlays** — extracting game geometry and aligning it to our map coordinate system. You'd use Leaflet.js, vanilla JS/CSS, and maybe some coordinate transforms.
 
-**Handles:**
-
-- Sidebar/legend with searchable mod list
-- Custom & colour-coded pin icons
-- Mobile layout and touch optimisation
-- District polygon overlays
-- Pin clustering and coordinate transforms
-- Coordinate transform calibration
+Current active work: **[Spuddeh](https://www.nexusmods.com/profile/Spuddeh/mods?gameId=3333)** is developing overlays and **[Akiway](https://www.nexusmods.com/profile/Akiway/mods?gameId=3333)** leads UI/UX. If you want to collaborate, reach out!
 
 ---
 
-### ⚙️ DevOps / Automation
->
-> Maintaining the GitHub Actions pipeline, tile generation, and deployment.
+### ⚙️ GitHub Automation & Tools
 
-**Needs:** GitHub Actions, GitHub API, GitHub Pages, Discord Webhooks, Node.js (sharp), YAML
+Into DevOps and automation? We maintain the **GitHub Actions submission pipeline**, **tile generation**, **deployment workflow**, and **Discord integrations**. Node.js + YAML + a bit of GitHub API knowledge.
 
-**Handles:**
-
-- Submission workflow (`auto-pr-submission.yml`)
-- Validation pipeline
-- Branch protection and secrets
-- Tile generation and upgrades (8k → 16k)
+Areas that sometimes need tweaks: submission workflows, CI/CD validation, secrets management, tile generation improvements.
 
 ---
 
-### 🎨 Visual Design
->
-> Polishing the look and feel — icons, layout, and Cyberpunk aesthetic.
+### 🎨 Design & Icons
 
-**Needs:** Icon/sprite design, dark theme UI, CSS
-
-**Handles:**
-
-- Custom pin icon set (per category)
-- Visual consistency with Cyberpunk 2077 aesthetic
+Want to make things look cool? Visual polish, **dark theme refinements**, UI refinements — this is where aesthetics meet functionality.
 
 ---
 
-## 🎯 Current Focus Areas
+### ✍️ Documentation & Guides
 
-If you're looking for something to do right now, these are our biggest bottlenecks:
+Like writing clear docs? We need help keeping **docs/** current, writing **contributor onboarding guides**, and clarifying existing documentation. Markdown + Git knowledge.
 
-- **District overlays and pin clustering:** This is the most complex outstanding mapping work.
-- **Custom CSS map markers:** We need visually distinct Cyberpunk-style pins for different mod categories.
-- **Reviewing submissions:** Double-checking coords against Nexus mods before we merge them. See the **[Reviewer Guide](reviewer-guide.md)** for the step-by-step process.
+---
+
+## 🎯 What Needs Help Right Now
+
+If you're looking for a good jumping-off point:
+
+- **District overlays & map geometry:** The main project in progress. Extracting building footprints, roads, metro lines, and district boundaries from game data. Interested in mapping? This is where the action is.
+- **Testing & feedback:** Use the map, submit location mods, and let us know what feels clunky or confusing. Real user feedback is incredibly valuable.
+- **Anything else:** Have an idea for a feature or improvement? Just start a discussion on GitHub or ping us in Discord.

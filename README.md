@@ -89,14 +89,17 @@ Prefer a permanent, manually curated entry? See **[docs/adding-mods.md](docs/add
 - **GitHub Actions** — Automated JSON validation and PR pipeline
 - **GitHub Pages** — Static hosting
 
-## Contributors
+## Contributors & Community
 
-A huge thanks to the people helping build and maintain the board:
+Built by modders, for modders. A huge thanks to everyone who's contributed:
 
-- **[Kaoziun](https://www.nexusmods.com/profile/Kaoziun/mods?gameId=3333)** — Original idea & project lead
-- **[manavortex](https://www.nexusmods.com/profile/manavortex/mods?gameId=3333)** — Data structure & dev support
-- **[Spuddeh](https://www.nexusmods.com/profile/Spuddeh/mods?gameId=3333)** — Lead developer
-- **The rest of the Locations Hub Council** — Testing, support, and ideas
+- **[Kaoziun](https://www.nexusmods.com/profile/Kaoziun/mods?gameId=3333)** — Original vision & community leadership
+- **[manavortex](https://www.nexusmods.com/profile/manavortex/mods?gameId=3333)** — Data structure & guidance
+- **[Spuddeh](https://www.nexusmods.com/profile/Spuddeh/mods?gameId=3333)** — Active development
+- **[Akiway](https://www.nexusmods.com/profile/Akiway/mods?gameId=3333)** — UI/UX & design
+- **Locations Hub Council & community** — Testing, ideas, and support
+
+Want to help? See **[CONTRIBUTING.md](CONTRIBUTING.md)** — we'd love to have you!
 
 ## License
 
