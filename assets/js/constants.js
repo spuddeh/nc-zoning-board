@@ -69,6 +69,10 @@ NCZ.DESCRIPTION_MAX_LENGTH = 500;
 NCZ.COPY_FEEDBACK_MS = 2000;
 NCZ.SEARCH_DEBOUNCE_MS = 200;
 
+// Deep-linking / URL sharing
+NCZ.SITE_URL      = "https://nczoning.net";
+NCZ.URL_PARAM_MOD = "mod";
+
 // CET <-> Leaflet transform calibration
 NCZ.CET_TO_LEAFLET_X_SCALE = 0.0208623;
 NCZ.CET_TO_LEAFLET_Y_SCALE = 0.02101335;

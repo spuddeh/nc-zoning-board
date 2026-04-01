@@ -608,6 +608,13 @@ async function initMap() {
     const popupSource = e.popup?._source;
     if (popupSource?.modData) {
       focusedMarker = popupSource;
+      // URL sync: reflect the open pin in the address bar
+      const mod = popupSource.modData;
+      const isNum = /^\d+$/.test(String(mod.nexus_id));
+      const lid = isNum ? String(mod.nexus_id) : mod.id;
+      const url = new URL(window.location.href);
+      url.searchParams.set(NCZ.URL_PARAM_MOD, lid);
+      history.replaceState(null, "", url.toString());
     }
     repositionActivePopup();
     scheduleActivePopupReposition();
@@ -617,6 +624,22 @@ async function initMap() {
         img.addEventListener("load", scheduleActivePopupReposition, { once: true });
       }
     });
+
+    // Clipboard copy handler for Copy Link button
+    const copyBtn = e.popup.getElement()?.querySelector(".ui-popup-action-link-copy-link");
+    if (copyBtn) {
+      let copyRevertTimer = null;
+      copyBtn.addEventListener("click", () => {
+        const url = copyBtn.dataset.copyUrl;
+        clearTimeout(copyRevertTimer);
+        navigator.clipboard.writeText(url).then(() => {
+          copyBtn.textContent = "Copied!";
+          copyRevertTimer = setTimeout(() => {
+            copyBtn.innerHTML = '<span class="ui-popup-action-link-icon" aria-hidden="true"></span>';
+          }, NCZ.COPY_FEEDBACK_MS);
+        });
+      });
+    }
   });
   map.on("popupclose", (e) => {
     activePopup = null;
@@ -625,6 +648,12 @@ async function initMap() {
       isZoomTransitioning ||
       Boolean(map._animatingZoom) ||
       Boolean(markerClusterGroup._inZoomAnimation);
+    // URL sync: clear the mod param when popup closes (unless zoom-related)
+    if (popupSource?.modData && !isZoomRelatedClose) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete(NCZ.URL_PARAM_MOD);
+      history.replaceState(null, "", url.toString());
+    }
     if (
       focusedMarker &&
       popupSource === focusedMarker &&
@@ -1055,6 +1084,11 @@ async function initMap() {
         const [cX, cY] = mod.coordinates;
         const editUrl = `https://github.com/spuddeh/nc-zoning-board/issues/new?template=modify_location.yml&location_id=${mod.id}&mod_name=${encodeURIComponent(mod.name)}&authors=${encodeURIComponent(mod.authors.join(", "))}&coord_x=${cX}&coord_y=${cY}`;
 
+        // Resolve shareable mod identifier for copy-link feature
+        const isNumericNexusId = /^\d+$/.test(String(mod.nexus_id));
+        const modLinkId = isNumericNexusId ? String(mod.nexus_id) : mod.id;
+        const copyLinkUrl = `${NCZ.SITE_URL}?${NCZ.URL_PARAM_MOD}=${encodeURIComponent(modLinkId)}`;
+
         // Use only Nexus thumbnails, skip manual images to prevent feature creep
         const nexusThumb = nexusThumbs[String(mod.nexus_id)];
         const thumbSrc = nexusThumb?.thumbnailUrl || null;
@@ -1100,6 +1134,7 @@ async function initMap() {
                         ${tagsHtml ? `<div class="custom-popup-tags">${tagsHtml}</div>` : ""}
                         <div class="popup-actions">
                             <a href="${NCZ.escapeHtml(nexusUrl)}" target="_blank" class="ui-popup-action-link ui-popup-action-link-nexus">${NCZ.escapeHtml(nexusLabel)}</a>
+                            <button type="button" class="ui-popup-action-link ui-popup-action-link-copy-link tertiary" data-copy-url="${NCZ.escapeHtml(copyLinkUrl)}" aria-label="Copy link to this pin" title="Copy link"><span class="ui-popup-action-link-icon" aria-hidden="true"></span></button>
                             ${!mod._source ? `<a href="${NCZ.escapeHtml(editUrl)}" target="_blank" class="ui-popup-action-link ui-popup-action-link-edit tertiary" aria-label="Suggest Edit" title="Suggest Edit"><span class="ui-popup-action-link-icon" aria-hidden="true"></span></a>` : ""}
                         </div>
                     </div>
@@ -1180,6 +1215,15 @@ async function initMap() {
     if (pinBounds.isValid()) {
       map.invalidateSize();
       map.fitBounds(pinBounds, { padding: [50, 50], maxZoom: 5 });
+    }
+
+    // Deep-link: open pin if ?mod= is in the URL
+    const deepLinkParam = new URLSearchParams(window.location.search).get(NCZ.URL_PARAM_MOD);
+    if (deepLinkParam) {
+      const targetMarker = allMarkers.find(
+        (m) => String(m.modData.nexus_id) === deepLinkParam || m.modData.id === deepLinkParam,
+      );
+      if (targetMarker) focusMarker(targetMarker);
     }
 
     // 5. Setup Category Filters
