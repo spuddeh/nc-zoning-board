@@ -69,6 +69,14 @@ NCZ.DESCRIPTION_MAX_LENGTH = 500;
 NCZ.COPY_FEEDBACK_MS = 2000;
 NCZ.SEARCH_DEBOUNCE_MS = 200;
 
+// Map world extent (CET world-space)
+// Source: Realistic Map 8k mod terrain quad UV mapping — the authoritative projection
+// for the satellite image (night_city_8k_transparent.png) and terrain tiles.
+NCZ.WORLD_MIN_X = -6298;
+NCZ.WORLD_MAX_X =  5815;
+NCZ.WORLD_MIN_Y = -7684;
+NCZ.WORLD_MAX_Y =  4427;
+
 // CET <-> Leaflet transform derived coefficients (from WORLD_MIN/MAX)
 // Used by the scale indicator for Leaflet distance -> CET meters conversion
 NCZ.CET_TO_LEAFLET_X_SCALE = 256 / (NCZ.WORLD_MAX_X - NCZ.WORLD_MIN_X);  // 0.02113734
@@ -78,6 +86,19 @@ NCZ.CET_TO_LEAFLET_Y_OFFSET = -NCZ.WORLD_MAX_Y * NCZ.CET_TO_LEAFLET_Y_SCALE;
 // Set this if you want to calibrate CET units to physical meters.
 // Default assumes 1 CET unit ~= 1 meter.
 NCZ.CET_UNITS_PER_METER = 1;
+
+// District outline colours (from game Ink styles — docs/district-hierarchy.md)
+NCZ.DISTRICT_COLORS = {
+  city_center:    "#ffd741",  // MainColors.Yellow
+  watson:         "#ff3e34",  // MainColors.CombatRed
+  westbrook:      "#ff5100",  // MainColors.Orange
+  heywood:        "#1ded83",  // MainColors.Green
+  santo_domingo:  "#5ef6ff",  // MainColors.Blue
+  pacifica:       "#ff6158",  // MainColors.Red
+  dogtown:        "#00a32c",  // MainColors.DarkGreen
+  ncx_morro_rock: "#349197",  // MainColors.MildBlue
+  badlands:       "#c882ff",  // Bright violet — distinct from all other districts, visible on desert
+};
 
 // LocalStorage cache keys & TTLs
 NCZ.THEME_PREFERENCE_KEY = "nc_theme_id";
@@ -102,14 +123,6 @@ NCZ.PIN_POPUP_ARROW_EDGE_PADDING_PX = 18;
 
 // Responsive
 NCZ.MOBILE_BREAKPOINT = 768;
-
-// Map world extent (CET world-space)
-// Source: Realistic Map 8k mod terrain quad UV mapping — the authoritative projection
-// for the satellite image (night_city_8k_transparent.png) and terrain tiles.
-NCZ.WORLD_MIN_X = -6298;
-NCZ.WORLD_MAX_X =  5815;
-NCZ.WORLD_MIN_Y = -7684;
-NCZ.WORLD_MAX_Y =  4427;
 
 // Cluster panel sizing
 NCZ.CLUSTER_PANEL_WIDTH_KEY = "nc_cluster_panel_width";

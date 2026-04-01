@@ -1,16 +1,20 @@
 /**
- * NC Zoning Board — Canvas Overlay Renderer
+ * NC Zoning Board — Overlay Module
  *
- * Renders 380k+ overlay features (roads, buildings, landmarks, metro) into
- * canvas tiles using L.GridLayer with grid-based spatial index.
+ * Manages ALL map overlay layers:
+ * - Canvas GridLayer for roads/buildings/landmarks/metro (380k+ features)
+ * - District/subdistrict GeoJSON borders with zoom-based switching
+ * - Terrain contour lines
+ * - Base layer switching (satellite <-> terrain)
  *
- * All features are z-sorted in a single unified pass per tile so that
- * elevated roads render on top of ground buildings, metro bridges on top
- * of roads, etc. — matching the in-game map rendering.
+ * app.js creates the UI controls and calls NCZ.initOverlays(), NCZ.switchBaseLayer(),
+ * and NCZ.toggleOverlay(). This module handles all rendering logic.
  *
  * Depends on: constants.js, utils.js (via NCZ namespace).
  * Load order: after utils.js, before app.js.
  */
+
+// ── Canvas Overlay Renderer (roads/buildings/landmarks/metro) ────────
 
 NCZ.OverlayRenderer = L.GridLayer.extend({
   options: {
@@ -44,20 +48,16 @@ NCZ.OverlayRenderer = L.GridLayer.extend({
       fetch("data/landmarks.json").then((r) => r.json()),
     ]);
 
-    // Unified feature array — all types mixed, will be z-sorted
-    // t: "r"=road, "b"=building, "l"=landmark, "m"=metro
     const features = [];
 
     for (const r of roads) {
       features.push({ t: "r", z: r.z, p: r.pts, s: this._polySize(r.pts) });
     }
-
     for (const dg of buildings) {
       for (const b of dg.polygons) {
         features.push({ t: "b", z: b.z, p: b.pts, s: this._polySize(b.pts) });
       }
     }
-
     for (const [, lm] of Object.entries(landmarks)) {
       if (lm.faces) {
         for (const face of lm.faces) {
@@ -65,18 +65,14 @@ NCZ.OverlayRenderer = L.GridLayer.extend({
         }
       }
     }
-
     for (const m of metro) {
       features.push({ t: "m", z: m.z, p: m.pts, s: this._lineSize(m.pts) });
     }
 
-    // Global z-sort — draw order for correct occlusion
     features.sort((a, b) => a.z - b.z);
-
     this._features = features;
     this._loaded = true;
     this._buildGrid();
-
     return features.length;
   },
 
@@ -103,7 +99,6 @@ NCZ.OverlayRenderer = L.GridLayer.extend({
     const scale = Math.pow(2, gz);
     const ts = this.options.tileSize;
     const grid = {};
-
     for (let i = 0; i < this._features.length; i++) {
       const f = this._features[i];
       let minPx = Infinity, minPy = Infinity, maxPx = -Infinity, maxPy = -Infinity;
@@ -127,7 +122,6 @@ NCZ.OverlayRenderer = L.GridLayer.extend({
         }
       }
     }
-
     this._grid = grid;
   },
 
@@ -142,7 +136,6 @@ NCZ.OverlayRenderer = L.GridLayer.extend({
       return tile;
     }
 
-    // Check tile cache
     const cacheKey = coords.x + "," + coords.y + "," + coords.z;
     const cached = this._tileCache[cacheKey];
     if (cached) {
@@ -161,7 +154,6 @@ NCZ.OverlayRenderer = L.GridLayer.extend({
     const originX = nw.lng * scale;
     const originY = -nw.lat * scale;
 
-    // Spatial lookup — get feature indices for this tile
     const gz = this._gridZoom;
     const gScale = Math.pow(2, gz);
     const refTxMin = Math.floor(nw.lng * gScale / ts);
@@ -176,10 +168,7 @@ NCZ.OverlayRenderer = L.GridLayer.extend({
         const bucket = this._grid[tx + "," + ty];
         if (!bucket) continue;
         for (const idx of bucket) {
-          if (!seen.has(idx)) {
-            seen.add(idx);
-            indices.push(idx);
-          }
+          if (!seen.has(idx)) { seen.add(idx); indices.push(idx); }
         }
       }
     }
@@ -189,8 +178,6 @@ NCZ.OverlayRenderer = L.GridLayer.extend({
       return tile;
     }
 
-    // Sort indices by z (features array is globally z-sorted, but grid lookup
-    // returns them in insertion order per cell, not z-order)
     indices.sort((a, b) => this._features[a].z - this._features[b].z);
 
     const minSize = 1.0 / scale;
@@ -198,7 +185,6 @@ NCZ.OverlayRenderer = L.GridLayer.extend({
     const showBuildings = this.options.showBuildings;
     const showMetro = this.options.showMetro;
 
-    // Read theme colours once
     const style = getComputedStyle(document.documentElement);
     const roadColor = style.getPropertyValue("--overlay-road").trim() || "rgba(110,100,85,0.47)";
     const buildingFill = style.getPropertyValue("--overlay-building-fill").trim() || "rgba(150,155,170,0.94)";
@@ -206,16 +192,11 @@ NCZ.OverlayRenderer = L.GridLayer.extend({
     const metroWidth = zoom >= 5 ? 2 : 1;
 
     requestAnimationFrame(() => {
-      const _t0 = performance.now();
-
-      // Unified z-sorted draw — track current style to minimize state changes
       let currentStyle = "";
       let currentIsStroke = false;
 
       for (const idx of indices) {
         const f = this._features[idx];
-
-        // Visibility + LOD filter
         if (f.s < minSize) continue;
         if (f.t === "r" && !showRoads) continue;
         if (f.t === "b" && !showBuildings) continue;
@@ -224,7 +205,6 @@ NCZ.OverlayRenderer = L.GridLayer.extend({
         const pts = f.p;
 
         if (f.t === "m") {
-          // Metro line
           if (pts.length < 2) continue;
           if (!currentIsStroke || currentStyle !== metroColor) {
             ctx.strokeStyle = metroColor;
@@ -237,7 +217,6 @@ NCZ.OverlayRenderer = L.GridLayer.extend({
           ctx.lineTo(pts[1][1] * scale - originX, -pts[1][0] * scale - originY);
           ctx.stroke();
         } else if (f.t === "r") {
-          // Road fill
           if (pts.length < 3) continue;
           if (currentIsStroke || currentStyle !== roadColor) {
             ctx.fillStyle = roadColor;
@@ -251,7 +230,6 @@ NCZ.OverlayRenderer = L.GridLayer.extend({
           }
           ctx.fill();
         } else {
-          // Building / landmark fill
           if (pts.length < 3) continue;
           if (currentIsStroke || currentStyle !== buildingFill) {
             ctx.fillStyle = buildingFill;
@@ -267,20 +245,14 @@ NCZ.OverlayRenderer = L.GridLayer.extend({
         }
       }
 
-      // Cache the rendered tile
       createImageBitmap(tile).then((bitmap) => {
         const keys = Object.keys(this._tileCache);
         if (keys.length >= this._tileCacheMax) {
-          for (let i = 0; i < 50; i++) {
-            this._tileCache[keys[i]].close();
-            delete this._tileCache[keys[i]];
-          }
+          for (let i = 0; i < 50; i++) { this._tileCache[keys[i]].close(); delete this._tileCache[keys[i]]; }
         }
         this._tileCache[cacheKey] = bitmap;
       }).catch(() => {});
 
-      const _ms = performance.now() - _t0;
-      if (_ms > 50) console.log(`[tile ${coords.x},${coords.y},z${coords.z}] ${_ms.toFixed(0)}ms (${indices.length} features)`);
       done(null, tile);
     });
 
@@ -290,21 +262,239 @@ NCZ.OverlayRenderer = L.GridLayer.extend({
   setVisibility: function (opts) {
     let changed = false;
     for (const [k, v] of Object.entries(opts)) {
-      if (this.options[k] !== v) {
-        this.options[k] = v;
-        changed = true;
-      }
+      if (this.options[k] !== v) { this.options[k] = v; changed = true; }
     }
     if (changed) {
-      for (const k in this._tileCache) {
-        this._tileCache[k].close();
-      }
+      for (const k in this._tileCache) { this._tileCache[k].close(); }
       this._tileCache = {};
       this.redraw();
     }
   },
+
+  clearCache: function () {
+    for (const k in this._tileCache) { this._tileCache[k].close(); }
+    this._tileCache = {};
+    if (this._map && this._map.hasLayer(this)) this.redraw();
+  },
 });
 
-NCZ.overlayRenderer = function (options) {
-  return new NCZ.OverlayRenderer(options);
+// ── Overlay Manager ──────────────────────────────────────────────────
+// Central controller for all overlay layers. Called by app.js UI controls.
+
+NCZ.initOverlays = function (map, mapBounds) {
+  const DISTRICT_ZOOM_MAX = 3;
+
+  // Panes
+  map.createPane("overlayPane");
+  map.getPane("overlayPane").style.zIndex = 450;
+  map.createPane("districtPane");
+  map.getPane("districtPane").style.zIndex = 460;
+
+  // ── Canvas overlay (roads/buildings/metro) ──────────────────────────
+  const canvasLayer = new NCZ.OverlayRenderer({ pane: "overlayPane" });
+
+  canvasLayer.loadData().then((count) => {
+    console.log(`[NCZ] Overlay: ${count.toLocaleString()} features loaded`);
+    canvasLayer.redraw();
+  });
+
+  // ── District/subdistrict borders ───────────────────────────────────
+  let districtLayer = null;
+  let subDistrictLayer = null;
+  let districtsEnabled = true;  // Districts shown by default on both map types
+
+  fetch("data/subdistricts.json")
+    .then((r) => r.json())
+    .then((data) => {
+      const districtFeatures = [];
+      const subDistrictFeatures = [];
+
+      for (const dist of data.districts) {
+        const color = NCZ.DISTRICT_COLORS[dist.id] || "#ffffff";
+
+        if (dist.polygon) {
+          const ring = dist.polygon.map((pt) => {
+            const ll = NCZ.cetToLeaflet(pt[0], pt[1]);
+            return [ll[1], ll[0]];
+          });
+          ring.push(ring[0]);
+          districtFeatures.push({
+            type: "Feature",
+            properties: { name: dist.name, id: dist.id, color },
+            geometry: { type: "Polygon", coordinates: [ring] },
+          });
+        }
+
+        for (const sub of dist.subdistricts || []) {
+          if (!sub.polygon) continue;
+          const subRing = sub.polygon.map((pt) => {
+            const ll = NCZ.cetToLeaflet(pt[0], pt[1]);
+            return [ll[1], ll[0]];
+          });
+          subRing.push(subRing[0]);
+          const feature = {
+            type: "Feature",
+            properties: { name: sub.name, id: sub.id, parent: dist.id, color },
+            geometry: { type: "Polygon", coordinates: [subRing] },
+          };
+          subDistrictFeatures.push(feature);
+          // Non-canonical subdistricts (casino) also go in the district layer
+          // so they're visible at all zoom levels, not just zoom 4+
+          if (sub.canonical === false) {
+            districtFeatures.push(feature);
+          }
+        }
+      }
+
+      districtLayer = L.geoJSON(
+        { type: "FeatureCollection", features: districtFeatures },
+        {
+          pane: "districtPane",
+          style: (f) => ({ fill: false, color: f.properties.color, weight: 3, opacity: 0.8 }),
+        }
+      );
+
+      subDistrictLayer = L.geoJSON(
+        { type: "FeatureCollection", features: subDistrictFeatures },
+        {
+          pane: "districtPane",
+          style: (f) => ({ fill: false, color: f.properties.color, weight: 3, opacity: 0.8 }),
+        }
+      );
+
+      // Debug: log casino feature to verify coordinates
+      const casinoFeature = subDistrictFeatures.find((f) => f.properties.id === "north_oaks_casino");
+      if (casinoFeature) {
+        const coords = casinoFeature.geometry.coordinates[0];
+        console.log("[NCZ] Casino polygon:", coords.length, "points, first:", coords[0], "last:", coords[coords.length - 1]);
+      }
+
+      // Log what was included
+      const casinoIncluded = subDistrictFeatures.some((f) => f.properties.id === "north_oaks_casino");
+      console.log(`[NCZ] Districts: ${districtFeatures.length} districts, ${subDistrictFeatures.length} subdistricts (casino: ${casinoIncluded})`);
+
+      // Show districts immediately if enabled (default on both map types)
+      if (districtsEnabled) updateDistrictZoom();
+    });
+
+  // Zoom-based district/subdistrict switching
+  // At low zoom: show district outlines only
+  // At high zoom: show subdistrict outlines + districts that have NO subdistricts
+  //               (e.g. Morro Rock, Dogtown — they stay visible at all zooms)
+  function updateDistrictZoom() {
+    if (!districtsEnabled || !districtLayer || !subDistrictLayer) return;
+    const zoom = map.getZoom();
+    if (zoom <= DISTRICT_ZOOM_MAX) {
+      if (!map.hasLayer(districtLayer)) districtLayer.addTo(map);
+      if (map.hasLayer(subDistrictLayer)) map.removeLayer(subDistrictLayer);
+    } else {
+      // Keep district layer visible — it contains districts with no subs
+      // (Morro Rock, Dogtown). The subdistrict layer adds the detail.
+      if (!map.hasLayer(districtLayer)) districtLayer.addTo(map);
+      if (!map.hasLayer(subDistrictLayer)) subDistrictLayer.addTo(map);
+    }
+  }
+
+  map.on("zoomend", updateDistrictZoom);
+
+  // ── Contour lines ──────────────────────────────────────────────────
+  let contourLayer = null;
+
+  fetch("data/terrain_contours.json")
+    .then((r) => r.json())
+    .then((contours) => {
+      const features = contours.map((c) => ({
+        type: "Feature",
+        properties: { level: c.level },
+        geometry: {
+          type: "LineString",
+          coordinates: c.pts.map((pt) => [pt[1], pt[0]]),
+        },
+      }));
+
+      contourLayer = L.geoJSON(
+        { type: "FeatureCollection", features },
+        { pane: "overlayPane", style: { color: "rgba(109,138,176,0.3)", weight: 0.5 } }
+      );
+
+      console.log(`[NCZ] Contours: ${features.length} lines`);
+    });
+
+  // ── Base layer switching ───────────────────────────────────────────
+  const satelliteTiles = L.tileLayer("assets/tiles/{z}/{x}/{y}.png", {
+    minZoom: 0, maxNativeZoom: 5, maxZoom: 8, tileSize: 256, noWrap: true, bounds: mapBounds,
+  });
+
+  const terrainOverlay = L.imageOverlay("assets/img/terrain_8k.webp", mapBounds, { zIndex: 1 });
+
+  let activeBaseLayer = "satellite";
+  satelliteTiles.addTo(map);
+
+  NCZ.switchBaseLayer = function (layerName) {
+    if (layerName === activeBaseLayer) return;
+
+    // Remove current
+    if (activeBaseLayer === "satellite") {
+      map.removeLayer(satelliteTiles);
+    } else {
+      map.removeLayer(terrainOverlay);
+      if (map.hasLayer(canvasLayer)) map.removeLayer(canvasLayer);
+      if (districtLayer && map.hasLayer(districtLayer)) map.removeLayer(districtLayer);
+      if (subDistrictLayer && map.hasLayer(subDistrictLayer)) map.removeLayer(subDistrictLayer);
+      if (contourLayer && map.hasLayer(contourLayer)) map.removeLayer(contourLayer);
+    }
+
+    // Add new
+    if (layerName === "satellite") {
+      satelliteTiles.addTo(map);
+      canvasLayer.setVisibility({ showRoads: false, showBuildings: false, showMetro: false });
+      districtsEnabled = true;
+      updateDistrictZoom();
+    } else {
+      terrainOverlay.addTo(map);
+      canvasLayer.addTo(map);
+      canvasLayer.setVisibility({ showRoads: true, showBuildings: true, showMetro: true });
+      districtsEnabled = true;
+      updateDistrictZoom();
+    }
+
+    activeBaseLayer = layerName;
+  };
+
+  // ── Overlay toggling ───────────────────────────────────────────────
+
+  NCZ.toggleOverlay = function (overlay, visible) {
+    // Canvas overlays
+    if (overlay === "roads" || overlay === "buildings" || overlay === "metro") {
+      const opts = {};
+      opts["show" + overlay.charAt(0).toUpperCase() + overlay.slice(1)] = visible;
+      canvasLayer.setVisibility(opts);
+
+      const anyOn = canvasLayer.options.showRoads || canvasLayer.options.showBuildings || canvasLayer.options.showMetro;
+      if (anyOn && !map.hasLayer(canvasLayer)) canvasLayer.addTo(map);
+      else if (!anyOn && map.hasLayer(canvasLayer)) map.removeLayer(canvasLayer);
+    }
+
+    // Districts
+    if (overlay === "districts") {
+      districtsEnabled = visible;
+      if (visible) {
+        updateDistrictZoom();
+      } else {
+        if (districtLayer && map.hasLayer(districtLayer)) map.removeLayer(districtLayer);
+        if (subDistrictLayer && map.hasLayer(subDistrictLayer)) map.removeLayer(subDistrictLayer);
+      }
+    }
+
+    // Contours
+    if (overlay === "contours") {
+      if (visible && contourLayer) contourLayer.addTo(map);
+      else if (!visible && contourLayer && map.hasLayer(contourLayer)) map.removeLayer(contourLayer);
+    }
+  };
+
+  // Theme change cache clear
+  NCZ._clearOverlayCache = function () {
+    canvasLayer.clearCache();
+  };
 };

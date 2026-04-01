@@ -584,6 +584,12 @@ def main():
         if _casino.geom_type == "MultiPolygon":
             _casino = max(_casino.geoms, key=lambda g: g.area)
 
+        # Clean degenerate spikes/tendrils from the buffer computation
+        if not _casino.is_empty:
+            _casino = _casino.buffer(0)
+            if _casino.geom_type == "MultiPolygon":
+                _casino = max(_casino.geoms, key=lambda g: g.area)
+
         if not _casino.is_empty and _casino.geom_type == "Polygon":
             _casino_polygon = [[round(x, 2), round(y, 2)]
                                for x, y in list(_casino.exterior.coords)[:-1]]
