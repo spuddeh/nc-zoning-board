@@ -54,22 +54,29 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-// ── World constants (from TweakDB WorldMap.DefaultSettings) ──────────────
-const WORLD_MIN_X = -5500, WORLD_MAX_X = 6050;
-const WORLD_MIN_Y = -7300, WORLD_MAX_Y = 5000;
+// ── World constants (from Realistic Map mod terrain quad UVs) ────────────
+// The mod's 4-vertex quad defines the exact satellite image projection.
+const WORLD_MIN_X = -6298, WORLD_MAX_X = 5815;
+const WORLD_MIN_Y = -7684, WORLD_MAX_Y = 4427;
 const WORLD_W = WORLD_MAX_X - WORLD_MIN_X;   // 11550
 const WORLD_H = WORLD_MAX_Y - WORLD_MIN_Y;   // 12300
 const WORLD_CX = (WORLD_MIN_X + WORLD_MAX_X) / 2;  // 275
 const WORLD_CY = (WORLD_MIN_Y + WORLD_MAX_Y) / 2;  // -1150
 
-// ── Game material colors ──────────────────────────────────────────────────
-const COLOR_TERRAIN  = new THREE.Color(86/255,  108/255, 136/255);
-const COLOR_WATER    = new THREE.Color(28/255,  179/255, 191/255);
-const COLOR_CLIFFS   = new THREE.Color(70/255,   90/255, 110/255);
-const COLOR_BG       = new THREE.Color(10/255,   22/255,  35/255);
+// ── Base tile colors ──────────────────────────────────────────────────────
+// Neutral dark grey — theme-agnostic, won't compete with any overlay accent.
+// These are the PERMANENT base tile colours (can't be changed per theme).
+const COLOR_TERRAIN  = new THREE.Color(45/255,  48/255,  55/255);   // #2d3037
+const COLOR_WATER    = new THREE.Color(25/255,  35/255,  50/255);   // #192332
+const COLOR_CLIFFS   = new THREE.Color(40/255,  43/255,  50/255);   // slightly darker than terrain
+const COLOR_BG       = new THREE.Color(0, 0, 0);
 
-// Hillshade — sun from NW
-const SUN_DIR = new THREE.Vector3(-1, 1.5, 1).normalize();
+// Hillshade — sun from NW in CET space (-1, 1, 1.5) converted to GLB/Three.js space:
+//   GLB_X = CET_X, GLB_Y = CET_Z (up), GLB_Z = -CET_Y (south)
+// So CET(-1, 1, 1.5) → GLB(-1, 1.5, -1)
+// NOTE: The game's terrain shader (3d_map_terrain.mt) uses edge-darkening (DarkEdgeWidth)
+// rather than a true directional light. Our Lambert approximation is visually similar.
+const SUN_DIR = new THREE.Vector3(-1, 1.5, -1).normalize();
 const AMBIENT = 0.35;
 
 // ── GLB paths ─────────────────────────────────────────────────────────────
@@ -83,7 +90,7 @@ const W = window.innerWidth, H = window.innerHeight;
 canvas.width  = W;
 canvas.height = H;
 
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
 renderer.setSize(W, H);
 renderer.setClearColor(COLOR_BG);
 renderer.shadowMap.enabled = false;
@@ -115,12 +122,15 @@ function setStatus(msg) {
 }
 
 function makeHillshadedMaterial(baseColor) {
-  // Vertex color shader: per-face normal dot sun direction → brightness
   return new THREE.MeshLambertMaterial({
     color: baseColor,
     side: THREE.DoubleSide,
     flatShading: true,
   });
+}
+
+function makeFlatMaterial(baseColor) {
+  return new THREE.MeshBasicMaterial({ color: baseColor, side: THREE.DoubleSide });
 }
 
 // ── Load terrain GLB ──────────────────────────────────────────────────────
@@ -169,14 +179,16 @@ Promise.all([
   applyMaterialToScene(meshes.terrain, makeHillshadedMaterial(COLOR_TERRAIN));
   scene.add(meshes.terrain);
 
-  // Water — flat plane, rendered at sea level (slightly below terrain)
-  const waterMat = new THREE.MeshBasicMaterial({ color: COLOR_WATER, side: THREE.DoubleSide });
-  applyMaterialToScene(meshes.water, waterMat);
-  meshes.water.position.y = -0.5;  // just below terrain sea level
+  // Water — confirmed Y=-1.0 in GLB. No position offset needed.
+  // Terrain faces above sea level will occlude it via the Z-buffer.
+  applyMaterialToScene(meshes.water, makeFlatMaterial(COLOR_WATER));
   scene.add(meshes.water);
 
-  // Cliffs — same treatment as terrain
+  // Cliffs — Dogtown cliff faces only (not general terrain).
+  // Entity localTransform: pos(-2255, -3050) CET → GLB offset (X=-2255, Z=+3050)
+  // Parent: ep1_dogtown_data (chain not fully resolved — direct offset for now)
   applyMaterialToScene(meshes.cliffs, makeHillshadedMaterial(COLOR_CLIFFS));
+  meshes.cliffs.position.set(-2255, 0, 3050);
   scene.add(meshes.cliffs);
 
   setStatus('Ready — all meshes loaded');
@@ -194,6 +206,11 @@ function render() {
   if (meshes.water)   meshes.water.visible   = document.getElementById('showWater').checked;
   if (meshes.cliffs)  meshes.cliffs.visible  = document.getElementById('showCliffs').checked;
   markerGroup.visible = document.getElementById('showMarkers').checked;
+
+  // Hillshade toggle — swap between lit (Lambert) and flat (Basic) on terrain/cliffs
+  const hillshadeOn = document.getElementById('showHillshade').checked;
+  dirLight.visible = hillshadeOn;
+  // Ambient always on; directional light provides the hillshade variation
 
   renderer.render(scene, camera);
 }

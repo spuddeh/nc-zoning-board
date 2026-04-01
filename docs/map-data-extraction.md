@@ -162,7 +162,7 @@ World placement and orientation are read from the ent JSON via `load_mesh_transf
 
 **Orientation:** `load_mesh_transforms()` walks the full `parentTransform` chain for each `entMeshComponent` and accumulates the world-space orientation as a quaternion (Hamilton product up the chain). For rendering, the full quaternion is converted to a 3×3 rotation matrix and applied to the GLB vertices in CET space before projection. This correctly handles pitch and roll (e.g. the collapsed ferris wheel lying on its side) not just yaw.
 
-**Roads/metro orientation exception:** The road and metro meshes have a 180° world yaw in the ent, but this is already accounted for by the `-GLB_X` axis flip in the projection formula. These meshes use `offset_key=None` in `GLB_LAYERS`, which suppresses the ent quaternion so it isn't double-applied.
+**Roads/metro orientation exception:** The road and metro meshes have a **116.6° world yaw** in the ent (confirmed from entity quaternion: both instances of 3dmap_roads.mesh and 3dmap_metro.mesh). The net effect of this rotation when projected top-down is equivalent to negating the X axis, so the projection formula uses `-GLB_X` = `CET_X`. This was confirmed empirically — roads appear 180° mirrored from buildings without the negation. These meshes use `offset_key=None` in `GLB_LAYERS`, which suppresses the ent quaternion so it isn't double-applied.
 
 **Rendering approaches per mesh type:**
 - **Roads:** Fill faces at low opacity — shows grey road areas between buildings

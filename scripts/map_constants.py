@@ -19,12 +19,22 @@ Leaflet uses L.CRS.Simple with tileSize=256 and maxNativeZoom=5:
 
 # ---------------------------------------------------------------------------
 # Authoritative world extent (CET world-space)
-# Source: TweakDB WorldMap.DefaultSettings (extracted via WolvenKit)
+# Source: The Realistic Map 8k mod's terrain quad UV→world mapping.
+# The mod replaces the 5-submesh terrain with a single 4-vertex quad and maps
+# the satellite image (night_city_8k_transparent.png) via custom UVs:
+#   CET_X = 12112.3 * U + (-6297.5)   →  U=0: X=-6298, U=1: X=5815
+#   CET_Y = -12111.5 * V + (7684.3)   →  V=0: Y=7684,  V=1: Y=-4427
+# This is the authoritative mapping for both the satellite tiles and our terrain tiles.
+#
+# Note: TweakDB WorldMap.DefaultSettings CursorBoundary (-5500,-7300)→(6050,5000)
+# defines the PAN LIMIT (how far the player can scroll), NOT the render extent.
+# The base game's 5-submesh terrain has inconsistent per-submesh UV mappings,
+# so the mod author's clean quad is the correct reference.
 # ---------------------------------------------------------------------------
-WORLD_MIN_X = -5500.0   # CursorBoundaryMin.X (western edge)
-WORLD_MAX_X =  6050.0   # CursorBoundaryMax.X (eastern edge)
-WORLD_MIN_Y = -7300.0   # CursorBoundaryMin.Y (southern edge)
-WORLD_MAX_Y =  5000.0   # CursorBoundaryMax.Y (northern edge)
+WORLD_MIN_X = -6298.0   # UV U=0 → CET_X (western edge)
+WORLD_MAX_X =  5815.0   # UV U=1 → CET_X (eastern edge)
+WORLD_MIN_Y = -7684.0   # UV V=0 → CET_Y (southern edge) — mod quad uses CET_Y = -GLB_Z
+WORLD_MAX_Y =  4427.0   # UV V=1 → CET_Y (northern edge)
 
 # Derived ranges
 WORLD_WIDTH  = WORLD_MAX_X - WORLD_MIN_X   # 11550.0
@@ -133,7 +143,16 @@ DISTRICT_COLORS = {
 DISTRICT_OUTLINE_OPACITY = 0.6
 
 # ---------------------------------------------------------------------------
-# Game material colors (from 3dmap Material.json files)
+# Base tile colors (theme-agnostic, used for permanent terrain tiles)
+# ---------------------------------------------------------------------------
+# Neutral dark grey palette — subtle land/water distinction, won't compete
+# with any theme's accent colours. These can't be changed per theme.
+TILE_TERRAIN_COLOR  = (45,   48,  55)   # #2d3037 — neutral dark grey
+TILE_WATER_COLOR    = (25,   35,  50)   # #192332 — slightly cooler/darker
+TILE_BACKGROUND     = (0,     0,   0)   # black — outside map area
+
+# ---------------------------------------------------------------------------
+# Game material colors (from 3dmap Material.json files, for reference/SVGs)
 # ---------------------------------------------------------------------------
 TERRAIN_BASE_COLOR  = (86,  108, 136)   # 3dmap_terrain BaseColorScale
 TERRAIN_LINES_COLOR = (109, 138, 176)   # 3dmap_terrain LinesColor

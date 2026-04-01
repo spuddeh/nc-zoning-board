@@ -92,11 +92,13 @@ NCZ.PIN_POPUP_ARROW_EDGE_PADDING_PX = 18;
 // Responsive
 NCZ.MOBILE_BREAKPOINT = 768;
 
-// Map world extent (CET world-space, from TweakDB WorldMap.DefaultSettings)
-NCZ.WORLD_MIN_X = -5500;
-NCZ.WORLD_MAX_X =  6050;
-NCZ.WORLD_MIN_Y = -7300;
-NCZ.WORLD_MAX_Y =  5000;
+// Map world extent (CET world-space)
+// Source: Realistic Map 8k mod terrain quad UV mapping — the authoritative projection
+// for the satellite image (night_city_8k_transparent.png) and terrain tiles.
+NCZ.WORLD_MIN_X = -6298;
+NCZ.WORLD_MAX_X =  5815;
+NCZ.WORLD_MIN_Y = -7684;
+NCZ.WORLD_MAX_Y =  4427;
 
 // Cluster panel sizing
 NCZ.CLUSTER_PANEL_WIDTH_KEY = "nc_cluster_panel_width";

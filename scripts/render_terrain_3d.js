@@ -89,19 +89,40 @@ async function main() {
     process.exit(1);
   }
 
-  console.log('All GLBs loaded. Capturing...');
+  console.log('All GLBs loaded. Preparing for capture...');
 
-  // Trigger final render and capture canvas
+  // Disable reference markers and UI overlays for clean export
+  await page.evaluate(() => {
+    document.getElementById('showMarkers').checked = false;
+    // Hide UI panels
+    document.getElementById('info').style.display = 'none';
+    document.getElementById('controls').style.display = 'none';
+  });
+
+  // Wait one frame for the render loop to apply the changes
+  await page.evaluate(() => new Promise(r => requestAnimationFrame(r)));
+
+  console.log('Capturing 8k canvas...');
+
+  // Force a render pass and capture via toDataURL (preserveDrawingBuffer must be true)
   const imageData = await page.evaluate(() => {
+    // Force synchronous render
     const canvas = document.getElementById('canvas');
-    // Force one more render pass
     return canvas.toDataURL('image/png');
   });
 
-  // Convert base64 data URL to PNG file
   const base64 = imageData.replace(/^data:image\/png;base64,/, '');
-  fs.mkdirSync(path.dirname(OUTPUT_PATH), { recursive: true });
-  fs.writeFileSync(OUTPUT_PATH, Buffer.from(base64, 'base64'));
+
+  // Check if we got actual content (not just transparent)
+  if (base64.length < 1000) {
+    console.log('toDataURL returned empty canvas, falling back to screenshot...');
+    // Fallback: use Puppeteer page screenshot of just the canvas element
+    const canvasEl = await page.$('#canvas');
+    await canvasEl.screenshot({ path: OUTPUT_PATH, type: 'png' });
+  } else {
+    fs.mkdirSync(path.dirname(OUTPUT_PATH), { recursive: true });
+    fs.writeFileSync(OUTPUT_PATH, Buffer.from(base64, 'base64'));
+  }
 
   await browser.close();
 
