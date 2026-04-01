@@ -96,9 +96,16 @@ html.theme-night-corp {
     --tertiary: #ffb300;
 
     --gray: #8892b0;
-    
+
     --white: #e6f1ff;
     --dark-accent: #112240;
+
+    /* Map overlay colours (canvas renderer reads these at draw time) */
+    --overlay-road: rgba(70, 85, 110, 0.47);
+    --overlay-building-fill: rgba(100, 120, 150, 0.9);
+    --overlay-building-edge: rgba(0, 180, 210, 0.5);
+    --overlay-landmark-fill: rgba(100, 120, 150, 0.9);
+    --overlay-metro: rgba(0, 240, 255, 0.8);
 
     /* Themed surfaces */
     --surface-panel: rgba(10, 25, 47, 0.95);
@@ -126,9 +133,15 @@ html.theme-arasaka {
     --tertiary: #ffb300;
 
     --gray: #8892b0;
-    
+
     --white: #e6f1ff;
     --dark-accent: #1a1a1a;
+
+    --overlay-road: rgba(100, 70, 70, 0.47);
+    --overlay-building-fill: rgba(140, 100, 100, 0.9);
+    --overlay-building-edge: rgba(200, 50, 50, 0.5);
+    --overlay-landmark-fill: rgba(140, 100, 100, 0.9);
+    --overlay-metro: rgba(230, 0, 0, 0.8);
 
     /* Themed surfaces */
     --surface-panel: rgba(16, 16, 16, 0.95);
@@ -156,9 +169,15 @@ html.theme-militech {
     --tertiary: #ee6b00;
 
     --gray: #93a58b;
-    
+
     --white: #e6f1ff;
     --dark-accent: #1a1a1a;
+
+    --overlay-road: rgba(80, 85, 60, 0.47);
+    --overlay-building-fill: rgba(120, 130, 100, 0.9);
+    --overlay-building-edge: rgba(200, 180, 0, 0.5);
+    --overlay-landmark-fill: rgba(120, 130, 100, 0.9);
+    --overlay-metro: rgba(250, 200, 0, 0.8);
 
     /* Themed surfaces */
     --surface-panel: rgba(16, 16, 16, 0.95);
@@ -186,9 +205,15 @@ html.theme-aldecaldos {
     --tertiary: #be8f27;
 
     --gray: #545d7c;
-    
+
     --white: #e6f1ff;
     --dark-accent: #424a63;
+
+    --overlay-road: rgba(90, 75, 60, 0.47);
+    --overlay-building-fill: rgba(130, 115, 95, 0.9);
+    --overlay-building-edge: rgba(200, 120, 50, 0.5);
+    --overlay-landmark-fill: rgba(130, 115, 95, 0.9);
+    --overlay-metro: rgba(220, 100, 45, 0.8);
 
     /* Themed surfaces */
     --surface-panel: rgba(16, 21, 24, 0.95);

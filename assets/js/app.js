@@ -142,6 +142,9 @@ document.addEventListener("DOMContentLoaded", () => {
         // Ignore storage write failures (private mode / restricted browsers).
       }
     }
+
+    // Clear overlay tile cache — theme colours changed
+    if (NCZ._clearOverlayCache) NCZ._clearOverlayCache();
   }
 
   const initialThemeId = getInitialThemeId();
@@ -462,14 +465,95 @@ async function initMap() {
   const northEast = map.unproject([8192, 0], maxZoom);
   const mapBounds = new L.LatLngBounds(southWest, northEast);
 
-  L.tileLayer("assets/tiles/{z}/{x}/{y}.png", {
+  // ── Base layers ──────────────────────────────────────────────────────
+  // Satellite: existing PNG tile layer (legacy, will migrate to WebP imageOverlay)
+  const satelliteTiles = L.tileLayer("assets/tiles/{z}/{x}/{y}.png", {
     minZoom: 0,
     maxNativeZoom: 5,
     maxZoom: 8,
     tileSize: 256,
     noWrap: true,
     bounds: mapBounds,
-  }).addTo(map);
+  });
+
+  // Terrain: WebP imageOverlay (290 KB, neutral dark grey)
+  // zIndex ensures terrain renders BELOW canvas overlays
+  const terrainOverlay = L.imageOverlay("assets/img/terrain_8k.webp", mapBounds, {
+    zIndex: 1,
+  });
+
+  // Default to satellite (current behaviour), terrain available via switcher
+  let activeBaseLayer = "satellite";
+  satelliteTiles.addTo(map);
+
+  // ── Overlay renderer ─────────────────────────────────────────────────
+  // Canvas-based GridLayer that draws 380k+ features in z-sorted order.
+  // Only visible tiles are rendered; Leaflet caches them for smooth panning.
+  // ── Overlay renderer (Canvas GridLayer) ────────────────────────────
+  // Create custom pane so overlays render above terrain but below markers
+  map.createPane("overlayPane");
+  map.getPane("overlayPane").style.zIndex = 450;
+
+  const overlayRenderer = NCZ.overlayRenderer({
+    pane: "overlayPane",
+    showRoads: false,
+    showBuildings: false,
+    showMetro: false,
+    showEdges: true,
+  });
+
+  overlayRenderer.loadData().then((count) => {
+    console.log(`[NCZ] Overlay: ${count.toLocaleString()} features loaded`);
+    overlayRenderer.redraw();
+  });
+
+  // Register cache-clear so theme switching invalidates rendered tiles
+  NCZ._clearOverlayCache = function () {
+    for (const k in overlayRenderer._tileCache) {
+      overlayRenderer._tileCache[k].close();
+    }
+    overlayRenderer._tileCache = {};
+    if (map.hasLayer(overlayRenderer)) overlayRenderer.redraw();
+  };
+
+  // ── Base layer switcher ──────────────────────────────────────────────
+  NCZ.switchBaseLayer = function (layerName) {
+    if (layerName === activeBaseLayer) return;
+
+    if (activeBaseLayer === "satellite") {
+      map.removeLayer(satelliteTiles);
+    } else {
+      map.removeLayer(terrainOverlay);
+      map.removeLayer(overlayRenderer);
+    }
+
+    if (layerName === "satellite") {
+      satelliteTiles.addTo(map);
+      overlayRenderer.setVisibility({ showRoads: false, showBuildings: false, showMetro: false });
+    } else {
+      terrainOverlay.addTo(map);
+      overlayRenderer.addTo(map);
+      overlayRenderer.setVisibility({ showRoads: true, showBuildings: true, showMetro: true });
+    }
+
+    activeBaseLayer = layerName;
+  };
+
+  // ── Overlay toggles ──────────────────────────────────────────────────
+  NCZ.toggleOverlay = function (overlay, visible) {
+    const opts = {};
+    opts["show" + overlay.charAt(0).toUpperCase() + overlay.slice(1)] = visible;
+    overlayRenderer.setVisibility(opts);
+
+    const anyOn = overlayRenderer.options.showRoads ||
+                  overlayRenderer.options.showBuildings ||
+                  overlayRenderer.options.showMetro;
+    if (anyOn && !map.hasLayer(overlayRenderer)) {
+      overlayRenderer.addTo(map);
+    } else if (!anyOn && map.hasLayer(overlayRenderer)) {
+      map.removeLayer(overlayRenderer);
+    }
+  };
 
   map.invalidateSize();
   map.fitBounds(mapBounds);
