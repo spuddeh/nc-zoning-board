@@ -43,16 +43,19 @@ position.set(CET_X, height, -CET_Y)
 //                          ↑ Z negated because THREE Z = -CET_Y
 ```
 
-### World Viewport Bounds
+### World Render Extent
 
-From TweakDB `WorldMap.DefaultSettings` (see `docs/district-hierarchy.md`):
+From the Realistic Map mod terrain quad UV mapping (see `docs/coordinate-system.md`):
 
 ```
-WORLD_MIN_X = -5500   WORLD_MAX_X = 6050
-WORLD_MIN_Y = -7300   WORLD_MAX_Y = 5000
+WORLD_MIN_X = -6298   WORLD_MAX_X = 5815   (width:  12113)
+WORLD_MIN_Y = -7684   WORLD_MAX_Y = 4427   (height: 12111)
+Centre: (-242, -1628)
 ```
 
-The orthographic camera frustum matches these bounds exactly.
+The orthographic camera frustum matches these bounds exactly. Both the terrain WebP and the satellite WebP use this same projection, so they align when switching base layers.
+
+**Note:** TweakDB `WorldMap.DefaultSettings.CursorBoundary` (-5500,-7300)→(6050,5000) is the in-game pan limit, not the render extent.
 
 ---
 
@@ -152,21 +155,55 @@ The 3D render eliminates all of these — the Z-buffer is the correct tool.
 
 ---
 
-## Generating the 8k PNG
+## Generating the Terrain WebP
+
+### Step 1: Visual debugging (browser)
 
 ```bash
-# 1. Start local server from D drive root
 npx serve D:/ -p 3001
-
-# 2. Open browser preview (visual debugging)
-# http://localhost:3001/Modding/cp2077-location-mods-map/scripts/render_terrain_3d.html
-
-# 3. Run headless capture (after visual validation)
-node scripts/render_terrain_3d.js
-
-# 4. Slice into tiles
-node scripts/generate_tiles.js
+# Open: http://localhost:3001/Modding/cp2077-location-mods-map/scripts/render_terrain_3d.html
 ```
 
-Expected output: `scripts/output/terrain_background_8k.png` (~4–5 MB)
-Tile output: `assets/tiles/terrain/{z}/{x}/{y}.png` (256×256, zoom 0–5)
+Toggle terrain, water, cliffs, hillshade, and reference markers to verify the render looks correct.
+
+### Step 2: Headless 8k capture
+
+```bash
+node scripts/render_terrain_3d.js
+```
+
+Output: `scripts/output/terrain_background_8k.png` (~9.5 MB PNG)
+
+### Step 3: Export to WebP
+
+The PNG is converted to WebP for the production site:
+
+```bash
+python3 -c "
+from PIL import Image
+img = Image.open('scripts/output/terrain_background_8k.png').convert('RGB')
+img.save('assets/img/terrain_8k.webp', 'WEBP', quality=80, method=6)
+"
+```
+
+Output: `assets/img/terrain_8k.webp` (~290 KB)
+
+### Delivery: L.imageOverlay (no tiles)
+
+Both base layers are served as single WebP files via Leaflet's `L.imageOverlay`:
+
+| File | Size | Notes |
+|------|------|-------|
+| `assets/img/terrain_8k.webp` | 290 KB | Schematic terrain, RGB, neutral dark grey |
+| `assets/img/satellite_8k.webp` | 9.6 MB | Satellite photograph, RGBA with transparency |
+
+This eliminates the tile generation pipeline entirely. WebP compresses the mostly-two-colour terrain down to 290 KB, which loads faster than a tile set.
+
+The Leaflet bounds for the imageOverlay are derived from the world extent:
+```javascript
+const bounds = [
+  [NCZ.cetToLeaflet(NCZ.WORLD_MIN_X, NCZ.WORLD_MIN_Y)],  // SW corner
+  [NCZ.cetToLeaflet(NCZ.WORLD_MAX_X, NCZ.WORLD_MAX_Y)]    // NE corner
+];
+// = [[-256, 0], [0, 256]] in Leaflet CRS.Simple
+```

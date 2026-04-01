@@ -1,8 +1,10 @@
 # Tile Generation
 
+> **Note:** The tile pipeline described here is used by the current production site (satellite tiles). Future versions will use WebP `L.imageOverlay` instead of tiles — the satellite image compresses to 9.6 MB as WebP, and the terrain base layer to 290 KB. See `docs/terrain-generation.md` for the new approach. This document is preserved for reference and backward compatibility.
+
 ## Overview
 
-The map image is too large to load as a single file (the 8k source is 108 MB). Instead, we slice it into 256×256 PNG tiles at multiple zoom levels. Leaflet loads only the visible tiles, making the map fast and responsive.
+The map image is too large to load as a single PNG file (the 8k source is 108 MB). Instead, we slice it into 256×256 PNG tiles at multiple zoom levels. Leaflet loads only the visible tiles, making the map fast and responsive.
 
 ## Source Images
 

@@ -37,16 +37,30 @@ From TweakDB `WorldMapZoomLevel_Record` entries. Camera range: zoomMin=800, zoom
 
 All levels use FOV=25 and Yaw=-85 rotation.
 
-## Map Viewport Bounds
+## Map Bounds
 
-From TweakDB `WorldMap.DefaultSettings`:
+### Render Extent (authoritative — used for tile/overlay projection)
+
+From the Realistic Map mod terrain quad UV mapping (see `docs/coordinate-system.md`):
+
+| Parameter | Value |
+|-----------|-------|
+| WORLD_MIN_X | -6298 |
+| WORLD_MAX_X | 5815 |
+| WORLD_MIN_Y | -7684 |
+| WORLD_MAX_Y | 4427 |
+| Width | 12113 CET units |
+| Height | 12111 CET units |
+| Centre | (-242, -1628) |
+
+### In-Game Pan Limit (TweakDB — NOT the render extent)
+
+From TweakDB `WorldMap.DefaultSettings` — defines how far the player can scroll the map in-game, not what is rendered:
 
 | Parameter | Value |
 |-----------|-------|
 | CursorBoundaryMin | X=-5500, Y=-7300 |
 | CursorBoundaryMax | X=6050, Y=5000 |
-| World Width | 11550 CET units |
-| World Height | 12300 CET units |
 
 ## Full Hierarchy
 
