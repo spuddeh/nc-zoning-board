@@ -65,7 +65,9 @@ from map_constants import (
 
 
 # ── CONFIG ─────────────────────────────────────────────────────────────────────
-MIN_AREA_SQ = 50.0   # Skip instances with footprint area < this (sq game units)
+# No area filter — extract ALL building instances for 1-to-1 game map replica.
+# Previously MIN_AREA_SQ = 50.0 which discarded 37% of instances (small buildings,
+# kiosks, phone booths, etc. that are visible on the in-game map).
 
 
 # ── DISTRICT WORLD OFFSETS ────────────────────────────────────────────────────
@@ -487,6 +489,18 @@ def classify_district(cx, cy, trigger_polygons):
 #
 # Set to an empty list [] to produce buildings-only output.
 
+# Human-readable names for landmark meshes (for hover tooltips in the frontend)
+LANDMARK_NAMES = {
+    "obelisk":                 "The Needle",
+    "pyramid":                 "Heavy Hearts Club",
+    "statue":                  "De-votion",
+    "av_building":             "Brainporium",
+    "icosphere":               "Brave Atlas",
+    "northoak_sign":           "North Oak Sign",
+    "ferris_wheel_upright":    "Pacifica Ferris Wheel",
+    "ferris_wheel_collapsed":  "Rancho Coronado Ferris Wheel",
+}
+
 GLB_LAYERS = [
     # (filename, fill_rgba, edge_rgba, edge_width, label, offset_key)
     # offset_key: entMeshComponent name in 3dmap_view.ent.json (None = use filename stem)
@@ -593,16 +607,17 @@ def render_glb_base_layer(wbounds, mesh_transforms=None, trigger_polygons=None, 
 
         # Resolve ("district", alpha) sentinel → actual RGBA using the landmark's
         # world CET position and the loaded district trigger polygons.
+        landmark_district = None  # Track district for JSON output
         if isinstance(fill_rgba, tuple) and len(fill_rgba) == 2 and fill_rgba[0] == "district":
             alpha = fill_rgba[1]
             if trigger_polygons:
-                dk = classify_district(off_x, off_y, trigger_polygons)
-                hex_col = DISTRICT_COLORS.get(dk, BADLANDS_COLOR) if dk else BADLANDS_COLOR
+                landmark_district = classify_district(off_x, off_y, trigger_polygons)
+                hex_col = DISTRICT_COLORS.get(landmark_district, BADLANDS_COLOR) if landmark_district else BADLANDS_COLOR
             else:
                 hex_col = "#dcdcc8"  # fallback off-white if no polygon data
             r, g, b = int(hex_col[1:3], 16), int(hex_col[3:5], 16), int(hex_col[5:7], 16)
             fill_rgba = (r, g, b, alpha)
-            print(f"  [GLB] {label}: district colour {hex_col} (alpha={alpha})")
+            print(f"  [GLB] {label}: district={landmark_district or 'badlands'}, colour {hex_col} (alpha={alpha})")
 
         # Same sentinel resolution for edge_rgba
         if isinstance(edge_rgba, tuple) and len(edge_rgba) == 2 and edge_rgba[0] == "district":
@@ -796,15 +811,30 @@ def render_glb_base_layer(wbounds, mesh_transforms=None, trigger_polygons=None, 
             fills = json_fill_acc.get(out_key)
             edges = json_edge_acc.get(out_key)
             if isinstance(fills, dict) or isinstance(edges, dict):
-                # Combined (landmark) output: merge per-label faces + edges
+                # Combined (landmark) output: merge per-label faces + edges + metadata
                 labels = set(fills or {}) | set(edges or {})
-                data = {
-                    lbl: {
-                        **({"faces": fills[lbl]} if fills and lbl in fills else {}),
-                        **({"edges": edges[lbl]} if edges and lbl in edges else {}),
-                    }
-                    for lbl in labels
-                }
+                data = {}
+                for lbl in labels:
+                    entry = {}
+                    if fills and lbl in fills:
+                        entry["faces"] = fills[lbl]
+                    if edges and lbl in edges:
+                        entry["edges"] = edges[lbl]
+                    # Add landmark metadata (name, district) from LANDMARK_NAMES
+                    # and the district classified during rendering
+                    if lbl in LANDMARK_NAMES:
+                        entry["name"] = LANDMARK_NAMES[lbl]
+                    # Find the district for this landmark from the layer data
+                    for layer in (layers if layers is not None else GLB_LAYERS):
+                        if layer[4] == lbl:  # label match
+                            lm_offset_key = layer[5] if len(layer) > 5 else None
+                            lm_key = lm_offset_key if lm_offset_key is not None else layer[0].replace(".glb", "")
+                            lm_off_x, lm_off_y, _ = transforms.get(lm_key, (0.0, 0.0, (1,0,0,0)))
+                            if trigger_polygons:
+                                lm_dist = classify_district(lm_off_x, lm_off_y, trigger_polygons)
+                                entry["district"] = lm_dist or "badlands"
+                            break
+                    data[lbl] = entry
                 json_file = os.path.join(json_output_dir, f"{out_key}.json")
                 with open(json_file, "w", encoding="utf-8") as f:
                     json.dump(data, f, separators=(",", ":"))
@@ -1065,16 +1095,13 @@ def decode_district(name, d, positions_only=False):
             cy = tmin_y + (tmax_y - tmin_y) * pg + off_y
             wz = tmin_z + (tmax_z - tmin_z) * pb
 
-            # Scale (half-extents)
-            sr, sg = px[y, x + 2*block_w, 0], px[y, x + 2*block_w, 1]
+            # Scale (half-extents) — X, Y for footprint, Z for building height
+            sr, sg, sb = px[y, x + 2*block_w, 0], px[y, x + 2*block_w, 1], px[y, x + 2*block_w, 2]
             hx = sr * cube_val
             hy = sg * cube_val
+            hz = sb * cube_val  # building height (vertical extrusion)
 
             if hx == 0.0 and hy == 0.0:
-                skipped += 1
-                continue
-
-            if hx * hy * 4.0 < MIN_AREA_SQ:
                 skipped += 1
                 continue
 
@@ -1097,7 +1124,12 @@ def decode_district(name, d, positions_only=False):
             world_offsets = (R2 @ local.T).T
             corners = [(float(cx + dx), float(cy + dy)) for dx, dy in world_offsets]
 
-            instances.append({"center": (float(cx), float(cy)), "z": float(wz), "corners_world": corners})
+            instances.append({
+                "center": (float(cx), float(cy)),
+                "z": float(wz),
+                "hz": float(hz),  # building height (half-extent Z, for shadow/extrusion)
+                "corners_world": corners,
+            })
 
     t2 = time.time()
     print(f"  {len(instances)} instances decoded, {skipped} skipped ({t2-t0:.1f}s total)")
@@ -1353,7 +1385,10 @@ def run_full_output():
 
             # Leaflet coordinates for buildings.json (z-enriched)
             leaflet_corners = [world_to_leaflet(wx, wy, wbounds) for wx, wy in corners_w]
-            polygons_leaflet.append({"z": round(inst_z, 3), "pts": leaflet_corners})
+            entry = {"z": round(inst_z, 3), "pts": leaflet_corners}
+            if "hz" in inst:
+                entry["hz"] = round(inst["hz"], 2)
+            polygons_leaflet.append(entry)
 
         json_districts.append({"district": label, "polygons": polygons_leaflet})
         sorted_polys = [s for _, s in sorted(z_polys, key=lambda t: t[0])]
