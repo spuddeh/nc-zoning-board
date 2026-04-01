@@ -2,7 +2,9 @@
 
 **An interactive web map and coordinate registry for Cyberpunk 2077 location mods — helping the community track what's been built and where.**
 
-🌍 **[View the Live Map](https://spuddeh.github.io/nc-zoning-board/)**
+> ⚠️ **Fan Content Disclaimer:** This is an unofficial fan project not approved or endorsed by CD PROJEKT RED. See [ASSETS.md](ASSETS.md) for licensing details and game asset attribution.
+
+🌍 **[View the Live Map](https://nczoning.net/)**
 
 ## What is This?
 
@@ -17,7 +19,7 @@ The live interactive map displays all registered mods on an 8k Night City map, a
 
 ### Viewing the Map
 
-Just visit the [Live Map](https://spuddeh.github.io/nc-zoning-board/) — no setup needed.
+Just visit the [Live Map](https://nczoning.net/) — no setup needed.
 
 ### Join the Community
 
@@ -89,15 +91,22 @@ Prefer a permanent, manually curated entry? See **[docs/adding-mods.md](docs/add
 - **GitHub Actions** — Automated JSON validation and PR pipeline
 - **GitHub Pages** — Static hosting
 
-## Contributors
+## Contributors & Community
 
-A huge thanks to the people helping build and maintain the board:
+Built by modders, for modders. A huge thanks to everyone who's contributed:
 
-- **[Kaoziun](https://www.nexusmods.com/profile/Kaoziun/mods?gameId=3333)** — Original idea & project lead
-- **[manavortex](https://www.nexusmods.com/profile/manavortex/mods?gameId=3333)** — Data structure & dev support
-- **[Spuddeh](https://www.nexusmods.com/profile/Spuddeh/mods?gameId=3333)** — Lead developer
-- **The rest of the Locations Hub Council** — Testing, support, and ideas
+- **[Kaoziun](https://www.nexusmods.com/profile/Kaoziun/mods?gameId=3333)** — Original vision & community leadership
+- **[manavortex](https://www.nexusmods.com/profile/manavortex/mods?gameId=3333)** — Data structure & guidance
+- **[Spuddeh](https://www.nexusmods.com/profile/Spuddeh/mods?gameId=3333)** — Active development
+- **[Akiway](https://www.nexusmods.com/profile/Akiway/mods?gameId=3333)** — UI/UX & design
+- **Locations Hub Council & community** — Testing, ideas, and support
 
-## License
+Want to help? See **[CONTRIBUTING.md](CONTRIBUTING.md)** — we'd love to have you!
 
-ISC
+## Licensing
+
+**Software Code:** MIT License (see [`LICENSE`](LICENSE) file)
+
+**Game Assets:** Subject to CD PROJEKT RED's Fan Content Policy (see [`ASSETS.md`](ASSETS.md) for details)
+
+This project is non-commercial and free. Game data and assets are used under CD PROJEKT RED's fan content terms, which require attribution and prohibit commercial use.

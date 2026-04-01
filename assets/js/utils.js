@@ -39,6 +39,16 @@ NCZ.cetToLeaflet = function (cetX, cetY) {
   return [lat, lng];
 };
 
+// Leaflet lat/lng distance converted to calibrated meters via the CET transform.
+NCZ.leafletDistanceMeters = function (a, b) {
+  const deltaLng = b.lng - a.lng;
+  const deltaLat = b.lat - a.lat;
+  const deltaCetX = deltaLng / NCZ.CET_TO_LEAFLET_X_SCALE;
+  const deltaCetY = deltaLat / NCZ.CET_TO_LEAFLET_Y_SCALE;
+  const distanceCetUnits = Math.hypot(deltaCetX, deltaCetY);
+  return distanceCetUnits / NCZ.CET_UNITS_PER_METER;
+};
+
 
 NCZ.clamp = function (value, min, max) {
   return Math.min(Math.max(value, min), max);
@@ -174,4 +184,15 @@ NCZ.parseNcZoningBlock = function (description, validTagNames) {
     credits: data.credits || null,
     additionalAuthors,
   };
+};
+
+// Comparator for Array.sort — orders mods by Nexus updatedAt descending.
+// Mods with no Nexus date (WIP/Dummy) fall to end, sorted alphabetically.
+NCZ.sortModsByUpdated = function (a, b) {
+  const tsA = a._updatedAt ? new Date(a._updatedAt).getTime() : null;
+  const tsB = b._updatedAt ? new Date(b._updatedAt).getTime() : null;
+  if (tsA !== null && tsB !== null) return tsB - tsA;
+  if (tsA !== null) return -1;
+  if (tsB !== null) return 1;
+  return a.name.localeCompare(b.name);
 };

@@ -69,9 +69,20 @@ NCZ.DESCRIPTION_MAX_LENGTH = 500;
 NCZ.COPY_FEEDBACK_MS = 2000;
 NCZ.SEARCH_DEBOUNCE_MS = 200;
 
+// CET <-> Leaflet transform derived coefficients (from WORLD_MIN/MAX)
+// Used by the scale indicator for Leaflet distance -> CET meters conversion
+NCZ.CET_TO_LEAFLET_X_SCALE = 256 / (NCZ.WORLD_MAX_X - NCZ.WORLD_MIN_X);  // 0.02113734
+NCZ.CET_TO_LEAFLET_Y_SCALE = 256 / (NCZ.WORLD_MAX_Y - NCZ.WORLD_MIN_Y);  // 0.02113385
+NCZ.CET_TO_LEAFLET_X_OFFSET = -NCZ.WORLD_MIN_X * NCZ.CET_TO_LEAFLET_X_SCALE;
+NCZ.CET_TO_LEAFLET_Y_OFFSET = -NCZ.WORLD_MAX_Y * NCZ.CET_TO_LEAFLET_Y_SCALE;
+// Set this if you want to calibrate CET units to physical meters.
+// Default assumes 1 CET unit ~= 1 meter.
+NCZ.CET_UNITS_PER_METER = 1;
+
 // LocalStorage cache keys & TTLs
 NCZ.THEME_PREFERENCE_KEY = "nc_theme_id";
 NCZ.RECENTLY_UPDATED_DAYS = 7;
+NCZ.UPDATED_LABEL = "RECENTLY UPDATED";
 NCZ.THUMB_CACHE_KEY = "nc_nexus_thumbs";
 NCZ.THUMB_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
 NCZ.AUTODISCOVERY_CACHE_KEY = "nc_nexus_autodiscovery";

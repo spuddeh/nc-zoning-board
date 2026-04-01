@@ -4,13 +4,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NC Zoning Board | Mod Registry Map</title>
+    <title>NC Zoning Board | Cyberpunk 2077 Location Mods Map</title>
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="assets/img/favicon.ico">
+    <link rel="canonical" href="https://nczoning.net">
 
     <!-- Meta Tags for SEO -->
     <meta name="description"
-        content="Interactive map for Cyberpunk 2077 location mods. Find custom apartments, overhauled zones, and new locations with ease.">
+        content="NC Zoning Board: the community map for Cyberpunk 2077 location mods. Browse everything Night City's modders have built, all on one grid.">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://nczoning.net">
+    <meta property="og:site_name" content="NC Zoning Board">
+    <meta property="og:title" content="NC Zoning Board | Cyberpunk 2077 Location Mods Map">
+    <meta property="og:description"
+        content="NC Zoning Board: the community map for Cyberpunk 2077 location mods. Browse everything Night City's modders have built, all on one grid.">
+    <meta property="og:image" content="https://nczoning.net/assets/img/og-image.jpg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="NC Zoning Board — Night City mod locations map">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="NC Zoning Board | Cyberpunk 2077 Location Mods Map">
+    <meta name="twitter:description"
+        content="NC Zoning Board: the community map for Cyberpunk 2077 location mods. Browse everything Night City's modders have built, all on one grid.">
+    <meta name="twitter:image" content="https://nczoning.net/assets/img/og-image.jpg">
 
     <!-- Shared constants needed by early theme bootstrap -->
     <script src="assets/js/constants.js"></script>
@@ -103,14 +123,40 @@
                 <span class="status-label">[SYSTEM_STATUS: NOMINAL]</span>
                 <span class="status-led"></span>
                 <span class="status-telemetry">SYNC_OFFSET: 0.00ms</span>
-                <button id="about-btn" aria-label="About" title="About NC Zoning Board">[?]</button>
-                <button id="parameters-btn" aria-label="Open settings" title="Open interface settings">SETTINGS</button>
-                <button id="bbcode-btn" aria-label="Generate NCZoning BBCode" title="Generate NCZoning metadata block for your Nexus mod">[+] SUBMIT</button>
+                <button id="about-btn" class="header-action-btn" aria-label="About" title="About NC Zoning Board">[?]</button>
+                <button id="parameters-btn" class="header-action-btn" aria-label="Open settings" title="Open interface settings">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1 .6 1.65 1.65 0 0 0-.33 1V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-.33-1A1.65 1.65 0 0 0 8 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-.6-1 1.65 1.65 0 0 0-1-.33H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1-.33A1.65 1.65 0 0 0 4.6 8a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-.6 1.65 1.65 0 0 0 .33-1V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 .33 1A1.65 1.65 0 0 0 16 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c0 .38.14.74.4 1a1.65 1.65 0 0 0 1 .33H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1 .33c-.26.26-.4.62-.4 1z"></path>
+                    </svg>
+                    <span>SETTINGS</span>
+                </button>
+                <button id="bbcode-btn" class="header-action-btn header-action-btn-tertiary" aria-label="Generate NCZoning BBCode" title="Generate NCZoning metadata block for your Nexus mod">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M12 5v14"></path>
+                        <path d="M5 12h14"></path>
+                    </svg>
+                    <span>SUBMIT</span>
+                </button>
             </div>
         </div>
     </header>
 
     <main id="map-container">
+        <button id="discover-location-btn" class="header-action-btn map-action-btn" aria-label="Discover a random location" title="Discover a random location">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <circle cx="8.5" cy="8.5" r="1"></circle>
+                <circle cx="15.5" cy="8.5" r="1"></circle>
+                <circle cx="12" cy="12" r="1"></circle>
+                <circle cx="8.5" cy="15.5" r="1"></circle>
+                <circle cx="15.5" cy="15.5" r="1"></circle>
+            </svg>
+            <span>Discover a location</span>
+        </button>
         <button id="sidebar-open" aria-label="Open sidebar" title="Open sidebar">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -127,26 +173,36 @@
             <div id="category-filters"></div>
 
             <div class="sidebar-section-header collapsible collapsed" data-collapse-target="tag-filters">
-                Filter by Tags
+                <span>Filter by Tags<span id="tag-filter-count" class="filter-selected-count"></span></span>
                 <svg class="collapse-chevron" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"
                     fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <polyline points="6 9 12 15 18 9"></polyline>
                 </svg>
             </div>
-            <div id="tag-filters" class="filter-collapsed"></div>
+            <div id="tag-filters" class="filter-collapsed">
+                <button type="button" id="clear-tag-filters" class="filter-clear-btn" hidden>Clear all</button>
+            </div>
 
             <div class="sidebar-section-header collapsible collapsed" data-collapse-target="author-filters">
-                Author Filters
+                <span>Author Filters<span id="author-filter-count" class="filter-selected-count"></span></span>
                 <svg class="collapse-chevron" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"
                     fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <polyline points="6 9 12 15 18 9"></polyline>
                 </svg>
             </div>
-            <div id="author-filters" class="filter-collapsed"></div>
+            <div id="author-filters" class="filter-collapsed">
+                <button type="button" id="clear-author-filters" class="filter-clear-btn" hidden>Clear all</button>
+            </div>
 
             <div class="sidebar-section-header">Locations <span id="mod-count"></span></div>
             <div class="sidebar-search-container">
-                <input type="text" id="mod-search" placeholder="Search locations..." aria-label="Search locations">
+                <div class="sidebar-search-input-wrap">
+                    <input type="text" id="mod-search" placeholder="Search locations..." aria-label="Search locations">
+                    <button type="button" id="mod-search-clear" class="sidebar-search-clear-btn ui-close-btn"
+                        aria-label="Clear search" title="Clear search" hidden>
+                        <span class="ui-close-btn-icon" aria-hidden="true"></span>
+                    </button>
+                </div>
             </div>
             <ul id="mod-list"></ul>
             <div id="sidebar-footer">
@@ -163,6 +219,8 @@
                         style="vertical-align: text-bottom; margin-right: 6px;">
                         <path d="M18.8943 4.34399C17.5183 3.71467 16.057 3.256 14.5317 3C14.3396 3.33067 14.1263 3.77866 13.977 4.13067C12.3546 3.89599 10.7439 3.89599 9.14391 4.13067C8.99457 3.77866 8.77056 3.33067 8.58922 3C7.05325 3.256 5.59191 3.71467 4.22552 4.34399C1.46286 8.41865 0.716188 12.3973 1.08952 16.3226C2.92418 17.6559 4.69486 18.4666 6.4346 19C6.86126 18.424 7.24527 17.8053 7.57594 17.1546C6.9466 16.92 6.34927 16.632 5.77327 16.2906C5.9226 16.184 6.07194 16.0667 6.21061 15.9493C9.68793 17.5387 13.4543 17.5387 16.889 15.9493C17.0383 16.0667 17.177 16.184 17.3263 16.2906C16.7503 16.632 16.153 16.92 15.5236 17.1546C15.8543 17.8053 16.2383 18.424 16.665 19C18.4036 18.4666 20.185 17.6559 22.01 16.3226C22.4687 11.7787 21.2836 7.83202 18.8943 4.34399ZM8.05593 13.9013C7.01058 13.9013 6.15725 12.952 6.15725 11.7893C6.15725 10.6267 6.98925 9.67731 8.05593 9.67731C9.11191 9.67731 9.97588 10.6267 9.95454 11.7893C9.95454 12.952 9.11191 13.9013 8.05593 13.9013ZM15.065 13.9013C14.0196 13.9013 13.1652 12.952 13.1652 11.7893C13.1652 10.6267 13.9983 9.67731 15.065 9.67731C16.121 9.67731 16.985 10.6267 16.9636 11.7893C16.9636 12.952 16.1317 13.9013 15.065 13.9013Z" />
                     </svg>Join the Locations Hub Discord</a>
+                <a href="https://ko-fi.com/nczoning" target="_blank" rel="noopener noreferrer" class="terminal-link">
+                    <img src="assets/img/kofi.webp" alt="" class="terminal-link-logo" width="18" height="18" aria-hidden="true">Buy us a coffee</a>
             </div>
         </div>
         <div id="cluster-panel" class="cluster-panel-closed" aria-live="polite">
@@ -269,6 +327,8 @@
                             style="vertical-align: text-bottom; margin-right: 6px;">
                             <path d="M18.8943 4.34399C17.5183 3.71467 16.057 3.256 14.5317 3C14.3396 3.33067 14.1263 3.77866 13.977 4.13067C12.3546 3.89599 10.7439 3.89599 9.14391 4.13067C8.99457 3.77866 8.77056 3.33067 8.58922 3C7.05325 3.256 5.59191 3.71467 4.22552 4.34399C1.46286 8.41865 0.716188 12.3973 1.08952 16.3226C2.92418 17.6559 4.69486 18.4666 6.4346 19C6.86126 18.424 7.24527 17.8053 7.57594 17.1546C6.9466 16.92 6.34927 16.632 5.77327 16.2906C5.9226 16.184 6.07194 16.0667 6.21061 15.9493C9.68793 17.5387 13.4543 17.5387 16.889 15.9493C17.0383 16.0667 17.177 16.184 17.3263 16.2906C16.7503 16.632 16.153 16.92 15.5236 17.1546C15.8543 17.8053 16.2383 18.424 16.665 19C18.4036 18.4666 20.185 17.6559 22.01 16.3226C22.4687 11.7787 21.2836 7.83202 18.8943 4.34399ZM8.05593 13.9013C7.01058 13.9013 6.15725 12.952 6.15725 11.7893C6.15725 10.6267 6.98925 9.67731 8.05593 9.67731C9.11191 9.67731 9.97588 10.6267 9.95454 11.7893C9.95454 12.952 9.11191 13.9013 8.05593 13.9013ZM15.065 13.9013C14.0196 13.9013 13.1652 12.952 13.1652 11.7893C13.1652 10.6267 13.9983 9.67731 15.065 9.67731C16.121 9.67731 16.985 10.6267 16.9636 11.7893C16.9636 12.952 16.1317 13.9013 15.065 13.9013Z" />
                         </svg>Join the Locations Hub Discord</a>
+                    <a href="https://ko-fi.com/nczoning" target="_blank" rel="noopener noreferrer" class="terminal-link">
+                        <img src="assets/img/kofi.webp" alt="" class="terminal-link-logo" width="18" height="18" aria-hidden="true">Buy us a coffee</a>
                 </div>
                 <hr style="border: 0; border-top: 1px solid var(--dark-accent); margin: 15px 0;">
                 <button id="close-about-modal" class="terminal-btn">[ CLOSE ]</button>

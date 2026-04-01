@@ -68,6 +68,8 @@
 
     /* Relative color tints derived from active theme base colors */
 
+    --primary-60: rgb(from var(--primary) r g b / 0.6);
+
     --secondary-05: rgb(from var(--secondary) r g b / 0.05);
     --secondary-10: rgb(from var(--secondary) r g b / 0.1);
     --secondary-20: rgb(from var(--secondary) r g b / 0.2);

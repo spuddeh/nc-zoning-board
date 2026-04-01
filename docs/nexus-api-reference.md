@@ -135,13 +135,15 @@ The Nexus API does not document pagination for the `mods` query, but it supports
 - Strategy: Full result set cached; re-filtered against current manual entries on every cache hit to suppress duplicates without waiting for expiry
 
 **Post-Fetch Processing:**
-1. Skip mods whose `modId` already exists in manual `mods.json` (manual entries win)
+1. For mods whose `modId` already exists in manual `mods.json`: collect `pictureUrl`, `thumbnailUrl`, and `updatedAt` into a `meta` map keyed by `nexusId`, then skip (manual entry wins for all other data)
 2. Parse `node.description` for `[NCZoning]` metadata block (see [`parseNcZoningBlock()`](../assets/js/utils.js) in utils.js)
 3. If block missing or invalid, skip the mod with a log message
 4. Construct authors array: Nexus uploader name + any additional authors from the block
 5. Truncate `summary` to 500 characters for the popup description
 6. Prepend `"nczoning"` tag automatically (identifies auto-discovered mods in the UI)
 7. Store `updatedAt` as `_updatedAt` on the mod object — if within `NCZ.RECENTLY_UPDATED_DAYS` days, an `UPDATED` badge is shown in the popup, sidebar, and cluster flyout
+
+The function returns `{ mods, meta }` where `meta` contains image/timestamp data for manually registered mods that are also NCZoning-tagged. In `app.js`, `meta` is merged into `nexusThumbs` so those manual mods receive their thumbnails and `_updatedAt` without a separate `modsByUid` call. Mods covered by `meta` are excluded from the `modsByUid` batch.
 
 **Implementation:** [`fetchNexusTaggedMods()` in services.js](../assets/js/services.js)
 
@@ -170,7 +172,7 @@ Both API calls use browser `localStorage` for caching via `cacheGet()`/`cacheSet
 | Cache Key | TTL | What's Stored | Merge Strategy |
 |---|---|---|---|
 | `nc_nexus_thumbs` | 24 hours | Map of `nexus_id → { pictureUrl, thumbnailUrl }` | Incremental — only missing IDs fetched |
-| `nc_nexus_autodiscovery` | 10 minutes | Array of auto-discovered mod objects | Full replacement — re-filtered on read |
+| `nc_nexus_autodiscovery` | 10 minutes | `{ mods: [...], meta: { nexusId → { pictureUrl, thumbnailUrl, updatedAt } } }` | Full replacement — re-filtered on read; backwards-compatible with old array format |
 
 ### Cache Envelope
 

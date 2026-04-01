@@ -3,6 +3,8 @@
 
 # Essential Repo Files
 !/.gitignore
+!/LICENSE
+!/ASSETS.md
 !/CHANGELOG.md
 !/README.md
 !/CONTRIBUTING.md
@@ -16,6 +18,8 @@
 !/docs/
 !/package.json
 !/package-lock.json
+!/robots.txt
+!/sitemap.xml
 
 # Ignore system and agent files
 .agent/

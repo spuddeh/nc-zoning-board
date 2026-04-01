@@ -7,6 +7,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-03-28
+
+### 2026-03-27
+
+- **UI** (contributed by [@Akiway](https://github.com/Akiway)):
+  - **Ko-Fi donation link** — "Buy us a coffee" link added to the sidebar footer and about modal, pointing to [ko-fi.com/nczoning](https://ko-fi.com/nczoning). Rendered with the Ko-Fi logo as an inline image.
+  - **Discover button repositioned** — the "Discover a location" button is now anchored to the bottom-left of the map container. On desktop it dynamically offsets its `left` position by the sidebar's current pixel width when the sidebar is visible, and resets when the sidebar is hidden. Position updates on sidebar open/close and window resize.
+  - **Cluster pin contrast** — cluster count badges now use bold white text with a text-shadow and a larger solid background area, improving legibility against varied map tile backgrounds.
+- **UI**:
+  - **Sidebar sort by last updated** — the mod list and cluster panel now sort by Nexus `updatedAt` descending (most recently updated first) instead of alphabetically. Mods with no Nexus timestamp (WIP/Dummy) fall to the end and sort alphabetically among themselves. Prevents gaming the list order by prefixing mod names with special characters.
+- **Utils**:
+  - `NCZ.sortModsByUpdated` added to `utils.js` — a comparator function `(a, b) => number` for use with `Array.sort()`. Orders by `_updatedAt` descending with alphabetical fallback for untimestamped mods.
+- **Bug fixes**:
+  - Fixed `_updatedAt` backfill for manual Nexus mods running inside the `.forEach()` body after `.sort()` had already completed. The backfill is now hoisted before the sort, so manual mods sort with their correct timestamps.
+  - Fixed auto-discovery silently discarding `updatedAt`, `thumbnailUrl`, and `pictureUrl` for manually registered mods that are also tagged NCZoning. That metadata is now collected into a separate map and merged into `nexusThumbs`, so NCZoning-tagged manual mods receive their timestamps and images from the auto-discovery response. These mods are also excluded from the `modsByUid` batch, reducing its size.
+
+### 2026-03-23
+
+- **UI** (contributed by [@Akiway](https://github.com/Akiway)):
+  - **Map scale indicator** — a Leaflet scale bar is displayed bottom-right (metric only). The scale is calibrated to in-game distances by overriding `L.CRS.Simple`'s `distance()` method with the inverse CET coordinate transform.
+  - **"Discover a location" button** — new header button picks a random visible (post-filter) marker and zooms to it, opening its popup. Hides the sidebar on mobile when triggered.
+  - **Focused pin persistence** — when the active popup's marker gets clustered on zoom-out, the cluster auto-spiderfies to keep the popup visible. Focus clears on manual close or when the marker is filtered out.
+  - **Header button polish** — `#about-btn`, `#parameters-btn`, and `#bbcode-btn` now share a `.header-action-btn` base class with inline SVG icons and bold text. Submit button uses `.header-action-btn-tertiary` for the amber colour variant.
+  - **Map pannable bounds** — `maxBounds` now extends 50% of the viewport past each edge so pins near the border can be panned to centre. Bounds recalculate on zoom and resize.
+  - **Filter clear buttons** — "Clear all" buttons in the Tag and Author filter sections, visible only when filters are active.
+  - **Active filter counts** — section headers show `(N)` beside "Filter by Tags" and "Author Filters" when filters are selected.
+  - **Search clear button** — an × button inside the search input clears it; pressing Escape also clears the field.
+  - **Popup height fix** — `positionDynamicPopup` now measures the full `.custom-popup-header.has-image` element (previously `.popup-thumb` only) for accurate arrow placement.
+- **Constants**:
+  - CET→Leaflet transform coefficients extracted to named constants (`NCZ.CET_TO_LEAFLET_X_SCALE`, `NCZ.CET_TO_LEAFLET_Y_SCALE`, `NCZ.CET_TO_LEAFLET_X_OFFSET`, `NCZ.CET_TO_LEAFLET_Y_OFFSET`, `NCZ.CET_UNITS_PER_METER`).
+  - Added `NCZ.UPDATED_LABEL` (`"RECENTLY UPDATED"`) — corrected badge text from `UPDATED`, applied across popup, sidebar, cluster panel, and filter tag.
+- **Utils**:
+  - Added `NCZ.leafletDistanceMeters()` — converts a Leaflet lat/lng pair to in-game meters using the inverse CET transform.
+
+### 2026-03-22
+
+- **UI** (contributed by [@Akiway](https://github.com/Akiway)):
+  - **Popup redesign** — mod popups have been fully restyled:
+    - Category-coloured border gradient: the popup frame fades from the category colour at the image/title boundary to the base secondary colour below.
+    - Category badge floated top-left outside the frame; RECENTLY UPDATED badge floated top-right.
+    - Thumbnail now `object-fit: contain` inside a max-height container — fills popup width without cropping.
+    - Title accent underline and glow text-shadow both driven by `--popup-title-accent` (set to the category colour).
+    - Tags moved below description with a dark background band.
+    - Credits names individually coloured in amber via `.custom-popup-credit-name`.
+    - Nexus link is flex-grow; Edit button is flex-shrink-0.
+    - Popup `className` now includes `popup-cat-{category}` for per-category CSS targeting.
+
 ### 2026-03-21
 
 - **UI**:
@@ -61,7 +108,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Strengthened negative coordinate guidance in both X and Y coordinate fields with warning emoji and clearer instructions.
   - Changed X coordinate placeholder to show a negative example (`-500`).
 
-### 2026-03-13
+### 2026-03-13 (BBCode modal)
 
 - **UI**:
   - Added step-by-step instructions to the BBCode Generator modal (Acquire Coordinates, Configure Metadata, Tag Your Mod, Deploy Block) replacing the single warning line.

@@ -1,5 +1,9 @@
 # Architecture
 
+This document explains how the NC Zoning Board is organized and how data flows through the system. **If you're new here:** Start with the [Project Overview](../README.md) — then read this to understand how the pieces fit together. You don't need to know every detail to contribute, but this gives you the full picture of where things live and how they interact.
+
+---
+
 ## File Structure
 
 ```text

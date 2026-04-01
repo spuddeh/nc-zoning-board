@@ -408,6 +408,15 @@ function positionDynamicPopup(map, popup) {
 
   popupEl.classList.add("ncz-dynamic-popup");
 
+  const imageEl = popupEl.querySelector(".custom-popup-header.has-image");
+  const titleEl = popupEl.querySelector(".custom-popup-title");
+  const imageHeight = imageEl ? Math.ceil(imageEl.getBoundingClientRect().height) : 0;
+  const titleHeight = titleEl ? Math.ceil(titleEl.getBoundingClientRect().height) : 0;
+  const gradientTopStopPx = imageHeight + titleHeight;
+  const gradientBottomStopPx = gradientTopStopPx + 20;
+  popupEl.style.setProperty("--ncz-popup-gradient-top-stop", `${gradientTopStopPx}px`);
+  popupEl.style.setProperty("--ncz-popup-gradient-bottom-stop", `${gradientBottomStopPx}px`);
+
   // Read popup size and marker anchor position.
   const size = {
     width: Math.max(1, Math.ceil(wrapperEl.offsetWidth)),
@@ -447,15 +456,30 @@ function isRecentlyUpdated(mod) {
 }
 
 async function initMap() {
+  const calibratedSimpleCrs = L.extend({}, L.CRS.Simple, {
+    distance(latlngA, latlngB) {
+      return NCZ.leafletDistanceMeters(latlngA, latlngB);
+    },
+  });
+
   // 1. Setup Map
   const map = L.map("map", {
-    crs: L.CRS.Simple,
+    crs: calibratedSimpleCrs,
     minZoom: 0,
     maxZoom: 8,
     maxBoundsViscosity: 1.0,
     attributionControl: false,
     zoomControl: false, // Disable default top-left zoom control
   });
+
+  // Add distance scale line control (Leaflet native control class: .leaflet-control-scale-line).
+  L.control.scale({
+    position: "bottomright",
+    metric: true,
+    imperial: false,
+    maxWidth: 160,
+    updateWhenIdle: true,
+  }).addTo(map);
 
   // Add zoom control manually to the bottom right
   L.control.zoom({ position: "bottomright" }).addTo(map);
@@ -464,6 +488,24 @@ async function initMap() {
   const southWest = map.unproject([0, 8192], maxZoom);
   const northEast = map.unproject([8192, 0], maxZoom);
   const mapBounds = new L.LatLngBounds(southWest, northEast);
+  const panEdgeFraction = 0.5; // Let each map edge travel about halfway toward screen center.
+
+  function updatePannableBounds() {
+    const size = map.getSize();
+    const scaleToMaxZoom = map.getZoomScale(maxZoom, map.getZoom());
+    const padX = size.x * panEdgeFraction * scaleToMaxZoom;
+    const padY = size.y * panEdgeFraction * scaleToMaxZoom;
+    const mapSouthWestPoint = map.project(mapBounds.getSouthWest(), maxZoom);
+    const mapNorthEastPoint = map.project(mapBounds.getNorthEast(), maxZoom);
+
+    const pannableSouthWest = L.point(mapSouthWestPoint.x - padX, mapSouthWestPoint.y + padY);
+    const pannableNorthEast = L.point(mapNorthEastPoint.x + padX, mapNorthEastPoint.y - padY);
+    const pannableBounds = L.latLngBounds(
+      map.unproject(pannableSouthWest, maxZoom),
+      map.unproject(pannableNorthEast, maxZoom),
+    );
+    map.setMaxBounds(pannableBounds);
+  }
 
   // ── Base layers ──────────────────────────────────────────────────────
   // Satellite: existing PNG tile layer (legacy, will migrate to WebP imageOverlay)
@@ -557,7 +599,8 @@ async function initMap() {
 
   map.invalidateSize();
   map.fitBounds(mapBounds);
-  map.setMaxBounds(mapBounds);
+  updatePannableBounds();
+  map.on("zoomend resize", updatePannableBounds);
 
   // 2. State & UI Elements
   const markerClusterGroup = L.markerClusterGroup({
@@ -589,6 +632,9 @@ async function initMap() {
   const pinTooltip = createPinTooltipController(map);
   let activePopup = null;
   let popupRepositionFrame = null;
+  let focusedMarker = null;
+  let isZoomTransitioning = false;
+  let focusedRestoreFrame = null;
 
   function repositionActivePopup() {
     if (!activePopup) return;
@@ -604,9 +650,49 @@ async function initMap() {
     });
   }
 
+  function restoreFocusedPopupIfVisible() {
+    if (!focusedMarker) return;
+    if (!markerClusterGroup.hasLayer(focusedMarker)) return;
+    const visibleParent = markerClusterGroup.getVisibleParent(focusedMarker);
+    if (!visibleParent) return;
+
+    if (visibleParent === focusedMarker) {
+      if (!focusedMarker.isPopupOpen()) {
+        focusedMarker.openPopup();
+      }
+      return;
+    }
+
+    // Keep focused markers visible even when they are clustered by re-spiderfying
+    // their current cluster once zoom animations have settled.
+    if (typeof visibleParent.spiderfy !== "function" || markerClusterGroup._inZoomAnimation) return;
+    if (markerClusterGroup._spiderfied === visibleParent) return;
+
+    const targetCluster = visibleParent;
+    const targetMarker = focusedMarker;
+    markerClusterGroup.once("spiderfied", (event) => {
+      if (event.cluster !== targetCluster) return;
+      if (focusedMarker !== targetMarker) return;
+      scheduleFocusedPopupRestore();
+    });
+    targetCluster.spiderfy();
+  }
+
+  function scheduleFocusedPopupRestore() {
+    if (!focusedMarker || focusedRestoreFrame !== null) return;
+    focusedRestoreFrame = requestAnimationFrame(() => {
+      focusedRestoreFrame = null;
+      restoreFocusedPopupIfVisible();
+    });
+  }
+
   map.on("popupopen", (e) => {
     pinTooltip.hide();
     activePopup = e.popup;
+    const popupSource = e.popup?._source;
+    if (popupSource?.modData) {
+      focusedMarker = popupSource;
+    }
     repositionActivePopup();
     scheduleActivePopupReposition();
     const popupImages = activePopup.getElement()?.querySelectorAll("img") || [];
@@ -616,8 +702,22 @@ async function initMap() {
       }
     });
   });
-  map.on("popupclose", () => {
+  map.on("popupclose", (e) => {
     activePopup = null;
+    const popupSource = e.popup?._source;
+    const isZoomRelatedClose =
+      isZoomTransitioning ||
+      Boolean(map._animatingZoom) ||
+      Boolean(markerClusterGroup._inZoomAnimation);
+    if (
+      focusedMarker &&
+      popupSource === focusedMarker &&
+      !isZoomRelatedClose &&
+      map.hasLayer(focusedMarker)
+    ) {
+      // Manual close on a visible marker clears focused state.
+      focusedMarker = null;
+    }
     if (popupRepositionFrame !== null) {
       cancelAnimationFrame(popupRepositionFrame);
       popupRepositionFrame = null;
@@ -634,15 +734,34 @@ async function initMap() {
   const modListEl = document.getElementById("mod-list");
   const filterContainer = document.getElementById("category-filters");
   const authorFilterContainer = document.getElementById("author-filters");
+  const tagFilterCountEl = document.getElementById("tag-filter-count");
+  const authorFilterCountEl = document.getElementById("author-filter-count");
+  const clearTagFiltersBtn = document.getElementById("clear-tag-filters");
+  const clearAuthorFiltersBtn = document.getElementById("clear-author-filters");
   const sidebar = document.getElementById("sidebar");
   const sidebarClose = document.getElementById("sidebar-close");
   const sidebarOpen = document.getElementById("sidebar-open");
+  const discoverLocationBtn = document.getElementById("discover-location-btn");
   // Cluster menu DOM references
   const clusterPanel = document.getElementById("cluster-panel");
   const clusterPanelResizeHandle = document.getElementById("cluster-panel-resize-handle");
   const clusterPanelClose = document.getElementById("cluster-panel-close");
   const clusterPanelCount = document.getElementById("cluster-panel-count");
   const clusterModList = document.getElementById("cluster-mod-list");
+
+  function updateDiscoverButtonPosition() {
+    if (!discoverLocationBtn || !sidebar) return;
+
+    const isDesktop = window.innerWidth >= NCZ.MOBILE_BREAKPOINT;
+    const isSidebarVisible = isDesktop && !sidebar.classList.contains("hidden");
+
+    if (isSidebarVisible) {
+      const sidebarWidth = Math.round(sidebar.getBoundingClientRect().width);
+      discoverLocationBtn.style.left = `calc(${sidebarWidth}px + var(--space-md))`;
+    } else {
+      discoverLocationBtn.style.left = "var(--space-md)";
+    }
+  }
 
   // Compute the maximum allowed cluster menu width for current viewport
   function getClusterPanelMaxWidth() {
@@ -767,17 +886,42 @@ async function initMap() {
   }
 
   function focusMarker(marker) {
+    focusedMarker = marker;
     markerClusterGroup.zoomToShowLayer(marker, () => marker.openPopup());
+  }
+
+  function focusRandomVisibleMarker() {
+    const visibleMarkers = allMarkers.filter((marker) => markerClusterGroup.hasLayer(marker));
+    if (visibleMarkers.length === 0) {
+      alert("No visible locations match the current filters.");
+      return;
+    }
+
+    const randomIndex = Math.floor(Math.random() * visibleMarkers.length);
+    const randomMarker = visibleMarkers[randomIndex];
+    focusMarker(randomMarker);
+    hideClusterPanel();
+
+    if (window.innerWidth < NCZ.MOBILE_BREAKPOINT) {
+      sidebar.classList.add("hidden");
+      sidebarOpen.classList.add("visible");
+    }
+
+    updateDiscoverButtonPosition();
+  }
+
+  if (discoverLocationBtn) {
+    discoverLocationBtn.addEventListener("click", focusRandomVisibleMarker);
   }
 
   markerClusterGroup.on("clusterclick", (a) => {
     if (a.originalEvent) L.DomEvent.stop(a.originalEvent);
 
-    // Collect mods from clicked cluster and sort by name
+    // Collect mods from clicked cluster and sort by last updated
     const childMarkers = a.layer
       .getAllChildMarkers()
       .slice()
-      .sort((left, right) => left.modData.name.localeCompare(right.modData.name));
+      .sort((left, right) => NCZ.sortModsByUpdated(left.modData, right.modData));
 
     // Rebuild cluster menu list for this cluster
     clusterModList.innerHTML = "";
@@ -813,7 +957,7 @@ async function initMap() {
           <span class="cluster-mod-layout">
             ${thumbMarkup}
             <span class="cluster-mod-content">
-              <span class="cluster-mod-name">${NCZ.escapeHtml(mod.name)}${isRecentlyUpdated(mod) ? ` <span class="badge-updated" title="Updated on Nexus within the last ${NCZ.RECENTLY_UPDATED_DAYS} days">UPDATED</span>` : ""}</span>
+              <span class="cluster-mod-name">${NCZ.escapeHtml(mod.name)}${isRecentlyUpdated(mod) ? ` <span class="badge-updated" title="Updated on Nexus within the last ${NCZ.RECENTLY_UPDATED_DAYS} days">${NCZ.UPDATED_LABEL}</span>` : ""}</span>
               <span class="cluster-mod-separator"></span>
               <span class="cluster-mod-meta">by ${NCZ.escapeHtml(mod.authors.join(", "))}</span>
               <span class="cluster-mod-tags">
@@ -855,12 +999,14 @@ async function initMap() {
   sidebarClose.addEventListener("click", () => {
     sidebar.classList.add("hidden");
     sidebarOpen.classList.add("visible");
+    updateDiscoverButtonPosition();
   });
 
   // Open Sidebar
   sidebarOpen.addEventListener("click", () => {
     sidebar.classList.remove("hidden");
     sidebarOpen.classList.remove("visible");
+    updateDiscoverButtonPosition();
   });
 
   // Auto-hide sidebar on mobile screens
@@ -869,8 +1015,19 @@ async function initMap() {
     sidebarOpen.classList.add("visible");
   }
 
+  updateDiscoverButtonPosition();
+  window.addEventListener("resize", updateDiscoverButtonPosition);
+
   map.on("click", hideClusterPanel);
-  map.on("zoomstart", hideClusterPanel);
+  map.on("zoomstart", () => {
+    isZoomTransitioning = true;
+    hideClusterPanel();
+  });
+  map.on("zoomend", () => {
+    isZoomTransitioning = false;
+    scheduleFocusedPopupRestore();
+  });
+  markerClusterGroup.on("animationend", scheduleFocusedPopupRestore);
 
   // 3. Fetch and Setup Data
   try {
@@ -883,7 +1040,7 @@ async function initMap() {
         .map((m) => String(m.nexus_id)),
     );
     const validTagNames = new Set(Object.keys(tagsDict));
-    const autoMods = await NCZ.fetchNexusTaggedMods(existingNexusIds, validTagNames);
+    const { mods: autoMods, meta: autoMeta } = await NCZ.fetchNexusTaggedMods(existingNexusIds, validTagNames);
     mods.push(...autoMods);
 
     modCountEl.textContent = `(${mods.length})`;
@@ -896,16 +1053,26 @@ async function initMap() {
       const nid = String(mod.nexus_id);
       if (mod._thumbnailUrl || mod._pictureUrl) {
         nexusThumbs[nid] = { pictureUrl: mod._pictureUrl, thumbnailUrl: mod._thumbnailUrl };
-      } else if (nid && !["wip", "dummy"].includes(nid.toLowerCase())) {
+      } else if (nid && !["wip", "dummy"].includes(nid.toLowerCase()) && !autoMeta[nid]) {
         manualNexusIds.push(nid);
       }
     }
     const fetchedThumbs = await NCZ.fetchNexusThumbnails(manualNexusIds);
     Object.assign(nexusThumbs, fetchedThumbs);
+    // Fill in metadata from auto-discovery for manual mods that are NCZoning-tagged
+    for (const [id, data] of Object.entries(autoMeta)) {
+      if (!nexusThumbs[id]) nexusThumbs[id] = data;
+    }
 
-    mods
-      .sort((a, b) => a.name.localeCompare(b.name))
-      .forEach((mod) => {
+    // Backfill _updatedAt for manual Nexus mods before sorting
+    for (const mod of mods) {
+      if (!mod._updatedAt) {
+        const thumb = nexusThumbs[String(mod.nexus_id)];
+        if (thumb?.updatedAt) mod._updatedAt = thumb.updatedAt;
+      }
+    }
+
+    mods.sort(NCZ.sortModsByUpdated).forEach((mod) => {
         const [lat, lng] = NCZ.cetToLeaflet(mod.coordinates[0], mod.coordinates[1]);
         const catStyle =
           NCZ.CATEGORY_STYLES[mod.category] || NCZ.CATEGORY_STYLES["other"];
@@ -979,42 +1146,55 @@ async function initMap() {
         marker.modThumb = thumbSrc;
         marker.modFull = fullSrc;
 
-        // Apply updatedAt for manual mods (auto-discovered mods already have _updatedAt set)
-        if (!mod._updatedAt && nexusThumb?.updatedAt) mod._updatedAt = nexusThumb.updatedAt;
-
         const nexusAutoBadge = mod._source === "nexus-auto"
           ? ` <span class="nexus-auto-badge" title="Sourced automatically from Nexus Mods" aria-hidden="true"></span>`
           : "";
-        const updatedBadge = isRecentlyUpdated(mod)
-          ? ` <span class="badge-updated" title="Updated on Nexus within the last ${NCZ.RECENTLY_UPDATED_DAYS} days">UPDATED</span>`
+        const hasPopupImage = Boolean(thumbSrc && fullSrc);
+        const updatedPopupBadge = isRecentlyUpdated(mod)
+          ? ` <span class="badge-updated" title="Updated on Nexus within the last ${NCZ.RECENTLY_UPDATED_DAYS} days">${NCZ.UPDATED_LABEL}</span>`
           : "";
+        const creditNames = (mod.credits || "")
+          .split(",")
+          .map((name) => name.trim())
+          .filter(Boolean);
+        const creditsHtml = creditNames
+          .map((name) => `<span class="custom-popup-credit-name">${NCZ.escapeHtml(name)}</span>`)
+          .join(", ");
 
         const popupContent = `
-                <div class="custom-popup-content">
+                <div class="custom-popup-content" style="--popup-title-accent: ${catStyle.color};">
+                    <span class="popup-category-badge">${NCZ.escapeHtml(catStyle.label)}</span>
+                    ${updatedPopupBadge}
                     ${
-                      thumbSrc && fullSrc
+                      hasPopupImage
                         ? `
-                        <div class="custom-popup-images">
-                            <img src="${NCZ.escapeHtml(thumbSrc)}" class="popup-thumb" referrerpolicy="no-referrer" data-full-src="${NCZ.escapeHtml(fullSrc)}">
-                        </div>
-                    `
+                            <div class="custom-popup-header has-image">
+                            <div class="custom-popup-images">
+                                <img src="${NCZ.escapeHtml(thumbSrc)}" class="popup-thumb" referrerpolicy="no-referrer" data-full-src="${NCZ.escapeHtml(fullSrc)}">
+                            </div>
+                            </div>
+                        `
                         : ""
                     }
-                    <div class="custom-popup-title">${NCZ.escapeHtml(mod.name)}${nexusAutoBadge}${updatedBadge}</div>
-                    <div class="custom-popup-authors">${authorsHtml}</div>
-                    ${mod.credits ? `<div class="custom-popup-credits">Credits: ${NCZ.escapeHtml(mod.credits)}</div>` : ""}
-                    <div class="custom-popup-tags">${tagsHtml}</div>
-                    <div class="custom-popup-desc">${NCZ.escapeHtml(mod.description || "No description provided.")}</div>
-                    <div class="popup-actions">
-                        <a href="${NCZ.escapeHtml(nexusUrl)}" target="_blank" class="ui-popup-action-link ui-popup-action-link-nexus">${NCZ.escapeHtml(nexusLabel)}</a>
-                        ${!mod._source ? `<a href="${NCZ.escapeHtml(editUrl)}" target="_blank" class="ui-popup-action-link ui-popup-action-link-edit tertiary" aria-label="Suggest Edit" title="Suggest Edit"><span class="ui-popup-action-link-icon" aria-hidden="true"></span></a>` : ""}
+                    <div class="custom-popup-title">${NCZ.escapeHtml(mod.name)}${nexusAutoBadge}</div>
+                    <div class="custom-popup-body">
+                        <div class="custom-popup-authors">${authorsHtml}</div>
+                        ${mod.credits ? `<div class="custom-popup-credits">Credits: ${creditsHtml || NCZ.escapeHtml(mod.credits)}</div>` : ""}
+                        <div class="custom-popup-desc">${NCZ.escapeHtml(mod.description || "No description provided.")}</div>
+                        ${tagsHtml ? `<div class="custom-popup-tags">${tagsHtml}</div>` : ""}
+                        <div class="popup-actions">
+                            <a href="${NCZ.escapeHtml(nexusUrl)}" target="_blank" class="ui-popup-action-link ui-popup-action-link-nexus">${NCZ.escapeHtml(nexusLabel)}</a>
+                            ${!mod._source ? `<a href="${NCZ.escapeHtml(editUrl)}" target="_blank" class="ui-popup-action-link ui-popup-action-link-edit tertiary" aria-label="Suggest Edit" title="Suggest Edit"><span class="ui-popup-action-link-icon" aria-hidden="true"></span></a>` : ""}
+                        </div>
                     </div>
                 </div>
             `;
         marker.bindPopup(popupContent, {
           autoPan: false,
           offset: [0, 0],
-          className: "ncz-dynamic-popup",
+          minWidth: 360,
+          maxWidth: 360,
+          className: `ncz-dynamic-popup popup-${catStyle.class}`,
         });
 
         // Add to Sidebar
@@ -1027,7 +1207,7 @@ async function initMap() {
           ? ` <span class="nexus-auto-badge" title="Sourced automatically from Nexus Mods" aria-hidden="true"></span>`
           : "";
         const sidebarUpdatedBadge = isRecentlyUpdated(mod)
-          ? ` <span class="badge-updated" title="Updated on Nexus within the last ${NCZ.RECENTLY_UPDATED_DAYS} days">UPDATED</span>`
+          ? ` <span class="badge-updated" title="Updated on Nexus within the last ${NCZ.RECENTLY_UPDATED_DAYS} days">${NCZ.UPDATED_LABEL}</span>`
           : "";
         li.innerHTML = `
                 <div class="mod-item-header">
@@ -1120,6 +1300,26 @@ async function initMap() {
 
     // Add Tags filter UI (targets static #tag-filters div in HTML)
     const tagsFilterContainer = document.getElementById("tag-filters");
+    function clearActiveTagLikeFilters(container) {
+      container.querySelectorAll(".tag-filter-btn.active").forEach((btn) => {
+        btn.classList.remove("active");
+      });
+    }
+
+    if (clearTagFiltersBtn) {
+      clearTagFiltersBtn.addEventListener("click", () => {
+        clearActiveTagLikeFilters(tagsFilterContainer);
+        applyFilters();
+      });
+    }
+
+    if (clearAuthorFiltersBtn) {
+      clearAuthorFiltersBtn.addEventListener("click", () => {
+        clearActiveTagLikeFilters(authorFilterContainer);
+        applyFilters();
+      });
+    }
+
     const usedTags = new Set();
     mods.forEach((mod) => (mod.tags || []).forEach((t) => usedTags.add(t)));
 
@@ -1127,7 +1327,7 @@ async function initMap() {
     if (mods.some(isRecentlyUpdated)) {
       const btn = document.createElement("button");
       btn.className = "tag-filter-btn";
-      btn.textContent = "updated";
+      btn.textContent = NCZ.UPDATED_LABEL;
       btn.title = `Updated on Nexus within the last ${NCZ.RECENTLY_UPDATED_DAYS} days`;
       btn.dataset.tag = "updated";
       btn.addEventListener("click", () => { btn.classList.toggle("active"); applyFilters(); });
@@ -1182,11 +1382,38 @@ async function initMap() {
 
     // 7. Setup Text Search (debounced to avoid excessive re-filtering)
     const searchInput = document.getElementById("mod-search");
+    const searchClearBtn = document.getElementById("mod-search-clear");
     let searchDebounce;
+    function updateSearchClearButtonVisibility() {
+      if (!searchClearBtn) return;
+      searchClearBtn.hidden = searchInput.value.length === 0;
+    }
+
+    function clearSearchQuery() {
+      if (searchInput.value.length === 0) return;
+      searchInput.value = "";
+      updateSearchClearButtonVisibility();
+      clearTimeout(searchDebounce);
+      applyFilters();
+      searchInput.focus();
+    }
+
     searchInput.addEventListener("input", () => {
+      updateSearchClearButtonVisibility();
       clearTimeout(searchDebounce);
       searchDebounce = setTimeout(applyFilters, NCZ.SEARCH_DEBOUNCE_MS);
     });
+    searchInput.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape") return;
+      if (searchInput.value.length === 0) return;
+      event.preventDefault();
+      clearSearchQuery();
+    });
+
+    if (searchClearBtn) {
+      searchClearBtn.addEventListener("click", clearSearchQuery);
+    }
+    updateSearchClearButtonVisibility();
 
     // Centralized Filter Logic
     function applyFilters() {
@@ -1200,6 +1427,10 @@ async function initMap() {
       const activeAuthors = Array.from(
         authorFilterContainer.querySelectorAll(".tag-filter-btn.active"),
       ).map((b) => b.dataset.author);
+      if (tagFilterCountEl) tagFilterCountEl.textContent = activeTags.length > 0 ? ` (${activeTags.length})` : "";
+      if (authorFilterCountEl) authorFilterCountEl.textContent = activeAuthors.length > 0 ? ` (${activeAuthors.length})` : "";
+      if (clearTagFiltersBtn) clearTagFiltersBtn.hidden = activeTags.length === 0;
+      if (clearAuthorFiltersBtn) clearAuthorFiltersBtn.hidden = activeAuthors.length === 0;
 
       // Clear current cluster group
       markerClusterGroup.clearLayers();
@@ -1257,6 +1488,12 @@ async function initMap() {
 
       // Update visible mod count
       modCountEl.textContent = `(${visibleMarkers.length}/${mods.length})`;
+
+      if (focusedMarker && !markerClusterGroup.hasLayer(focusedMarker)) {
+        focusedMarker = null;
+      } else {
+        scheduleFocusedPopupRestore();
+      }
     }
   } catch (error) {
     console.error("Error loading mod data:", error);
