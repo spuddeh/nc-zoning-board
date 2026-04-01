@@ -225,25 +225,39 @@ World extent constants were derived by inverting the existing `cetToLeaflet` for
 | `data/landmarks.json` | `{label: {"faces": [{"z":,"pts":},...], "edges": [{"z":,"pts":},...}]}}` | ~5.0 MB |
 | `data/subdistricts.json` | District + sub-district boundary polygons in CET coords | ~small |
 
-### Output Statistics (as of 2026-03-22)
+### Output Statistics (as of 2026-04-01)
 
-- **151,439** total building instances decoded across 8 district textures
-- **136,635** classified into districts, **14,804** classified as badlands
-- **8** district-level trigger polygons, **16** sub-district polygons
+- **255,220** total building instances decoded across 8 district textures (no area filter — all instances extracted)
+- **236,010** classified into districts, **19,210** classified as badlands
+- All buildings include `hz` (height half-extent) for shadow/extrusion rendering
+- **8** landmark meshes with names and district classification
+- **8** district-level trigger polygons, **16** city sub-district polygons, **10** Badlands sub-district polygons (from streaming sectors)
+- **1** non-canonical sub-district: North Oaks Casino (cut content, Westbrook)
 
-## District Colours
+### Delivery
 
-| District | Hex | Colour |
-|----------|-----|--------|
-| City Center | `#ffb300` | Amber |
-| Watson | `#b47aff` | Purple |
-| Westbrook | `#00f0ff` | Cyan |
-| Heywood | `#ff4081` | Pink |
-| Santo Domingo | `#ff9800` | Orange |
-| Pacifica | `#69ff47` | Lime |
-| Dogtown | `#ff5252` | Red |
-| NCX Spaceport | `#40c4ff` | Light Blue |
-| Badlands | `#c8a96a` | Sandy/Golden |
+Terrain and satellite base layers are delivered as WebP `L.imageOverlay` files (no tiles):
+
+| File | Size | Notes |
+|------|------|-------|
+| `assets/img/terrain_8k.webp` | 290 KB | Schematic terrain, neutral dark grey |
+| `assets/img/satellite_8k.webp` | 9.6 MB | Satellite photograph, RGBA with transparency |
+
+Overlay data (roads, buildings, metro, landmarks) is rendered via a canvas-based `L.GridLayer` (`overlay.js`) with unified z-sorted drawing and grid-based spatial index. See `terrain-generation.md` for the full pipeline.
+
+## District Colours (from game Ink styles)
+
+| District | Hex | Colour | Source |
+|----------|-----|--------|--------|
+| City Center | `#ffd741` | Yellow | MainColors.Yellow |
+| Watson | `#ff3e34` | Red | MainColors.CombatRed |
+| Westbrook | `#ff5100` | Orange | MainColors.Orange |
+| Heywood | `#1ded83` | Green | MainColors.Green |
+| Santo Domingo | `#5ef6ff` | Cyan | MainColors.Blue |
+| Pacifica | `#ff6158` | Pink-red | MainColors.Red |
+| Dogtown | `#00a32c` | Dark green | MainColors.DarkGreen |
+| Morro Rock | `#349197` | Teal | MainColors.MildBlue |
+| Badlands | `#c882ff` | Violet | Custom (visibility on desert) |
 
 ## Troubleshooting
 

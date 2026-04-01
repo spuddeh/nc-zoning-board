@@ -224,7 +224,7 @@ Legend:
 |---------------|--------|--------|
 | 8 main city districts | `3dmap_view.ent.json` trigger polygons | Extracted |
 | 16 city subdistricts | `3dmap_view.ent.json` trigger polygons | Extracted |
-| Badlands subdistricts | Streaming sector `worldLocationAreaNode` | Partially exported (8 of 18) |
+| Badlands subdistricts | Streaming sector `worldLocationAreaNode` | All 10 extracted and in `data/subdistricts.json` |
 | Deep locations (bars, apartments) | In-game trigger volumes | Not applicable for map |
 
 ### Streaming Sector Exports (Badlands)
@@ -238,6 +238,6 @@ Legend:
 | `exterior_-1_1_0_6.streamingsector` | North Sunrise Oil Field |
 | `exterior_-3_-6_0_4.streamingsector` | SoCal Border Crossing |
 
-**Renderable Badlands subdistricts** (8): Biotechnica Flats, Jackson Plains, Laguna Bend, North Sunrise Oil Field, Rattlesnake Creek, Red Peaks, Rocky Ridge, Sierra Sonora, SoCal Border Crossing, Vasquez Pass
+**Renderable Badlands subdistricts** (10): Biotechnica Flats, Jackson Plains, Laguna Bend, North Sunrise Oil Field, Rattlesnake Creek, Red Peaks, Rocky Ridge, Sierra Sonora, SoCal Border Crossing, Vasquez Pass
 
 **Not on world map** (skipped): Dry Creek, Yucca, Yucca Garage, Yucca Radio Tower (nomad lifepath start); Las Palapas (motel within Biotechnica Flats); NC Spaceport (= Morro Rock/NCX); Santa Clara (unknown/unused)
