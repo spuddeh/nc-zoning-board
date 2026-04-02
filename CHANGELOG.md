@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-04-02
+
+### Deep-link Sharing
+
+- **UI**:
+  - **Copy Link button** — each mod popup now includes a "Copy Link" button (chain icon) that copies a shareable URL to the clipboard (e.g. `https://nczoning.net?mod=13821`) with 2-second "Copied!" feedback
+  - **Deep-link support** — URLs with `?mod=<id>` parameter now automatically open and focus the matching pin on page load. Uses numeric `nexus_id` for Nexus mods; falls back to UUID for WIP/Dummy entries
+  - **URL sync** — the browser address bar updates to reflect the current open pin (`?mod=` parameter), allowing users to share the map URL directly from their browser
+- **Icons**:
+  - Added `link.svg` — new Feather-style chain-link icon for the Copy Link button
+- **Constants**:
+  - `NCZ.SITE_URL` — canonical site URL for deep-link generation
+  - `NCZ.URL_PARAM_MOD` — configurable URL parameter name (defaults to `"mod"`)
+
 ## [0.1.0] - 2026-03-28
 
 ### 2026-03-27
