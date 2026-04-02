@@ -861,6 +861,12 @@ body.cluster-panel-resizing * {
     mask-image: url("../img/icon/edit.svg");
 }
 
+.ui-popup-action-link-copy-link .ui-popup-action-link-icon {
+    background-color: currentColor;
+    -webkit-mask-image: url("../img/icon/link.svg");
+    mask-image: url("../img/icon/link.svg");
+}
+
 .ui-popup-action-link-nexus {
     font-size: var(--text-md);
     padding: var(--space-xs) var(--space-lg);
@@ -1008,6 +1014,10 @@ body.cluster-panel-resizing * {
         }
 
         .ui-popup-action-link-edit {
+            flex: 0 0 auto;
+        }
+
+        .ui-popup-action-link-copy-link {
             flex: 0 0 auto;
         }
     }
