@@ -82,7 +82,11 @@ body:
   - type: markdown
     attributes:
       value: |
-        **Tags** — check all that apply. Leave all unchecked to keep the existing tags.
+        **Tags** — Due to limitations with how data is handled, selecting ***ANY*** tag below will remove and overwrite all existing tags. 
+        - To **add** a tag, you will need to re-select all existing tags and any new ones.
+        - To **remove** a tag, select the existing tags, and leave the tag you wish to be removed unchecked.
+        *Leave all boxes unchecked to keep the existing tags.*
+        
         > Style tags describe the aesthetic. Life-path tags describe who the mod suits. Utility tags describe the function.
   - type: checkboxes
     id: tags
