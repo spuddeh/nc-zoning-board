@@ -41,8 +41,12 @@
                     "type": "number"
                 },
                 "minItems": 2,
-                "maxItems": 2,
-                "description": "[X, Y] — in-game coordinates from Cyber Engine Tweaks (X = east/west, Y = north/south)"
+                "maxItems": 3,
+                "description": "[X, Y, Z] — in-game coordinates from Cyber Engine Tweaks (X = east/west, Y = north/south, Z = height/elevation). Z is required for new submissions; existing entries with only [X, Y] remain valid."
+            },
+            "yaw": {
+                "type": "number",
+                "description": "Optional. Player facing direction in degrees from CET output (extracted from GetWorldOrientation():ToEulerAngles().yaw)."
             },
             "nexus_id": {
                 "type": "string",
