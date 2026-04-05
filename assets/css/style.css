@@ -1794,6 +1794,34 @@ body::before {
     }
 }
 
+.bbcode-cet-command-block {
+    display: flex;
+    gap: var(--space-sm);
+    align-items: flex-start;
+    background: var(--black-50);
+    border: var(--ui-border-thin) solid var(--dark-accent);
+    padding: var(--space-md);
+    margin: var(--space-md) 0;
+    border-radius: 2px;
+
+    code {
+        flex: 1;
+        color: var(--secondary);
+        font-family: monospace;
+        font-size: var(--text-sm);
+        overflow-x: auto;
+        white-space: pre-wrap;
+        word-break: break-all;
+        line-height: var(--lh-relaxed);
+    }
+}
+
+.ui-popup-action-link-copy-cmd .ui-popup-action-link-icon {
+    background-color: currentColor;
+    -webkit-mask-image: url("../img/icon/copy.svg");
+    mask-image: url("../img/icon/copy.svg");
+}
+
 /* ── BBCode Steps & Notes ────────────────────────────────────────── */
 .bbcode-doc-link {
     font-size: var(--text-sm);
