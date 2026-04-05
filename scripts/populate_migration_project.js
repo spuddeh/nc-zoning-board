@@ -81,7 +81,11 @@ async function nexusQuery(query, variables = {}) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ query, variables }),
   });
-  return (await res.json()).data;
+  const json = await res.json();
+  if (json.errors) {
+    console.warn('Nexus API errors:', JSON.stringify(json.errors, null, 2));
+  }
+  return json.data ?? null;
 }
 
 // ---------------------------------------------------------------------------
@@ -201,7 +205,10 @@ async function fetchNexusMods() {
       offset,
     });
     const page = data?.mods;
-    if (!page) break;
+    if (!page) {
+      console.warn('Nexus: no mods page in response — API may have returned an error or null data');
+      break;
+    }
     total = page.totalCount ?? 0;
     if (page.nodes.length === 0) break;
     console.log(`Nexus: fetched ${page.nodes.length} mods (offset ${offset}, total ${total})`);
