@@ -286,18 +286,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const bbcodeCopyCetBtn = document.getElementById("bbcode-copy-cet-btn");
   if (bbcodeCopyCetBtn) {
+    let cetCopyRevertTimer = null;
     bbcodeCopyCetBtn.addEventListener("click", () => {
       const command = document.getElementById("bbcode-cet-command").textContent;
+      clearTimeout(cetCopyRevertTimer);
       navigator.clipboard.writeText(command).then(() => {
-        const original = bbcodeCopyCetBtn.textContent;
-        bbcodeCopyCetBtn.textContent = "✓";
-        setTimeout(() => {
-          bbcodeCopyCetBtn.textContent = original;
-        }, NCZ.COPY_FEEDBACK_MS);
-      }).catch(() => {
-        bbcodeCopyCetBtn.textContent = "✗";
-        setTimeout(() => {
-          bbcodeCopyCetBtn.textContent = original;
+        bbcodeCopyCetBtn.textContent = "Copied!";
+        cetCopyRevertTimer = setTimeout(() => {
+          bbcodeCopyCetBtn.innerHTML = '<span class="ui-popup-action-link-icon" aria-hidden="true"></span>';
         }, NCZ.COPY_FEEDBACK_MS);
       });
     });

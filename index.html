@@ -369,7 +369,7 @@
                     <li><strong>ACQUIRE COORDINATES</strong> — Open CET in-game, run the command below in the console. Copy the output and paste the values below:
                         <div class="bbcode-cet-command-block">
                             <code id="bbcode-cet-command">local p,r = GetPlayer():GetWorldPosition(), GetPlayer():GetWorldOrientation():ToEulerAngles(); print(string.format("x=%.4f  y=%.4f  z=%.4f  yaw=%.4f", p.x, p.y, p.z, r.yaw))</code>
-                            <button id="bbcode-copy-cet-btn" class="bbcode-copy-cet-btn" title="Copy command">📋</button>
+                            <button id="bbcode-copy-cet-btn" class="ui-popup-action-link ui-popup-action-link-copy-cmd tertiary" title="Copy command" aria-label="Copy command"><span class="ui-popup-action-link-icon" aria-hidden="true"></span></button>
                         </div>
                     </li>
                     <li><strong>CONFIGURE METADATA</strong> — Fill out the form below and generate the block</li>
@@ -399,6 +399,10 @@
                         <div class="bbcode-coord-note">Coordinates can be negative — make sure to include the minus sign if present (e.g. <code>-1234.56</code>).</div>
                     </div>
                     <div class="bbcode-field-row">
+                        <label class="bbcode-label" for="bbcode-yaw">Yaw <span class="bbcode-optional">(optional — player facing direction in degrees, useful for teleport)</span></label>
+                        <input type="number" id="bbcode-yaw" class="bbcode-input" placeholder="e.g. 180.0" step="any">
+                    </div>
+                    <div class="bbcode-field-row">
                         <label class="bbcode-label" for="bbcode-category">Category</label>
                         <select id="bbcode-category" class="bbcode-select">
                             <option value="">— Select Category —</option>
@@ -406,10 +410,6 @@
                             <option value="new-location">New Location</option>
                             <option value="other">Other</option>
                         </select>
-                    </div>
-                    <div class="bbcode-field-row">
-                        <label class="bbcode-label" for="bbcode-yaw">Yaw <span class="bbcode-optional">(optional — player facing direction in degrees)</span></label>
-                        <input type="number" id="bbcode-yaw" class="bbcode-input" placeholder="e.g. 180.0" step="any">
                     </div>
                     <div class="bbcode-field-row">
                         <label class="bbcode-label">Tags <span class="bbcode-optional">(optional)</span></label>
