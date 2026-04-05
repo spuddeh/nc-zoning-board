@@ -56,22 +56,28 @@ body:
     id: coord_x
     attributes:
       label: X Coordinate
-      description: Required for updates. **Include the minus sign if the value is negative**. Leave blank if requesting removal.
+      description: "Pre-filled from the mod pin. Include the minus sign if the value is negative."
+    validations:
+      required: true
   - type: input
     id: coord_y
     attributes:
       label: Y Coordinate
-      description: Required for updates. **Include the minus sign if the value is negative**. Leave blank if requesting removal.
+      description: "Pre-filled from the mod pin. Include the minus sign if the value is negative."
+    validations:
+      required: true
   - type: input
     id: coord_z
     attributes:
       label: Z Coordinate
-      description: Height/elevation. Leave blank to keep the existing value or if requesting removal.
+      description: "Pre-filled from the mod pin. Height/elevation from CET."
+    validations:
+      required: true
   - type: input
     id: yaw
     attributes:
       label: Yaw
-      description: Optional. Player facing direction in degrees. Leave blank to keep the existing value.
+      description: "Optional. Player facing direction in degrees. Leave blank to keep the existing value."
   - type: dropdown
     id: category
     attributes:
