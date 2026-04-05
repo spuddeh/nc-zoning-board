@@ -4,9 +4,11 @@
     "authors": [
         "Spuddeh"
     ],
+    "credits": "",
     "coordinates": [
         -1605.7515,
-        356.4753
+        356.4753,
+        49.2
     ],
     "nexus_id": "WIP",
     "description": "Future site of the Corpo Plaza apartment overhaul. (When Spuddeh stops getting distracted by Kao)",
@@ -15,5 +17,6 @@
         "apartment",
         "neomilitarism",
         "corpo"
-    ]
+    ],
+    "yaw": 174.5
 }
