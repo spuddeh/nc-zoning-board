@@ -159,6 +159,7 @@ NCZ.parseNcZoningBlock = function (description, validTagNames) {
   // coords is required — two or three comma-separated numbers [X, Y] or [X, Y, Z]
   if (!data.coords) return null;
   const coordParts = data.coords.split(",").map((s) => parseFloat(s.trim()));
+  // Prevent invalid input: reject < 2 values (missing Y or both), > 3 values (extra fields), or NaN (failed parse)
   if (coordParts.length < 2 || coordParts.length > 3 || coordParts.some(isNaN)) return null;
 
   // category is required
@@ -176,8 +177,7 @@ NCZ.parseNcZoningBlock = function (description, validTagNames) {
     : [];
 
   // yaw is optional
-  const yawRaw = data.yaw ? parseFloat(data.yaw) : null;
-  const yaw = (yawRaw !== null && !isNaN(yawRaw)) ? yawRaw : null;
+  const yaw = data.yaw && !isNaN(parseFloat(data.yaw)) ? parseFloat(data.yaw) : null;
 
   return {
     coordinates: coordParts,
