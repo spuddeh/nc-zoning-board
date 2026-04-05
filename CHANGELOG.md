@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-04-06
+
+### Coordinate Expansion — Z and Yaw
+
+- **Data schema**:
+  - `coordinates` extended from `[X, Y]` to `[X, Y, Z]` — Z (height/elevation) is now required for new submissions; existing `[X, Y]` entries remain valid
+  - Optional `yaw` top-level field added — player facing direction in degrees from CET
+- **BBCode Generator modal**:
+  - Added **Z Coordinate** input (required) and **Yaw** input (optional, above Category)
+  - Canonical CET command displayed in a styled code block with a copy icon button
+  - Generated block now outputs `coords=X,Y,Z` with optional `yaw=` line directly below coords
+  - New `copy.svg` icon (Feather-style stroke, works with CSS `mask-image`)
+- **Auto-discovery (Nexus BBCode)**:
+  - `parseNcZoningBlock()` accepts both `coords=X,Y` (legacy, remains valid) and `coords=X,Y,Z`; parses optional `yaw=` field
+  - `yaw` is now included in auto-discovered mod objects when present in the Nexus description
+- **GitHub issue forms**:
+  - Submission form: added required **Z Coordinate** and optional **Yaw** fields
+  - Modify form: added required **Z Coordinate** (pre-filled from deep link) and optional **Yaw**; X/Y/Z marked `required: true`
+  - Both forms: updated to canonical CET command; added SLM **Print Coordinates** button reference
+- **GitHub workflows**: `auto-pr-submission` and `modify-location-submission` parse and write Z and Yaw; modify workflow preserves existing values when fields are blank
+- **Documentation**: removed all "ignore Z" guidance; updated `coordinate-system.md`, `adding-mods.md`, `nczoning-auto-discovery.md`; legacy `coords=X,Y` Nexus blocks remain valid during transition
+- **Canonical CET command** (replaces `print(GetPlayer():GetWorldPosition())`):
+
+  ```lua
+  local p,r = GetPlayer():GetWorldPosition(), GetPlayer():GetWorldOrientation():ToEulerAngles(); print(string.format("x=%.4f  y=%.4f  z=%.4f  yaw=%.4f", p.x, p.y, p.z, r.yaw))
+  ```
+
 ## [0.2.0] - 2026-04-02
 
 ### Deep-link Sharing
