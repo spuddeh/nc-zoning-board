@@ -230,11 +230,10 @@ async function main() {
       }
 
       if (item.source === 'nexus-auto') {
-        // Can't update a local file — author must update Nexus BBCode
-        console.log('nexus-auto — author update needed');
+        // No local file to update — tracked in project for author outreach only
+        console.log('skip — nexus-auto (contact author to update their Nexus page)');
         nexusOnly++;
         nexusOnlyItems.push({ nexusId: item.nexusId, itemId: item.itemId });
-        await setProcessed(projectId, item.itemId, statusField.id, processedOption.id);
         continue;
       }
 

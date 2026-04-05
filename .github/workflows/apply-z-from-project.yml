@@ -10,7 +10,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      pull-requests: write
 
     steps:
       - uses: actions/checkout@v4
@@ -20,32 +19,23 @@ jobs:
           node-version: '20'
 
       - name: Apply Z/Yaw data from project
-        id: apply
         env:
           GITHUB_TOKEN: ${{ secrets.PROJECTS_PAT }}
         run: node scripts/apply_z_from_project.js
 
       - name: Check for changes
         id: changes
-        run: |
-          git diff --quiet data/locations/ || echo "changed=true" >> $GITHUB_OUTPUT
+        run: git diff --quiet data/locations/ || echo "changed=true" >> $GITHUB_OUTPUT
 
       - name: Rebuild mods.json
         if: steps.changes.outputs.changed == 'true'
         run: node scripts/build_mods.js
 
-      - name: Create Pull Request
+      - name: Commit and push to main
         if: steps.changes.outputs.changed == 'true'
-        uses: peter-evans/create-pull-request@v7
-        with:
-          token: ${{ secrets.ACTIONS_PAT }}
-          branch: data/z-yaw-batch-${{ github.run_number }}
-          commit-message: "data: backfill Z and Yaw coordinates (batch ${{ github.run_number }})"
-          title: "data: backfill Z and Yaw coordinates (batch ${{ github.run_number }})"
-          body: |
-            Automated batch update from the [Z/Yaw migration project](https://github.com/users/spuddeh/projects/3).
-
-            Updates `coordinates` to `[X, Y, Z]` and adds `yaw` for all locations marked **Done** in the project.
-
-            <!-- apply_z_batch -->
-          labels: data-update
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/locations/
+          git commit -m "data: backfill Z and Yaw coordinates (batch ${{ github.run_number }})"
+          git push origin main
