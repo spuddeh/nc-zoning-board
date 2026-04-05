@@ -47,8 +47,9 @@ Paste the following block into your mod description. The easiest way to generate
 ```
 [code]
 NCZoning:
-coords=X,Y
+coords=X,Y,Z
 category=new-location
+yaw=180.0
 tags=apartment,kitsch
 credits=Optional attribution line
 authors=SecondAuthor,ThirdAuthor
@@ -61,8 +62,9 @@ If you want to hide the block from casual readers, wrap it in a `[spoiler]` tag:
 [spoiler]
 [code]
 NCZoning:
-coords=X,Y
+coords=X,Y,Z
 category=new-location
+yaw=180.0
 [/code]
 [/spoiler]
 ```
@@ -71,8 +73,9 @@ category=new-location
 
 | Field | Required | Format | Notes |
 |---|---|---|---|
-| `coords` | Yes | `X,Y` | CET float values — see [Getting Coordinates](#getting-coordinates) |
+| `coords` | Yes | `X,Y,Z` | CET float values (X=east/west, Y=north/south, Z=height/elevation) — see [Getting Coordinates](#getting-coordinates) |
 | `category` | Yes | enum | `location-overhaul`, `new-location`, or `other` |
+| `yaw` | No | degrees | Player facing direction in degrees from CET output |
 | `tags` | No | comma-separated | Must match tags from the [Tag Registry](tags.md) — unknown tags are silently ignored |
 | `credits` | No | free text | Optional — team name or secondary acknowledgments |
 | `authors` | No | comma-separated names | Additional authors beyond the Nexus uploader |
@@ -83,19 +86,24 @@ The Nexus uploader is always included as the first author automatically. Use `au
 
 - The block must start with `NCZoning:` on the first line inside `[code]`
 - `coords` and `category` are required — mods missing either are skipped entirely
+- `coords` accepts either 2 values (`X,Y` — legacy format) or 3 values (`X,Y,Z` — new format). For new submissions, Z is required
 - `tags` that don't exist in the tag registry are silently dropped (the mod still appears)
 - The `[spoiler]` wrapper is stripped before parsing — both formats work identically
+
+### Transition Note
+
+The old `coords=X,Y` format (2 values) remains valid for existing mod descriptions during the transition period. If you update your description, we recommend upgrading to the new `coords=X,Y,Z` format. Z is the height/elevation coordinate from CET.
 
 ---
 
 ## Getting Coordinates
 
 1. Stand at the location in-game
-2. Open the CET console
-3. Run: `print(GetPlayer():GetWorldPosition())`
-4. Use the **X** and **Y** values — do not swap them, and ignore Z (height)
+2. Open the CET console (`~`)
+3. Run: `local p,r = GetPlayer():GetWorldPosition(), GetPlayer():GetWorldOrientation():ToEulerAngles(); print(string.format("x=%.4f  y=%.4f  z=%.4f  yaw=%.4f", p.x, p.y, p.z, r.yaw))`
+4. Use the **X**, **Y**, **Z**, and **Yaw** values from the output — do not swap X and Y
 
-See [Coordinate System](coordinate-system.md) for more detail.
+See [Coordinate System](coordinate-system.md) for more detail and alternative tools like Simple Location Manager.
 
 ---
 

@@ -39,11 +39,11 @@ body:
         **Option 1 — CET Console:**
         1. Stand at the location in-game
         2. Open the CET console (`~`)
-        3. Run: `print(GetPlayer():GetWorldPosition())`
-        4. Note the **X** and **Y** values (ignore Z — that's height)
+        3. Run: `local p,r = GetPlayer():GetWorldPosition(), GetPlayer():GetWorldOrientation():ToEulerAngles(); print(string.format("x=%.4f  y=%.4f  z=%.4f  yaw=%.4f", p.x, p.y, p.z, r.yaw))`
+        4. Note the **X**, **Y**, **Z**, and **Yaw** values from the output
 
         **Option 2 — Simple Location Manager:**
-        Install [Simple Location Manager](https://www.nexusmods.com/cyberpunk2077/mods/26454), save the location, then read the X/Y from the saved entry.
+        Install [Simple Location Manager](https://www.nexusmods.com/cyberpunk2077/mods/26454), save the location, then read the X, Y, Z from the saved entry. The BBCode Generator modal on the NC Zoning Board website also has this command ready to copy.
   - type: input
     id: coord_x
     attributes:
@@ -60,6 +60,20 @@ body:
       placeholder: "e.g., -1200"
     validations:
       required: true
+  - type: input
+    id: coord_z
+    attributes:
+      label: Z Coordinate
+      description: "The Z coordinate from CET output (height/elevation value). Include the minus sign (-) if negative."
+      placeholder: "e.g., 42.5"
+    validations:
+      required: true
+  - type: input
+    id: yaw
+    attributes:
+      label: Yaw (Facing Direction)
+      description: "Optional. The player facing direction in degrees from CET output (fourth value). Leave blank if not available."
+      placeholder: "e.g., 180.0"
   - type: input
     id: nexus_link
     attributes:
