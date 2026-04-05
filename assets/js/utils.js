@@ -156,10 +156,11 @@ NCZ.parseNcZoningBlock = function (description, validTagNames) {
     if (key && value) data[key] = value;
   }
 
-  // coords is required — two comma-separated numbers
+  // coords is required — two or three comma-separated numbers [X, Y] or [X, Y, Z]
   if (!data.coords) return null;
   const coordParts = data.coords.split(",").map((s) => parseFloat(s.trim()));
-  if (coordParts.length !== 2 || coordParts.some(isNaN)) return null;
+  // Prevent invalid input: reject < 2 values (missing Y or both), > 3 values (extra fields), or NaN (failed parse)
+  if (coordParts.length < 2 || coordParts.length > 3 || coordParts.some(isNaN)) return null;
 
   // category is required
   const validCategories = ["location-overhaul", "new-location", "other"];
@@ -175,12 +176,16 @@ NCZ.parseNcZoningBlock = function (description, validTagNames) {
     ? data.authors.split(",").map((a) => a.trim()).filter(Boolean)
     : [];
 
+  // yaw is optional
+  const yaw = data.yaw && !isNaN(parseFloat(data.yaw)) ? parseFloat(data.yaw) : null;
+
   return {
     coordinates: coordParts,
     category: data.category,
     tags,
     credits: data.credits || null,
     additionalAuthors,
+    yaw,
   };
 };
 
