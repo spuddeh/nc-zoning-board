@@ -366,7 +366,12 @@
             <div class="terminal-body bbcode-modal-body">
                 <a href="https://github.com/spuddeh/nc-zoning-board/blob/main/docs/nczoning-auto-discovery.md" target="_blank" rel="noopener" class="terminal-link bbcode-doc-link">&gt; Full auto-discovery documentation</a>
                 <ol class="bbcode-steps">
-                    <li><strong>ACQUIRE COORDINATES</strong> — Open CET in-game, run <code>print(GetPlayer():GetWorldPosition())</code>, note the X and Y values</li>
+                    <li><strong>ACQUIRE COORDINATES</strong> — Open CET in-game, run the command below in the console. Copy the output and paste the values below:
+                        <div class="bbcode-cet-command-block">
+                            <code id="bbcode-cet-command">local p,r = GetPlayer():GetWorldPosition(), GetPlayer():GetWorldOrientation():ToEulerAngles(); print(string.format("x=%.4f  y=%.4f  z=%.4f  yaw=%.4f", p.x, p.y, p.z, r.yaw))</code>
+                            <button id="bbcode-copy-cet-btn" class="bbcode-copy-cet-btn" title="Copy command">📋</button>
+                        </div>
+                    </li>
                     <li><strong>CONFIGURE METADATA</strong> — Fill out the form below and generate the block</li>
                     <li><strong>TAG YOUR MOD</strong> — Add the <code>NCZoning</code> tag to your mod on Nexus Mods</li>
                     <li><strong>DEPLOY BLOCK</strong> — Paste the generated code into your Nexus mod description</li>
@@ -384,8 +389,12 @@
                                 <span class="coord-label">Y</span>
                                 <input type="number" id="bbcode-coord-y" placeholder="e.g. 789.01" step="any">
                             </div>
+                            <div class="coord-input-group">
+                                <span class="coord-label">Z</span>
+                                <input type="number" id="bbcode-coord-z" placeholder="e.g. 42.5" step="any">
+                            </div>
                             <button class="coord-help-btn" tabindex="-1"
-                                title="Open the CET overlay in-game, then run print(GetPlayer():GetWorldPosition()) in the CET console. Use the X and Y values — do not swap them.">?</button>
+                                title="Paste the output from the CET command above. Use X, Y, and Z values — do not swap them. Z is the height/elevation.">?</button>
                         </div>
                         <div class="bbcode-coord-note">Coordinates can be negative — make sure to include the minus sign if present (e.g. <code>-1234.56</code>).</div>
                     </div>
@@ -397,6 +406,10 @@
                             <option value="new-location">New Location</option>
                             <option value="other">Other</option>
                         </select>
+                    </div>
+                    <div class="bbcode-field-row">
+                        <label class="bbcode-label" for="bbcode-yaw">Yaw <span class="bbcode-optional">(optional — player facing direction in degrees)</span></label>
+                        <input type="number" id="bbcode-yaw" class="bbcode-input" placeholder="e.g. 180.0" step="any">
                     </div>
                     <div class="bbcode-field-row">
                         <label class="bbcode-label">Tags <span class="bbcode-optional">(optional)</span></label>

@@ -199,6 +199,8 @@ document.addEventListener("DOMContentLoaded", () => {
     bbcodeGenerateBtn.addEventListener("click", () => {
       const x = document.getElementById("bbcode-coord-x").value.trim();
       const y = document.getElementById("bbcode-coord-y").value.trim();
+      const z = document.getElementById("bbcode-coord-z").value.trim();
+      const yaw = document.getElementById("bbcode-yaw").value.trim();
       const category = document.getElementById("bbcode-category").value;
       const credits = document.getElementById("bbcode-credits").value.trim();
       const authors = document.getElementById("bbcode-authors").value.trim();
@@ -206,12 +208,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const xNum = parseFloat(x);
       const yNum = parseFloat(y);
+      const zNum = parseFloat(z);
       if (!Number.isFinite(xNum) || !Number.isFinite(yNum)) {
         alert("Please enter valid X and Y coordinates.");
         return;
       }
       if (Math.abs(xNum) > 5000 || Math.abs(yNum) > 5000) {
         alert("Coordinates appear out of range. Night City CET coords are typically within \u00b14000. Check your values.");
+        return;
+      }
+      if (!Number.isFinite(zNum)) {
+        alert("Please enter a valid Z coordinate.");
+        return;
+      }
+      if (Math.abs(zNum) > 1000) {
+        alert("Z coordinate appears out of range. Night City Z coords are typically within \u00b1300. Check your value.");
         return;
       }
       if (!category) {
@@ -223,8 +234,9 @@ document.addEventListener("DOMContentLoaded", () => {
         document.querySelectorAll("#bbcode-tag-checkboxes input:checked"),
       ).map((cb) => cb.value).join(",");
 
-      const lines = [`NCZoning:`, `coords=${x},${y}`, `category=${category}`];
+      const lines = [`NCZoning:`, `coords=${x},${y},${z}`, `category=${category}`];
       if (selectedTags) lines.push(`tags=${selectedTags}`);
+      if (yaw && Number.isFinite(parseFloat(yaw))) lines.push(`yaw=${yaw}`);
       if (credits) lines.push(`credits=${credits}`);
       if (authors) lines.push(`authors=${authors}`);
 
@@ -260,6 +272,8 @@ document.addEventListener("DOMContentLoaded", () => {
     bbcodeResetBtn.addEventListener("click", () => {
       document.getElementById("bbcode-coord-x").value = "";
       document.getElementById("bbcode-coord-y").value = "";
+      document.getElementById("bbcode-coord-z").value = "";
+      document.getElementById("bbcode-yaw").value = "";
       document.getElementById("bbcode-category").value = "";
       document.getElementById("bbcode-credits").value = "";
       document.getElementById("bbcode-authors").value = "";
@@ -267,6 +281,25 @@ document.addEventListener("DOMContentLoaded", () => {
       document.querySelectorAll("#bbcode-tag-checkboxes input:checked").forEach((cb) => (cb.checked = false));
       document.getElementById("bbcode-output-section").classList.add("hidden");
       document.getElementById("bbcode-output").value = "";
+    });
+  }
+
+  const bbcodeCopyCetBtn = document.getElementById("bbcode-copy-cet-btn");
+  if (bbcodeCopyCetBtn) {
+    bbcodeCopyCetBtn.addEventListener("click", () => {
+      const command = document.getElementById("bbcode-cet-command").textContent;
+      navigator.clipboard.writeText(command).then(() => {
+        const original = bbcodeCopyCetBtn.textContent;
+        bbcodeCopyCetBtn.textContent = "✓";
+        setTimeout(() => {
+          bbcodeCopyCetBtn.textContent = original;
+        }, NCZ.COPY_FEEDBACK_MS);
+      }).catch(() => {
+        bbcodeCopyCetBtn.textContent = "✗";
+        setTimeout(() => {
+          bbcodeCopyCetBtn.textContent = original;
+        }, NCZ.COPY_FEEDBACK_MS);
+      });
     });
   }
 
@@ -1081,8 +1114,9 @@ async function initMap() {
           .join("");
 
         // Build Link for Suggesting Edits (Phase 2)
-        const [cX, cY] = mod.coordinates;
-        const editUrl = `https://github.com/spuddeh/nc-zoning-board/issues/new?template=modify_location.yml&location_id=${mod.id}&mod_name=${encodeURIComponent(mod.name)}&authors=${encodeURIComponent(mod.authors.join(", "))}&coord_x=${cX}&coord_y=${cY}`;
+        const [cX, cY, cZ] = mod.coordinates;
+        const yawParam = mod.yaw != null ? `&yaw=${mod.yaw}` : "";
+        const editUrl = `https://github.com/spuddeh/nc-zoning-board/issues/new?template=modify_location.yml&location_id=${mod.id}&mod_name=${encodeURIComponent(mod.name)}&authors=${encodeURIComponent(mod.authors.join(", "))}&coord_x=${cX}&coord_y=${cY}&coord_z=${cZ ?? ""}&yaw=${mod.yaw ?? ""}${yawParam}`;
 
         // Resolve shareable mod identifier for copy-link feature
         const isNumericNexusId = /^\d+$/.test(String(mod.nexus_id));
