@@ -160,16 +160,17 @@ function loadRegistryEntries() {
 // Step 3b: Fetch Nexus auto-discovered mods
 // ---------------------------------------------------------------------------
 
-// Minimal BBCode block parser (mirrors utils.js parseNcZoningBlock logic)
+// BBCode block parser — kept in sync with assets/js/utils.js parseNcZoningBlock
 function parseNcZoningBlock(description) {
   if (!description) return null;
-  const spoilerStripped = description.replace(/\[spoiler\]|\[\/spoiler\]/gi, '');
-  const match = spoilerStripped.match(/\[code\]\s*NCZoning:([\s\S]*?)\[\/code\]/i);
+  let text = description.replace(/<br\s*\/?>/gi, '\n');
+  text = text.replace(/\[spoiler\]([\s\S]*?)\[\/spoiler\]/gi, '$1');
+  const match = text.match(/\[code\]\s*NCZoning:\s*\n([\s\S]*?)\[\/code\]/i);
   if (!match) return null;
   const data = {};
-  for (const line of match[1].split(/\r?\n/)) {
+  for (const line of match[1].split('\n')) {
     const eqIdx = line.indexOf('=');
-    if (eqIdx < 1) continue;
+    if (eqIdx === -1) continue;
     const key = line.slice(0, eqIdx).trim().toLowerCase();
     const val = line.slice(eqIdx + 1).trim();
     if (key && val) data[key] = val;
@@ -180,7 +181,6 @@ function parseNcZoningBlock(description) {
   return {
     coordinates: parts,
     yaw: data.yaw && !isNaN(parseFloat(data.yaw)) ? parseFloat(data.yaw) : null,
-    nexusId: null,
   };
 }
 
