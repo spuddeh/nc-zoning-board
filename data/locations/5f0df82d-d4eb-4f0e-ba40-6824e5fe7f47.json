@@ -1,0 +1,22 @@
+{
+    "id": "5f0df82d-d4eb-4f0e-ba40-6824e5fe7f47",
+    "name": "Testy test",
+    "authors": [
+        "Spuddeh"
+    ],
+    "credits": "",
+    "coordinates": [
+        -500,
+        -1200,
+        45
+    ],
+    "nexus_id": "Dummy",
+    "description": "Testy McTestface",
+    "category": "other",
+    "tags": [
+        "apartment",
+        "house",
+        "neokitsch"
+    ],
+    "yaw": 180
+}
