@@ -71,7 +71,7 @@ body:
   - type: input
     id: yaw
     attributes:
-      label: Yaw (Facing Direction)
+      label: Yaw
       description: "Optional. The player facing direction in degrees from CET output (fourth value). Leave blank if not available."
       placeholder: "e.g., 180.0"
   - type: input

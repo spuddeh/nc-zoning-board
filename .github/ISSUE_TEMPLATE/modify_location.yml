@@ -70,7 +70,7 @@ body:
   - type: input
     id: yaw
     attributes:
-      label: Yaw (Facing Direction)
+      label: Yaw
       description: Optional. Player facing direction in degrees. Leave blank to keep the existing value.
   - type: dropdown
     id: category
