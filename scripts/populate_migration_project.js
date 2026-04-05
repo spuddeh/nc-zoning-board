@@ -230,7 +230,58 @@ async function fetchNexusMods() {
 }
 
 // ---------------------------------------------------------------------------
-// Step 4: Filter to entries still needing Z
+// Step 4a: Load existing project items to avoid duplicates
+// ---------------------------------------------------------------------------
+
+async function loadExistingProjectKeys(projectId, fieldMap) {
+  const uuidFieldId   = fieldMap['UUID']?.id;
+  const nexusFieldId  = fieldMap['Nexus ID']?.id;
+  const existingUuids   = new Set();
+  const existingNexusIds = new Set();
+
+  let cursor = null;
+  let hasNextPage = true;
+  while (hasNextPage) {
+    const data = await ghQuery(`
+      query($projectId: ID!, $cursor: String) {
+        node(id: $projectId) {
+          ... on ProjectV2 {
+            items(first: 100, after: $cursor) {
+              nodes {
+                fieldValues(first: 20) {
+                  nodes {
+                    ... on ProjectV2ItemFieldTextValue {
+                      text
+                      field { ... on ProjectV2Field { id } }
+                    }
+                  }
+                }
+              }
+              pageInfo { hasNextPage endCursor }
+            }
+          }
+        }
+      }
+    `, { projectId, cursor });
+
+    const page = data.node.items;
+    for (const item of page.nodes) {
+      for (const fv of item.fieldValues.nodes) {
+        if (!fv.text || !fv.field) continue;
+        if (fv.field.id === uuidFieldId)  existingUuids.add(fv.text);
+        if (fv.field.id === nexusFieldId) existingNexusIds.add(fv.text);
+      }
+    }
+    hasNextPage = page.pageInfo.hasNextPage;
+    cursor = page.pageInfo.endCursor;
+  }
+
+  console.log(`Existing project items: ${existingUuids.size} by UUID, ${existingNexusIds.size} by Nexus ID`);
+  return { existingUuids, existingNexusIds };
+}
+
+// ---------------------------------------------------------------------------
+// Step 4b: Filter to entries still needing Z and not already in project
 // ---------------------------------------------------------------------------
 
 function needsMigration(entry) {
@@ -298,19 +349,30 @@ async function main() {
   const nexusMods = await fetchNexusMods();
   console.log('');
 
+  // Check which entries are already in the project
+  console.log('Checking existing project items...');
+  const { existingUuids, existingNexusIds: existingProjectNexusIds } = await loadExistingProjectKeys(project.id, fieldMap);
+  console.log('');
+
   // Registry IDs for deduplication (API mods that are also in registry are covered by registry)
   const registryNexusIds = new Set(registry.map(e => e.nexus_id).filter(Boolean));
 
-  // Filter to entries needing migration
+  // Filter to entries needing migration and not already in the project
   const toMigrate = [
-    ...registry.filter(needsMigration),
-    ...nexusMods.filter(m => !registryNexusIds.has(m.nexus_id) && needsMigration(m)),
+    ...registry.filter(e => needsMigration(e) && !existingUuids.has(e.id)),
+    ...nexusMods.filter(m =>
+      !registryNexusIds.has(m.nexus_id) &&
+      needsMigration(m) &&
+      !existingProjectNexusIds.has(m.nexus_id)
+    ),
   ];
 
-  const alreadyDone = registry.length + nexusMods.length - toMigrate.length;
-  console.log(`Total entries:   ${registry.length} registry + ${nexusMods.length} API = ${registry.length + nexusMods.length}`);
-  console.log(`Already have Z:  ${alreadyDone}`);
-  console.log(`Needs migration: ${toMigrate.length}`);
+  const alreadyHaveZ    = registry.length + nexusMods.length - [...registry, ...nexusMods].filter(needsMigration).length;
+  const alreadyInProject = [...registry, ...nexusMods].filter(needsMigration).length - toMigrate.length;
+  console.log(`Total entries:      ${registry.length} registry + ${nexusMods.length} API = ${registry.length + nexusMods.length}`);
+  console.log(`Already have Z:     ${alreadyHaveZ}`);
+  console.log(`Already in project: ${alreadyInProject}`);
+  console.log(`To create:          ${toMigrate.length}`);
   console.log('');
 
   if (toMigrate.length === 0) {
