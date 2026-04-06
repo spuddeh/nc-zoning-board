@@ -7,24 +7,27 @@ We're collecting the missing **Z (height)** and **Yaw (facing direction)** coord
 ## What you need
 
 - **Cyber Engine Tweaks (CET)** — to run the teleport command and read coordinates
-- **[Simple Location Manager](https://www.nexusmods.com/cyberpunk2077/mods/26454) (optional)** — use the **Print Coordinates** button in the Settings tab instead of the console command below
-- **Freefly mod** — **strongly recommended**, the teleport puts you ~690 units above the location
+- **[Simple Location Manager](https://www.nexusmods.com/cyberpunk2077/mods/26454) (optional)** — use the **Dump Coordinates** button in the Settings tab instead of the console command below
+- **[Freefly mod](https://www.nexusmods.com/cyberpunk2077/mods/780)** — **strongly recommended**, the teleport puts you ~690 units above the location
 
 ---
 
 ## Steps
 
 1. **Assign yourself a card** in the [migration project](https://github.com/users/spuddeh/projects/3) — pick any unassigned location with Status: **Todo**
-2. **Copy the Teleport Command** from the card
-3. **Open CET in-game** and paste the command — this teleports you above the location
-4. **Fly straight down** (hold Ctrl in Freefly) until you reach the right height
-5. **Disable Freefly** to land naturally and avoid being clipped into the floor
-6. **Run the CET command** to print your coordinates:
+2. **Install the mod** — the location needs to be loaded in your game for the coordinates to be accurate
+3. **Copy the Teleport Command** from the card
+4. **Open CET in-game** and paste the command — this teleports you above the location
+5. **Fly straight down** (hold Ctrl in Freefly) until you reach the right height
+6. **Disable Freefly** to land naturally and avoid being clipped into the floor
+7. **Run the CET command** to print your coordinates:
+
    ```lua
    local p,r = GetPlayer():GetWorldPosition(), GetPlayer():GetWorldOrientation():ToEulerAngles(); print(string.format("x=%.4f  y=%.4f  z=%.4f  yaw=%.4f", p.x, p.y, p.z, r.yaw))
    ```
-7. **Record the values** — fill in the **Z Coordinate** and **Yaw** fields on the card
-8. **Set Status to Done**
+
+8. **Record the values** — fill in the **Z Coordinate** and **Yaw** fields on the card
+9. **Set Status to Done**
 
 > **Yaw is optional** — if the location doesn't have a meaningful facing direction, leave it blank.
 
@@ -61,11 +64,12 @@ Cards with **Source: nexus-auto** are tracked for author outreach. They will rem
 ## Scripts
 
 | Script | Purpose |
-|---|---|
+| --- | --- |
 | `scripts/populate_migration_project.js` | Seeds the GitHub Project with all locations missing Z. Safe to re-run — skips existing cards. |
 | `scripts/apply_z_from_project.js` | Reads Done cards and backfills JSON files. Run manually or via the daily workflow. |
 
 Both scripts require a GitHub token with `project` scope:
+
 ```bash
 GITHUB_TOKEN=<your_projects_token> node scripts/populate_migration_project.js
 GITHUB_TOKEN=<your_projects_token> node scripts/apply_z_from_project.js
