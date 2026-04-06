@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         -2229.5732,
-        3618.9644
+        3618.9644,
+        12.2151
     ],
     "nexus_id": "26046",
     "description": "Custom standalone home.",
@@ -15,5 +16,6 @@
     "tags": [
         "house",
         "neokitsch"
-    ]
+    ],
+    "yaw": -121.2
 }
