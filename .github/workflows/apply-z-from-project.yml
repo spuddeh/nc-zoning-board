@@ -37,7 +37,7 @@ jobs:
         id: cpr
         uses: peter-evans/create-pull-request@v6
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.ACTIONS_PAT }}
           commit-message: "data: backfill Z and Yaw coordinates (batch ${{ github.run_number }})"
           title: "data: backfill Z and Yaw coordinates (batch ${{ github.run_number }})"
           body: "Automated Z and Yaw coordinate backfill from migration project."
