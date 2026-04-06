@@ -18,7 +18,7 @@ We're collecting the missing **Z (height)** and **Yaw (facing direction)** coord
 2. **Install the mod** — the location needs to be loaded in your game for the coordinates to be accurate
 3. **Copy the Teleport Command** from the card
 4. **Open CET in-game** and paste the command — this teleports you above the location
-5. **Fly straight down** (hold Ctrl in Freefly) until you reach the right height
+5. **Fly straight down** (hold Shift in Freefly) until you reach the right height
 6. **Disable Freefly** to land naturally and avoid being clipped into the floor
 7. **Run the CET command** to print your coordinates:
 
