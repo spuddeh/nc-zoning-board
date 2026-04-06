@@ -7,12 +7,14 @@
     "credits": "",
     "coordinates": [
         -1180.613,
-        -995.12274
+        -995.12274,
+        13.0371
     ],
     "nexus_id": "20780",
     "description": "Overhaul for Jackie's garage post Heroes.",
     "category": "location-overhaul",
     "tags": [
         "streetkid"
-    ]
+    ],
+    "yaw": -76.1251
 }
