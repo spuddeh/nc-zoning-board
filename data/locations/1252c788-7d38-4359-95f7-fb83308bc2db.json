@@ -6,8 +6,9 @@
     ],
     "credits": "",
     "coordinates": [
-        2746.1829,
-        173.27959
+        2777.946,
+        191.9625,
+        74.6013
     ],
     "nexus_id": "26152",
     "description": "This mod adds a Nomad themed house/Garage in Rocky Ridge, made completely from scratch and with native interactions.",
@@ -16,5 +17,6 @@
         "apartment",
         "entropism",
         "nomad"
-    ]
+    ],
+    "yaw": -37.65
 }
