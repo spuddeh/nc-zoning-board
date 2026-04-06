@@ -6,8 +6,9 @@
     ],
     "credits": "",
     "coordinates": [
-        -121.851685,
-        608.62256
+        -123.2152,
+        607.8815,
+        63.9817
     ],
     "nexus_id": "25492",
     "description": "A new location for my quest project based on the Strange Insight radio.",
@@ -15,5 +16,6 @@
     "tags": [
         "entropism",
         "streetkid"
-    ]
+    ],
+    "yaw": -67.0455
 }
