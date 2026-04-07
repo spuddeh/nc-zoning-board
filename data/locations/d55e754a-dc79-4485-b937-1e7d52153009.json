@@ -8,7 +8,8 @@
     "credits": "",
     "coordinates": [
         -1176.327,
-        1323.3492
+        1323.3492,
+        31.7503
     ],
     "nexus_id": "26159",
     "description": "Unlocks and repairs the upper floors of the No-Tell Motel.",
@@ -16,5 +17,6 @@
     "tags": [
         "entertainment",
         "kitsch"
-    ]
+    ],
+    "yaw": 71.5105
 }

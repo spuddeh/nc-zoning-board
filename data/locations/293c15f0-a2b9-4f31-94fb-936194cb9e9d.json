@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         -1288.348,
-        -4230.471
+        -4230.471,
+        62.6615
     ],
     "nexus_id": "28630",
     "description": "\"Choom ! This new preem garage on the outskirts of town just appeared on the market, it's near those solar plants, it's all yours for only 25,000 eds !\"\nThis adds a new purchasable garage with living area in the Solar Farms region of the Badlands.",
@@ -16,5 +17,6 @@
         "apartment",
         "entropism",
         "nomad"
-    ]
+    ],
+    "yaw": 157.4
 }

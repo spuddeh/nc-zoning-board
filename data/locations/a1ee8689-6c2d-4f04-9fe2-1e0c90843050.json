@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         -729.8433,
-        619.52466
+        619.52466,
+        330.028
     ],
     "nexus_id": "28045",
     "description": "stark white space nest",
@@ -19,5 +20,6 @@
         "neokitsch",
         "neomilitarism",
         "photos"
-    ]
+    ],
+    "yaw": -34.6005
 }

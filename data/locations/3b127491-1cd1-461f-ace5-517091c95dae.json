@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         -1382.787,
-        1270.6815
+        1270.6815,
+        123.0649
     ],
     "nexus_id": "27518",
     "description": "An Archive preset of V's Apartment (Modern)﻿ by rexxgta, updating its warm and modern design.",
@@ -15,5 +16,6 @@
     "tags": [
         "apartment",
         "neokitsch"
-    ]
+    ],
+    "yaw": 79.1
 }

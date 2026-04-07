@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         -713.1996,
-        2976.2917
+        2976.2917,
+        27.1714
     ],
     "nexus_id": "27223",
     "description": "A Liberty Walk Garage Inspired, using the IRL location for reference.",
@@ -15,5 +16,6 @@
     "tags": [
         "entropism",
         "streetkid"
-    ]
+    ],
+    "yaw": 17.7793
 }

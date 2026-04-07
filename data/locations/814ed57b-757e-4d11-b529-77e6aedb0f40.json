@@ -7,12 +7,14 @@
     "credits": "",
     "coordinates": [
         3732.2097,
-        820.3253
+        820.3253,
+        134.309
     ],
     "nexus_id": "25611",
     "description": "Out there in the badlands there's a canyon. Restoring the missing bridge.",
     "category": "new-location",
     "tags": [
         "infrastructure"
-    ]
+    ],
+    "yaw": -51.3379
 }

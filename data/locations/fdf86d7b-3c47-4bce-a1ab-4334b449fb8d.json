@@ -7,12 +7,14 @@
     "credits": "",
     "coordinates": [
         3732.2097,
-        820.3253
+        820.3253,
+        134.309
     ],
     "nexus_id": "27013",
     "description": "Adds an access ramp down to the bottom of the canyon.",
     "category": "location-overhaul",
     "tags": [
         "infrastructure"
-    ]
+    ],
+    "yaw": -51.3379
 }

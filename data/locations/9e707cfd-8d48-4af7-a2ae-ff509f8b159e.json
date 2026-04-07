@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         -2230.1956,
-        -2562.3433
+        -2562.3433,
+        80.301
     ],
     "nexus_id": "28378",
     "description": "A hideout for nomads (and city nomads) in Dogtown, where they can fuel and repair their bikes.",
@@ -16,5 +17,6 @@
         "apartment",
         "entropism",
         "nomad"
-    ]
+    ],
+    "yaw": -130.15
 }

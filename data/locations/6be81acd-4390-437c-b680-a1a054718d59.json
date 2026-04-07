@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         -1382.787,
-        1270.6815
+        1270.6815,
+        123.0649
     ],
     "nexus_id": "10925",
     "description": "Kitschy maximalist H10 Apartment. Extra interactions : sit, drink tea, netrunning chair. Adds a radio, netrunning chair, tub, kitchenette, washer/dryer, playable arcade machine, plenty of neons, plants, clutter, stickers, etc",
@@ -16,5 +17,6 @@
         "apartment",
         "kitsch",
         "streetkid"
-    ]
+    ],
+    "yaw": 79.1
 }

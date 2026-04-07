@@ -7,12 +7,14 @@
     "credits": "",
     "coordinates": [
         4528.514,
-        589.7748
+        589.7748,
+        223.8003
     ],
     "nexus_id": "25918",
     "description": "Collection of various visual fixes to correct the eastern Badlands canyon and map border. Entirely customizable through Native Settings UI.",
     "category": "location-overhaul",
     "tags": [
         "infrastructure"
-    ]
+    ],
+    "yaw": -32.2148
 }

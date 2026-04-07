@@ -9,7 +9,8 @@
     "credits": "",
     "coordinates": [
         37.888023,
-        115.85715
+        115.85715,
+        14.7604
     ],
     "nexus_id": "21735",
     "description": "Welcome to Zenitex. Adds a lore-friendly faction with a unique aesthetic, interior location, vendors, NPCs and collectible data. Purchase Zenitex equipment at up to 50% discount.",
@@ -18,5 +19,6 @@
         "corpo",
         "neomilitarism",
         "shop"
-    ]
+    ],
+    "yaw": -119.188
 }

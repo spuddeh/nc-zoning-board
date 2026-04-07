@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         -402.56494,
-        1276.3997
+        1276.3997,
+        37.4164
     ],
     "nexus_id": "25294",
     "description": "A fully featured ramen restaurant with numerous NPCs, including custom characters, each with intricate schedules, interactions, vendors, and plenty of hidden Easter eggs.",
@@ -15,5 +16,6 @@
     "tags": [
         "entertainment",
         "shop"
-    ]
+    ],
+    "yaw": 166.6981
 }

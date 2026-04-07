@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         -624.67114,
-        880.32336
+        880.32336,
+        32.9839
     ],
     "nexus_id": "26255",
     "description": "colorful neon apartment fit for a mox with an extra hideout on the roof",
@@ -16,5 +17,6 @@
         "apartment",
         "kitsch",
         "streetkid"
-    ]
+    ],
+    "yaw": 97.7499
 }

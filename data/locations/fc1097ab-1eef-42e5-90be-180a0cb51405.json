@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         -2225.1167,
-        -2645.5527
+        -2645.5527,
+        34.4427
     ],
     "nexus_id": "22818",
     "description": "Lina Malina house enhanced with new interactions.",
@@ -15,5 +16,6 @@
     "tags": [
         "apartment",
         "entropism"
-    ]
+    ],
+    "yaw": -9.2524
 }

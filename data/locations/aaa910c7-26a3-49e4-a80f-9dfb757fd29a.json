@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         1949.0994,
-        2364.854
+        2364.854,
+        191.3913
     ],
     "nexus_id": "27369",
     "description": "A peaceful, fully interactive Nomad \"Apartment\" – On the plateau of the Aldecaldos camp. This Trailer is your quiet home between the chaos.",
@@ -15,5 +16,6 @@
     "tags": [
         "apartment",
         "nomad"
-    ]
+    ],
+    "yaw": 28.1514
 }

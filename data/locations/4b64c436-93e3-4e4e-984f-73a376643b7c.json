@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         -625.0426,
-        824.43835
+        824.43835,
+        18.3832
     ],
     "nexus_id": "28278",
     "description": "Enter the parlor… and hope for the best. 20 unique randomized outcomes available so far. Rewarding, goofy, lethal, slightly NSFW. An unique type of location.",
@@ -15,5 +16,6 @@
     "tags": [
         "entertainment",
         "kitsch"
-    ]
+    ],
+    "yaw": -81.3003
 }

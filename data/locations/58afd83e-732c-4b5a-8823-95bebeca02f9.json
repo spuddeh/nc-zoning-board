@@ -7,12 +7,14 @@
     "credits": "",
     "coordinates": [
         -1382.787,
-        1270.6815
+        1270.6815,
+        123.0649
     ],
     "nexus_id": "26731",
     "description": "Updated overhaul of my H10 apartment design. Features Archive XL for install and Native Interactions for injecting interactions. Redesigns key sections of the apartment. More smart frames addon available under optional files",
     "category": "location-overhaul",
     "tags": [
         "apartment"
-    ]
+    ],
+    "yaw": 79.1
 }

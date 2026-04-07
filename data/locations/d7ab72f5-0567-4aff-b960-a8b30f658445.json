@@ -7,12 +7,14 @@
     "credits": "",
     "coordinates": [
         -1654.1001,
-        354.56592
+        354.56592,
+        8.1902
     ],
     "nexus_id": "24148",
     "description": "Among the benefits of urban planning is taking trouble spots and turning them into amenities for our hard-working citizens. Why live next to trash, dirt, rust and gang graffities when you can take away an underutilized space and give it back to the most important group of our community: rich tenants.",
     "category": "location-overhaul",
     "tags": [
         "infrastructure"
-    ]
+    ],
+    "yaw": -87.6405
 }

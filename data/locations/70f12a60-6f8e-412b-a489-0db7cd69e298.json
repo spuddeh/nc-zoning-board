@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         -1506.1044,
-        2231.2832
+        2231.2832,
+        22.2
     ],
     "nexus_id": "26985",
     "description": "Space/Motel themed mod for V's Northside Apartment, entropy/kitsch style.",
@@ -16,5 +17,6 @@
         "apartment",
         "entropism",
         "kitsch"
-    ]
+    ],
+    "yaw": 36.55
 }

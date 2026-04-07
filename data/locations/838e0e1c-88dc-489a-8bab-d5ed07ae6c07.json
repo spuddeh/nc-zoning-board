@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         554.5476,
-        -2180.8003
+        -2180.8003,
+        34.0876
     ],
     "nexus_id": "24739",
     "description": "This mod adds a new, standalone apartment in a run down neighborhood near the Petrochem Dam in Rancho Coronado !",
@@ -15,5 +16,6 @@
     "tags": [
         "apartment",
         "entropism"
-    ]
+    ],
+    "yaw": 75.1385
 }

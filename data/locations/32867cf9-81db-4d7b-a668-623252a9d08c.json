@@ -7,12 +7,14 @@
     "credits": "",
     "coordinates": [
         3732.2097,
-        820.3253
+        820.3253,
+        134.309
     ],
     "nexus_id": "25617",
     "description": "Explore the full canyon. Removes the player kill zones.",
     "category": "other",
     "tags": [
         "infrastructure"
-    ]
+    ],
+    "yaw": -51.3379
 }

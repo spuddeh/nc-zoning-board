@@ -7,7 +7,8 @@
     "credits": "Brocreate  (Jungle Runner is a remix of Brocreate’s DIGITAL OASIS)",
     "coordinates": [
         -1382.787,
-        1270.6815
+        1270.6815,
+        123.0649
     ],
     "nexus_id": "22061",
     "description": "Space greenhouse decor for apartment H10. Adding 5 new Smart Frames (7 total available) and 10 interactions : drink coffee and tea, eat yakitori, play guitar, use netrunner chair, meditate, etc.",
@@ -16,5 +17,6 @@
         "apartment",
         "entropism",
         "streetkid"
-    ]
+    ],
+    "yaw": 79.1
 }

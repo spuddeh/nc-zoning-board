@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         -1382.787,
-        1270.6815
+        1270.6815,
+        123.0649
     ],
     "nexus_id": "21418",
     "description": "A Moxx inspired makeover of V's Megabuilding H10 Apartment. Built using archiveXL / World Builder / Native Interactions.",
@@ -16,5 +17,6 @@
         "apartment",
         "kitsch",
         "streetkid"
-    ]
+    ],
+    "yaw": 79.1
 }
