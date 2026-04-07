@@ -362,16 +362,7 @@ NCZ.initOverlays = function (map, mapBounds) {
         }
       );
 
-      // Debug: log casino feature to verify coordinates
-      const casinoFeature = subDistrictFeatures.find((f) => f.properties.id === "north_oaks_casino");
-      if (casinoFeature) {
-        const coords = casinoFeature.geometry.coordinates[0];
-        console.log("[NCZ] Casino polygon:", coords.length, "points, first:", coords[0], "last:", coords[coords.length - 1]);
-      }
-
-      // Log what was included
-      const casinoIncluded = subDistrictFeatures.some((f) => f.properties.id === "north_oaks_casino");
-      console.log(`[NCZ] Districts: ${districtFeatures.length} districts, ${subDistrictFeatures.length} subdistricts (casino: ${casinoIncluded})`);
+      console.log(`[NCZ] Districts: ${districtFeatures.length} districts, ${subDistrictFeatures.length} subdistricts`);
 
       // Show districts immediately if enabled (default on both map types)
       if (districtsEnabled) updateDistrictZoom();
@@ -398,7 +389,10 @@ NCZ.initOverlays = function (map, mapBounds) {
   map.on("zoomend", updateDistrictZoom);
 
   // ── Contour lines ──────────────────────────────────────────────────
+  // Only visible at zoom >= 4 — too noisy at low zoom
+  const CONTOUR_ZOOM_MIN = 4;
   let contourLayer = null;
+  let contoursEnabled = false;
 
   fetch("data/terrain_contours.json")
     .then((r) => r.json())
@@ -419,6 +413,17 @@ NCZ.initOverlays = function (map, mapBounds) {
 
       console.log(`[NCZ] Contours: ${features.length} lines`);
     });
+
+  function updateContourZoom() {
+    if (!contoursEnabled || !contourLayer) return;
+    if (map.getZoom() >= CONTOUR_ZOOM_MIN) {
+      if (!map.hasLayer(contourLayer)) contourLayer.addTo(map);
+    } else {
+      if (map.hasLayer(contourLayer)) map.removeLayer(contourLayer);
+    }
+  }
+
+  map.on("zoomend", updateContourZoom);
 
   // ── Base layer switching ───────────────────────────────────────────
   const satelliteTiles = L.tileLayer("assets/tiles/{z}/{x}/{y}.png", {
@@ -486,10 +491,14 @@ NCZ.initOverlays = function (map, mapBounds) {
       }
     }
 
-    // Contours
+    // Contours — zoom-gated (only visible at zoom >= 4)
     if (overlay === "contours") {
-      if (visible && contourLayer) contourLayer.addTo(map);
-      else if (!visible && contourLayer && map.hasLayer(contourLayer)) map.removeLayer(contourLayer);
+      contoursEnabled = visible;
+      if (visible) {
+        updateContourZoom();
+      } else {
+        if (contourLayer && map.hasLayer(contourLayer)) map.removeLayer(contourLayer);
+      }
     }
   };
 
