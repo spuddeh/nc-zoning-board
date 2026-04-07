@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         3278.9236,
-        368.14096
+        368.14096,
+        111.7834
     ],
     "nexus_id": "23122",
     "description": "Adds a trailer home in the Badlands with a view on Rocky Ridge and the Night City skyline.",
@@ -16,5 +17,6 @@
         "entropism",
         "house",
         "nomad"
-    ]
+    ],
+    "yaw": -155.303
 }

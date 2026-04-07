@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         -786.4785,
-        978.493
+        978.493,
+        28.2095
     ],
     "nexus_id": "22095",
     "description": "A Japantown apartment edit, Neokitsch style.",
@@ -15,5 +16,6 @@
     "tags": [
         "apartment",
         "neokitsch"
-    ]
+    ],
+    "yaw": 97.6499
 }

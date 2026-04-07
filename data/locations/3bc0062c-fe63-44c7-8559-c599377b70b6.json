@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         -1521.956,
-        -973.40356
+        -973.40356,
+        86.9754
     ],
     "nexus_id": "17058",
     "description": "This is a AMM preset For Your Glen Apartment! Inspired By Lizzy Wizzy with my Twist. Purple Lighting And Marble Floors! Big Aquariums for your Enjoyment! I will be making different Lighting Versions of this preset so stay tuned!",
@@ -16,5 +17,6 @@
         "apartment",
         "entertainment",
         "neokitsch"
-    ]
+    ],
+    "yaw": -165.3515
 }

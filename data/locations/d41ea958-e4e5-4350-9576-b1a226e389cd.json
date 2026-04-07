@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         -1568.323,
-        -2331.8086
+        -2331.8086,
+        57.8963
     ],
     "nexus_id": "22643",
     "description": "Heavy Heart Vip Room Appartment Heavy Earth – Just across from Mr. Hand’s Room, Night City.",
@@ -16,5 +17,6 @@
         "apartment",
         "corpo",
         "neokitsch"
-    ]
+    ],
+    "yaw": -151
 }

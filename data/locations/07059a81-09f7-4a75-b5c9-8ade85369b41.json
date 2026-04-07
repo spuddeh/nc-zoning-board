@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         -2045.511,
-        -2531.4382
+        -2531.4382,
+        65.4604
     ],
     "nexus_id": "25975",
     "description": "A hidden weapons stash belonging to a couple of enterprising Barghest soldiers who thought they could sell guns right from under their boss's nose.",
@@ -16,5 +17,6 @@
         "apartment",
         "entropism",
         "neomilitarism"
-    ]
+    ],
+    "yaw": 44.1288
 }

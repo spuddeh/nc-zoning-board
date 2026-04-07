@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         -2704.004,
-        3551.6392
+        3551.6392,
+        4.1097
     ],
     "nexus_id": "22362",
     "description": "Custom home for V at the shore.",
@@ -15,5 +16,6 @@
     "tags": [
         "house",
         "neokitsch"
-    ]
+    ],
+    "yaw": -178.9004
 }

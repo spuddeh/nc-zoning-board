@@ -7,12 +7,14 @@
     "credits": "",
     "coordinates": [
         -1382.787,
-        1270.6815
+        1270.6815,
+        123.0649
     ],
     "nexus_id": "25651",
     "description": "Adds more interactions to the H10 apartment; coffee maker, whiskey & smoke spot, guitar, lean spot and more. Also restores access to the shooting range.",
     "category": "location-overhaul",
     "tags": [
         "apartment"
-    ]
+    ],
+    "yaw": 79.1
 }

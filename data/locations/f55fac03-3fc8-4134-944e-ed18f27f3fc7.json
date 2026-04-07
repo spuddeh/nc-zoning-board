@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         429.69156,
-        -2254.4045
+        -2254.4045,
+        50.5552
     ],
     "nexus_id": "24131",
     "description": "Flip an unfinished, empty room in a backwater building in Santo Domingo, turn it into an artistic apartment/safehouse.",
@@ -15,5 +16,6 @@
     "tags": [
         "apartment",
         "entropism"
-    ]
+    ],
+    "yaw": 140.6134
 }

@@ -7,12 +7,14 @@
     "credits": "",
     "coordinates": [
         1102.2855,
-        -3489.335
+        -3489.335,
+        180.161
     ],
     "nexus_id": "21549",
     "description": "Adds bed, mirror, shower, coffee, stash, closet interactions (and more) to Judy's lake shack.",
     "category": "location-overhaul",
     "tags": [
         "apartment"
-    ]
+    ],
+    "yaw": -51.3486
 }

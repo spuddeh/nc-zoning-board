@@ -6,12 +6,14 @@
     ],
     "coordinates": [
         1802.2341,
-        2248.4915
+        2248.4915,
+        180.254
     ],
     "nexus_id": "13821",
     "description": "Improves the realism of the new Aldecaldos camp (once they moved after the quest Queen of the Highway) with new content and QoL stuff.",
     "category": "location-overhaul",
     "tags": [
         "nomad"
-    ]
+    ],
+    "yaw": 141.1519
 }

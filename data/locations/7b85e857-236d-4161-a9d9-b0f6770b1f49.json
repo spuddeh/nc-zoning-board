@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         1817.5009,
-        2208.8804
+        2208.8804,
+        180.7776
     ],
     "nexus_id": "24336",
     "description": "Adds a new player home with interactions in the badlands, at the new Aldecaldos camp location.",
@@ -16,5 +17,6 @@
         "apartment",
         "neomilitarism",
         "nomad"
-    ]
+    ],
+    "yaw": 72.6
 }

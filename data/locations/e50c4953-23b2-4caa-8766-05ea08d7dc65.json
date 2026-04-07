@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         -2062.1663,
-        -2536.4302
+        -2536.4302,
+        23.007
     ],
     "nexus_id": "24246",
     "description": "Adds a new player home with interactions. Since this is Dogtown, you live in the gutter, literally. And no, Panam doesn't want to stay at your house... Oh well, it still beats waiting for elevators, and nobody expects you to pay rent!",
@@ -16,5 +17,6 @@
         "apartment",
         "entropism",
         "streetkid"
-    ]
+    ],
+    "yaw": 38.65
 }

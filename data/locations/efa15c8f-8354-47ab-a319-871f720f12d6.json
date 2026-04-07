@@ -8,7 +8,8 @@
     "credits": "CRF Team",
     "coordinates": [
         1062.8049,
-        1534.3431
+        1534.3431,
+        218.6555
     ],
     "nexus_id": "25556",
     "description": "North Oaks Resort and Casino. All new interior, updated access road, car park and Casino entrance - Phase 2 of the Casino Reforged project",
@@ -17,5 +18,6 @@
         "entertainment",
         "infrastructure",
         "neokitsch"
-    ]
+    ],
+    "yaw": 111.2147
 }

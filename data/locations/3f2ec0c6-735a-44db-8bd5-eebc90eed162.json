@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         -1542.6659,
-        1168.9929
+        1168.9929,
+        25.9911
     ],
     "nexus_id": "25954",
     "description": "cluttered netrunner's apartment above Misty's",
@@ -16,5 +17,6 @@
         "apartment",
         "kitsch",
         "streetkid"
-    ]
+    ],
+    "yaw": -168.1427
 }

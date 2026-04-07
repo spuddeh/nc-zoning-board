@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         -1521.956,
-        -973.40356
+        -973.40356,
+        86.9754
     ],
     "nexus_id": "26020",
     "description": "bold flashy neon glen redesign with wraparound balcony",
@@ -15,5 +16,6 @@
     "tags": [
         "apartment",
         "streetkid"
-    ]
+    ],
+    "yaw": -165.3515
 }

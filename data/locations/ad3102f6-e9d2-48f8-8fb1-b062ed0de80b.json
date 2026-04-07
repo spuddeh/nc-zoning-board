@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         429.9929,
-        -2143.5132
+        -2143.5132,
+        14.609
     ],
     "nexus_id": "25555",
     "description": "Adds a new player home with interactions, and a cat of course!",
@@ -16,5 +17,6 @@
         "apartment",
         "entropism",
         "streetkid"
-    ]
+    ],
+    "yaw": -81.6474
 }

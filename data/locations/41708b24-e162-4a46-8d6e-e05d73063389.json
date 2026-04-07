@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         -1033.4761,
-        1739.1152
+        1739.1152,
+        31.4029
     ],
     "nexus_id": "24416",
     "description": "This adds a new player home with working interactions, I think it fits the vibe quite well.",
@@ -16,5 +17,6 @@
         "apartment",
         "entropism",
         "streetkid"
-    ]
+    ],
+    "yaw": 99.3089
 }

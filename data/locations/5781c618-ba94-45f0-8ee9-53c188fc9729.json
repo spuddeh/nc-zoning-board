@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         -1525.6667,
-        -978.3817
+        -978.3817,
+        86.9754
     ],
     "nexus_id": "24075",
     "description": "Vanilla themed overhaul with added garage, landing pad, and balcony",
@@ -15,5 +16,6 @@
     "tags": [
         "apartment",
         "infrastructure"
-    ]
+    ],
+    "yaw": -165.3515
 }

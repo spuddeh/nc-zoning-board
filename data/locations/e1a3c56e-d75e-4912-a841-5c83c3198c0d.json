@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         581.5887,
-        -2195.1768
+        -2195.1768,
+        46.1298
     ],
     "nexus_id": "24483",
     "description": "WE'RE LIVIN' IN SANTO DOMINGO CHOOMBA!!! This mod reworks what was a closed off and destroyed building right by the gun store and ripperdoc at the bottom of the SanDom dam. Has native interactions.",
@@ -16,5 +17,6 @@
         "apartment",
         "entropism",
         "streetkid"
-    ]
+    ],
+    "yaw": 35.0064
 }

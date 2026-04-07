@@ -8,7 +8,8 @@
     "credits": "CRF team",
     "coordinates": [
         834.0293,
-        1434.8807
+        1434.8807,
+        210.0864
     ],
     "nexus_id": "25430",
     "description": "A collaborative project between multiple mods and authors to restore the North Oak Casino district. This mod grants physical access for V to the zone and introduces several area fixes and improvements.",
@@ -17,5 +18,6 @@
         "entertainment",
         "infrastructure",
         "neokitsch"
-    ]
+    ],
+    "yaw": -117.0652
 }
