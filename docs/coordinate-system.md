@@ -4,8 +4,10 @@
 
 The map uses two coordinate systems that are linked by a simple linear transform:
 
-1. **CET Coordinates** — the in-game `[X, Y]` values from Cyber Engine Tweaks
+1. **CET Coordinates** — the in-game `[X, Y, Z]` values from Cyber Engine Tweaks (X=east/west, Y=north/south, Z=height)
 2. **Leaflet Coordinates** — the `[lat, lng]` values used internally by the map
+
+**Note:** The 2D map placement uses only X and Y coordinates. The Z (height/elevation) coordinate is stored for reference and future features (like teleport scripts or 3D visualization). 
 
 Mod authors only need to know CET coordinates. The app handles the conversion automatically.
 
@@ -15,8 +17,8 @@ Mod authors only need to know CET coordinates. The app handles the conversion au
 
 1. Install [Cyber Engine Tweaks](https://www.nexusmods.com/cyberpunk2077/mods/107)
 2. In-game, press `~` to open the CET console
-3. Run: `print(GetPlayer():GetWorldPosition())`
-4. Note the **X** and **Y** values (ignore Z — that's height)
+3. Run: `local p,r = GetPlayer():GetWorldPosition(), GetPlayer():GetWorldOrientation():ToEulerAngles(); print(string.format("x=%.4f  y=%.4f  z=%.4f  yaw=%.4f", p.x, p.y, p.z, r.yaw))`
+4. Note the **X**, **Y**, **Z**, and **Yaw** values from the output
 
 ### Using Simple Location Manager (Recommended)
 

@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         -1277.292,
-        1515.3153
+        1515.3153,
+        45
     ],
     "nexus_id": "23150",
     "description": "After you helped her recover her databank and scrubbed her name from the corpos' systems,\nSandra Dorsett now considers you someone she can trust.\nAs a token of gratitude, she’s given you access to her hidden Kabuki apartment.\nA quiet, secure place — and more functional than it looks.",
@@ -16,5 +17,6 @@
         "apartment",
         "corpo",
         "neokitsch"
-    ]
+    ],
+    "yaw": -78.0868
 }

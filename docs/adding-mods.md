@@ -13,11 +13,12 @@ Each mod entry is stored in its own file in `data/locations/<UUID>.json`. The sc
     "id": "7e846694-63b3-4c92-8c3f-beea64344457",
     "name": "Human Readable Mod Name",
     "authors": ["AuthorName", "CoAuthor"],
-    "coordinates": [CET_X, CET_Y],
+    "coordinates": [CET_X, CET_Y, CET_Z],
     "nexus_id": "12345",
     "category": "apartment",
     "tags": ["apartment", "neokitsch"],
-    "description": "Brief description of what the mod does (max 500 chars)."
+    "description": "Brief description of what the mod does (max 500 chars).",
+    "yaw": 180.0
 }
 ```
 
@@ -26,7 +27,8 @@ Each mod entry is stored in its own file in `data/locations/<UUID>.json`. The sc
 | `id` | string | UUID v4 — **auto-generated**, do not set manually |
 | `name` | string | Min 3 characters |
 | `authors` | array[string] | Array of modding aliases |
-| `coordinates` | [number, number] | `[CET_X, CET_Y]` — in-game coordinates from CET |
+| `coordinates` | [number, number, number] | `[CET_X, CET_Y, CET_Z]` — in-game coordinates from CET (X=east/west, Y=north/south, Z=height) |
+| `yaw` | number | (Optional) Player facing direction in degrees from CET |
 | `nexus_id` | string | Numeric Nexus ID (Used to automatically fetch thumbnails/images via API), or "WIP" / "Dummy" |
 | `category` | string | `location-overhaul`, `new-location`, or `other` |
 | `tags` | array[string] | Tags from `data/tags.json` — see [Tag Registry](tags.md) for the full list |
@@ -35,7 +37,7 @@ Each mod entry is stored in its own file in `data/locations/<UUID>.json`. The sc
 
 ### Important: Coordinate Order
 
-Coordinates are stored as **`[X, Y]`** — matching the order CET reports them.
+Coordinates are stored as **`[X, Y, Z]`** — matching the order CET reports them. Z (height/elevation) is required for new submissions.
 
 ## Getting Your Coordinates
 
@@ -46,10 +48,10 @@ Coordinates are stored as **`[X, Y]`** — matching the order CET reports them.
 3. Run:
 
    ```lua
-   print(GetPlayer():GetWorldPosition())
+   local p,r = GetPlayer():GetWorldPosition(), GetPlayer():GetWorldOrientation():ToEulerAngles(); print(string.format("x=%.4f  y=%.4f  z=%.4f  yaw=%.4f", p.x, p.y, p.z, r.yaw))
    ```
 
-4. Note the **X** and **Y** values (ignore Z — that's height)
+4. Note the **X**, **Y**, **Z**, and **Yaw** values from the output
 
 ### Option 2: Simple Location Manager
 

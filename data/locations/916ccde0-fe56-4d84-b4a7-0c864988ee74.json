@@ -8,7 +8,8 @@
     "credits": "",
     "coordinates": [
         618.02,
-        -385.87253
+        -385.87253,
+        10.1301
     ],
     "nexus_id": "24887",
     "description": "Dedka Dealership is a location that allows you to purchase any vehicles physically at a showroom. Fully compatible with Virtual Car Dealer and Auto Fixer.",
@@ -16,5 +17,6 @@
     "tags": [
         "neokitsch",
         "shop"
-    ]
+    ],
+    "yaw": -78.946
 }

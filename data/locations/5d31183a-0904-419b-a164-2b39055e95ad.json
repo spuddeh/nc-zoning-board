@@ -7,12 +7,14 @@
     "credits": "",
     "coordinates": [
         -1169.7494,
-        1744.2937
+        1744.2937,
+        31.37
     ],
     "nexus_id": "24577",
     "description": "Adds a new purchasable apartment in Kabuki above a Tom's Diner.",
     "category": "new-location",
     "tags": [
         "apartment"
-    ]
+    ],
+    "yaw": -94.5946
 }

@@ -7,12 +7,14 @@
     "credits": "",
     "coordinates": [
         -1382.787,
-        1270.6815
+        1270.6815,
+        123.0649
     ],
     "nexus_id": "25426",
     "description": "A wood recolor/texture of the all redesigns of V's H10 Apartment.",
     "category": "location-overhaul",
     "tags": [
         "apartment"
-    ]
+    ],
+    "yaw": 79.1
 }

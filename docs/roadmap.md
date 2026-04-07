@@ -33,6 +33,7 @@ The NC Zoning Board is an interactive map and coordinate registry for Cyberpunk 
 - ✅ **Progressive cluster colours** — smooth colour gradients across cluster size tiers
 - ✅ **Less restrictive map panning** — map edge allows movement up to halfway across the screen
 - ✅ **Nexus API documentation** — full reference for queries, fields, caching, and known limitations
+- ✅ **Deep links to mod pins** — URL param (e.g. `?mod=13821`) jumps directly to a pin on the map; Copy Link button copies shareable URLs
 
 ### In Progress
 
@@ -43,7 +44,6 @@ The NC Zoning Board is an interactive map and coordinate registry for Cyberpunk 
 
 ### Medium Priority
 
-- [ ] **Deep links to mod pins** — URL param (e.g. `?mod=13821`) jumps directly to a pin on the map; useful for mod authors to link from Nexus
 - [ ] **Mobile layout / optimisations** — responsive sidebar and touch-friendly markers
 - [ ] **Sort controls** — ascending/descending toggles and additional sort methods for the locations list
 

@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         -2230.1956,
-        -2562.3433
+        -2562.3433,
+        80.301
     ],
     "nexus_id": "26694",
     "description": "A faithful overhaul of the original Dogtown hideout, rebuilt with enhanced detail, atmosphere and story-accurate adjustments.",
@@ -16,5 +17,6 @@
         "apartment",
         "entropism",
         "streetkid"
-    ]
+    ],
+    "yaw": -130.15
 }

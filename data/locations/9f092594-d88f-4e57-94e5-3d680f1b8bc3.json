@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         3631.5356,
-        -922.85297
+        -922.85297,
+        121.3324
     ],
     "nexus_id": "24436",
     "description": "Militech presence reported. Kill any hostiles found on arrival, and claim the place as your own.",
@@ -15,5 +16,6 @@
     "tags": [
         "corpo",
         "neomilitarism"
-    ]
+    ],
+    "yaw": -98.8279
 }

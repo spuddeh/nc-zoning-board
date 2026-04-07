@@ -69,6 +69,10 @@ NCZ.DESCRIPTION_MAX_LENGTH = 500;
 NCZ.COPY_FEEDBACK_MS = 2000;
 NCZ.SEARCH_DEBOUNCE_MS = 200;
 
+// Deep-linking / URL sharing
+NCZ.SITE_URL      = "https://nczoning.net";
+NCZ.URL_PARAM_MOD = "mod";
+
 // Map world extent (CET world-space)
 // Source: Realistic Map 8k mod terrain quad UV mapping — the authoritative projection
 // for the satellite image (night_city_8k_transparent.png) and terrain tiles.

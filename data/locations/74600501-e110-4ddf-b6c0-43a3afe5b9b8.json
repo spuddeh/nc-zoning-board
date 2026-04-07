@@ -7,12 +7,14 @@
     "credits": "",
     "coordinates": [
         -1715.6635,
-        169.74834
+        169.74834,
+        43.7
     ],
     "nexus_id": "15300",
     "description": "The Virtual Atelier Coiffeur for your pubic hair styles.",
     "category": "new-location",
     "tags": [
         "shop"
-    ]
+    ],
+    "yaw": 59.2
 }

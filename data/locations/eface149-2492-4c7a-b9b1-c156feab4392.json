@@ -7,12 +7,14 @@
     "credits": "",
     "coordinates": [
         -787.8556,
-        965.8151
+        965.8151,
+        12.0253
     ],
     "nexus_id": "19850",
     "description": "Adds a two car garage to V's Japantown Apartment. Removes construction debris and adds an accessible door inside added garage.",
     "category": "location-overhaul",
     "tags": [
         "infrastructure"
-    ]
+    ],
+    "yaw": -47.3554
 }

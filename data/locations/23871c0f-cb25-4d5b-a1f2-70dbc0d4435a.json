@@ -7,7 +7,8 @@
     "credits": "manavortex, Akiway",
     "coordinates": [
         -667.84863,
-        2668.6604
+        2668.6604,
+        53.9817
     ],
     "nexus_id": "26078",
     "description": "Photo studio and visual room to provide an optimal working space for all sorts of Virtual Photographers needs, get creative !",
@@ -17,5 +18,6 @@
         "nomad",
         "photos",
         "streetkid"
-    ]
+    ],
+    "yaw": 13.85
 }

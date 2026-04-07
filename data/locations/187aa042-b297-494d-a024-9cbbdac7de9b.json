@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         -1571.5,
-        1184.6
+        1184.6,
+        16.3697
     ],
     "nexus_id": "23350",
     "description": "This is a standalone version of the Gomorrah night club on Urmland Street.",
@@ -15,5 +16,6 @@
     "tags": [
         "entertainment",
         "shop"
-    ]
+    ],
+    "yaw": 166.35
 }

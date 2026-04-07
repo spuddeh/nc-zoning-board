@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         -399.0492,
-        1517.7688
+        1517.7688,
+        173.0869
     ],
     "nexus_id": "26587",
     "description": "A luxurious Japanese penthouse in the north tip of Japantown. This property hosts of many features, interactions, customization and is fully integrated into the game world with lower floors of the building.",
@@ -15,5 +16,6 @@
     "tags": [
         "house",
         "neokitsch"
-    ]
+    ],
+    "yaw": -129.9002
 }

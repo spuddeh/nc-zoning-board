@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         -1521.956,
-        -973.40356
+        -973.40356,
+        86.9754
     ],
     "nexus_id": "13051",
     "description": "Flashy eclectic Glen Apartment and/or lobby. Designed for an edgerunner who rocks both expensive and lowbrow tastes.",
@@ -15,5 +16,6 @@
     "tags": [
         "apartment",
         "kitsch"
-    ]
+    ],
+    "yaw": -165.3515
 }

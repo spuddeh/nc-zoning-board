@@ -6,8 +6,9 @@
     ],
     "credits": "",
     "coordinates": [
-        2579.4023,
-        -79.50955
+        2578.363,
+        -81.1889,
+        81.0385
     ],
     "nexus_id": "24587",
     "description": "\"EL CAPITAN\" will text you the details of the place. Low price for a place to stay low.",
@@ -16,5 +17,6 @@
         "entropism",
         "house",
         "nomad"
-    ]
+    ],
+    "yaw": 109.5
 }

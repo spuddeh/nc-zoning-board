@@ -7,12 +7,14 @@
     "credits": "",
     "coordinates": [
         -1844.6635,
-        -586.26587
+        -586.26587,
+        7.6054
     ],
     "nexus_id": "24248",
     "description": "This mod adds a few interactions to the Time Machine junk shop in Heywood.",
     "category": "location-overhaul",
     "tags": [
         "entertainment"
-    ]
+    ],
+    "yaw": -2.1383
 }

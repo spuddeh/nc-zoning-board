@@ -7,12 +7,14 @@
     "credits": "",
     "coordinates": [
         -1381.9185,
-        1271.4558
+        1271.4558,
+        123.0649
     ],
     "nexus_id": "7923",
     "description": "Overhaul of V's H10 apartment with additional netrunning room",
     "category": "location-overhaul",
     "tags": [
         "apartment"
-    ]
+    ],
+    "yaw": 79.1
 }

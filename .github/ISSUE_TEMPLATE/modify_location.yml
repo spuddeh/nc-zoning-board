@@ -47,21 +47,37 @@ body:
         **Option 1 — CET Console:**
         1. Stand at the location in-game
         2. Open the CET console (`~`)
-        3. Run: `print(GetPlayer():GetWorldPosition())`
-        4. Note the **X** and **Y** values (ignore Z — that's height)
+        3. Run: `local p,r = GetPlayer():GetWorldPosition(), GetPlayer():GetWorldOrientation():ToEulerAngles(); print(string.format("x=%.4f  y=%.4f  z=%.4f  yaw=%.4f", p.x, p.y, p.z, r.yaw))`
+        4. Note the **X**, **Y**, **Z**, and **Yaw** values from the output
 
         **Option 2 — Simple Location Manager:**
-        Install [Simple Location Manager](https://www.nexusmods.com/cyberpunk2077/mods/26454), save the location, then read the X/Y from the saved entry.
+        Install [Simple Location Manager](https://www.nexusmods.com/cyberpunk2077/mods/26454), save the location, then read the X, Y, Z from the saved entry. The BBCode Generator modal on the NC Zoning Board website also has this command ready to copy.
   - type: input
     id: coord_x
     attributes:
       label: X Coordinate
-      description: Required for updates. **Include the minus sign if the value is negative**. Leave blank if requesting removal.
+      description: "Pre-filled from the mod pin. Include the minus sign if the value is negative."
+    validations:
+      required: true
   - type: input
     id: coord_y
     attributes:
       label: Y Coordinate
-      description: Required for updates. **Include the minus sign if the value is negative**. Leave blank if requesting removal.
+      description: "Pre-filled from the mod pin. Include the minus sign if the value is negative."
+    validations:
+      required: true
+  - type: input
+    id: coord_z
+    attributes:
+      label: Z Coordinate
+      description: "Pre-filled from the mod pin. Height/elevation from CET."
+    validations:
+      required: true
+  - type: input
+    id: yaw
+    attributes:
+      label: Yaw
+      description: "Optional. Player facing direction in degrees. Leave blank to keep the existing value."
   - type: dropdown
     id: category
     attributes:
@@ -82,7 +98,11 @@ body:
   - type: markdown
     attributes:
       value: |
-        **Tags** — check all that apply. Leave all unchecked to keep the existing tags.
+        **Tags** — Due to limitations with how data is handled, selecting ***ANY*** tag below will remove and overwrite all existing tags. 
+        - To **add** a tag, you will need to re-select all existing tags and any new ones.
+        - To **remove** a tag, select the existing tags, and leave the tag you wish to be removed unchecked.
+        *Leave all boxes unchecked to keep the existing tags.*
+        
         > Style tags describe the aesthetic. Life-path tags describe who the mod suits. Utility tags describe the function.
   - type: checkboxes
     id: tags

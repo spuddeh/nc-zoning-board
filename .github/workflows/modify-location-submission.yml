@@ -43,6 +43,8 @@ jobs:
             const authorsRaw = extract('Author\\(s\\)');
             const coordXRaw = extract('X Coordinate');
             const coordYRaw = extract('Y Coordinate');
+            const coordZRaw = extract('Z Coordinate');
+            const yawRaw = extract('Yaw');
             const nexusLink = extract('Nexus Mods Link');
             const creditsRaw = extract('Credits');
             const credits = creditsRaw.toLowerCase() === '_no response_' ? '' : creditsRaw;
@@ -81,16 +83,36 @@ jobs:
               }
 
               const existingData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-              
-              // Prepare new data — keep existing coordinates if both are blank
-              let coordX, coordY;
-              if (!coordXRaw && !coordYRaw) {
-                [coordX, coordY] = existingData.coordinates;
+
+              // Prepare new data — keep existing coordinates if all are blank
+              let coordX, coordY, coordZ;
+              const hasNewCoords = coordXRaw || coordYRaw || coordZRaw;
+              if (!hasNewCoords) {
+                [coordX, coordY, coordZ] = existingData.coordinates;
               } else {
-                coordX = parseFloat(coordXRaw);
-                coordY = parseFloat(coordYRaw);
+                // Parse new values, or fall back to existing if blank
+                coordX = coordXRaw ? parseFloat(coordXRaw) : existingData.coordinates[0];
+                coordY = coordYRaw ? parseFloat(coordYRaw) : existingData.coordinates[1];
+                coordZ = coordZRaw ? parseFloat(coordZRaw) : (existingData.coordinates[2] || null);
+
                 if (isNaN(coordX) || isNaN(coordY)) {
                   core.setFailed(`Invalid coordinates: X=${coordXRaw}, Y=${coordYRaw}`);
+                  return;
+                }
+
+                // Z must be valid if provided
+                if (coordZRaw && isNaN(coordZ)) {
+                  core.setFailed(`Invalid Z coordinate: Z=${coordZRaw}`);
+                  return;
+                }
+              }
+
+              // Parse optional yaw (keep existing if blank)
+              let yaw = existingData.yaw || null;
+              if (yawRaw && yawRaw.toLowerCase() !== '_no response_') {
+                yaw = parseFloat(yawRaw);
+                if (isNaN(yaw)) {
+                  core.setFailed(`Invalid yaw: ${yawRaw}`);
                   return;
                 }
               }
@@ -121,17 +143,27 @@ jobs:
                 ? categoryRaw
                 : existingData.category;
 
+              // Prepare coordinates array: include Z if it's defined, otherwise just [X, Y]
+              const coordinates = (coordZ != null && !isNaN(coordZ))
+                ? [coordX, coordY, coordZ]
+                : [coordX, coordY];
+
               const updatedMod = {
                 id: locationId,
                 name: modName || existingData.name,
                 authors: authors,
                 credits: credits || existingData.credits || '',
-                coordinates: [coordX, coordY],
+                coordinates: coordinates,
                 nexus_id: nexusId,
                 description: description || existingData.description,
                 category: category,
                 tags: tags
               };
+
+              // Add optional yaw if it's defined
+              if (yaw !== null && !isNaN(yaw)) {
+                updatedMod.yaw = yaw;
+              }
 
               // Basic Validation against schema logic could go here
               // For now we write it back

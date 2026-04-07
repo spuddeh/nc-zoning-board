@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         -892.55206,
-        136.5025
+        136.5025,
+        17.2291
     ],
     "nexus_id": "27849",
     "description": "cozy brick rocker apartment",
@@ -15,5 +16,6 @@
     "tags": [
         "apartment",
         "streetkid"
-    ]
+    ],
+    "yaw": -148.6441
 }

@@ -181,6 +181,7 @@ NCZ.fetchNexusTaggedMods = async function (existingNexusIds, validTagNames) {
           authors: allAuthors,
           ...(parsed.credits ? { credits: parsed.credits } : {}),
           coordinates: parsed.coordinates,
+          ...(parsed.yaw !== null ? { yaw: parsed.yaw } : {}),
           nexus_id: nexusId,
           description,
           category: parsed.category,

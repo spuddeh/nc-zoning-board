@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         -1520.9395,
-        1245.1738
+        1245.1738,
+        23.101
     ],
     "nexus_id": "25193",
     "description": "Adds a new player home where there was nothing before, so this will work at any time. Located right across the street from the Bradbury & Buran fast travel point by Viktors clinic.",
@@ -16,5 +17,6 @@
         "apartment",
         "entropism",
         "streetkid"
-    ]
+    ],
+    "yaw": -143.3425
 }

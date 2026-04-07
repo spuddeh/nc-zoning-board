@@ -924,6 +924,18 @@ body.cluster-panel-resizing * {
     mask-image: url("../img/icon/edit.svg");
 }
 
+.ui-popup-action-link-copy-link .ui-popup-action-link-icon {
+    background-color: currentColor;
+    -webkit-mask-image: url("../img/icon/link.svg");
+    mask-image: url("../img/icon/link.svg");
+}
+
+.ui-popup-action-link-copy-cmd .ui-popup-action-link-icon {
+    background-color: currentColor;
+    -webkit-mask-image: url("../img/icon/copy.svg");
+    mask-image: url("../img/icon/copy.svg");
+}
+
 .ui-popup-action-link-nexus {
     font-size: var(--text-md);
     padding: var(--space-xs) var(--space-lg);
@@ -1071,6 +1083,10 @@ body.cluster-panel-resizing * {
         }
 
         .ui-popup-action-link-edit {
+            flex: 0 0 auto;
+        }
+
+        .ui-popup-action-link-copy-link {
             flex: 0 0 auto;
         }
     }
@@ -1846,6 +1862,29 @@ body::before {
         color: var(--primary) !important;
     }
 }
+
+.bbcode-cet-command-block {
+    display: flex;
+    gap: var(--space-sm);
+    align-items: flex-start;
+    background: var(--black-50);
+    border: var(--ui-border-thin) solid var(--dark-accent);
+    padding: var(--space-md);
+    margin: var(--space-md) 0;
+    border-radius: 2px;
+
+    code {
+        flex: 1;
+        color: var(--secondary);
+        font-family: monospace;
+        font-size: var(--text-sm);
+        overflow-x: auto;
+        white-space: pre-wrap;
+        word-break: break-all;
+        line-height: var(--lh-relaxed);
+    }
+}
+
 
 /* ── BBCode Steps & Notes ────────────────────────────────────────── */
 .bbcode-doc-link {

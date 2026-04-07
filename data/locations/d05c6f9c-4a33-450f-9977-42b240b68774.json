@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         -1375.9819,
-        1287.8365
+        1287.8365,
+        123.0824
     ],
     "nexus_id": "19792",
     "description": "Overhauls megabuilding H10's exterior elevator, adding additional stops and floors",
@@ -15,5 +16,6 @@
     "tags": [
         "infrastructure",
         "photos"
-    ]
+    ],
+    "yaw": -95.3
 }

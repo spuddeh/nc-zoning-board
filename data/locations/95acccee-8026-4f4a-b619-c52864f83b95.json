@@ -6,8 +6,9 @@
     ],
     "credits": "",
     "coordinates": [
-        -1883.6686,
-        -1041.3093
+        -1875.4535,
+        -1037.4564,
+        40.6079
     ],
     "nexus_id": "26263",
     "description": "A new apartment now available in Heywood. Featuring several custom interactable items and a store located on the ground floor.",
@@ -16,5 +17,6 @@
         "apartment",
         "entropism",
         "shop"
-    ]
+    ],
+    "yaw": -91.8323
 }
