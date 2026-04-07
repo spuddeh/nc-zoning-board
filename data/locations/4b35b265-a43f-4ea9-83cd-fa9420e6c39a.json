@@ -6,9 +6,9 @@
     ],
     "credits": "",
     "coordinates": [
-        -1243.8295,
-        -992.508,
-        31.7743
+        -1264.1458,
+        -1001.2848,
+        32.2963
     ],
     "nexus_id": "27269",
     "description": "This mod adds a two-story apartment above the Coyote Cojo's bar, built completely from scratch and with native interactions.",
@@ -18,5 +18,5 @@
         "entropism",
         "streetkid"
     ],
-    "yaw": 118
+    "yaw": -7.35
 }
