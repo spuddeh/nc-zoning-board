@@ -6,8 +6,9 @@
     ],
     "credits": "",
     "coordinates": [
-        -1487.5,
-        1196.8
+        -1485.663,
+        1196.6736,
+        19.1841
     ],
     "nexus_id": "22048",
     "description": "Marmur Bank has opened up in Night City!",
@@ -16,5 +17,6 @@
         "corpo",
         "neokitsch",
         "shop"
-    ]
+    ],
+    "yaw": 122.4
 }

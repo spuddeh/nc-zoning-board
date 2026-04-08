@@ -6,13 +6,15 @@
     ],
     "credits": "",
     "coordinates": [
-        -626.3,
-        875.4
+        -621.1278,
+        879.801,
+        23.906
     ],
     "nexus_id": "19133",
     "description": "This is a minimal mod that changes some things with the Bliss club on Jigjig street.",
     "category": "location-overhaul",
     "tags": [
         "entertainment"
-    ]
+    ],
+    "yaw": 145
 }

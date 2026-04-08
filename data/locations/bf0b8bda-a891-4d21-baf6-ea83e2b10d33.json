@@ -6,13 +6,15 @@
     ],
     "credits": "",
     "coordinates": [
-        -1424.7025,
-        1287.8915
+        -1449.1093,
+        1282.1422,
+        123.0824
     ],
     "nexus_id": "20892",
     "description": "Pretty much just fills out some of the empty spaces and adds some lights in MegaBuilding H-10 so it doesn't feel as empty and dark.",
     "category": "location-overhaul",
     "tags": [
         "infrastructure"
-    ]
+    ],
+    "yaw": 0.8092075
 }

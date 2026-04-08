@@ -6,8 +6,9 @@
     ],
     "credits": "",
     "coordinates": [
-        -1018.9749,
-        1788.7262
+        -1018.585,
+        1789.1313,
+        45.6686
     ],
     "nexus_id": "22546",
     "description": "A highly modular hideout home for V made using World Builder.",
@@ -16,5 +17,6 @@
         "apartment",
         "entropism",
         "neomilitarism"
-    ]
+    ],
+    "yaw": 59.6
 }

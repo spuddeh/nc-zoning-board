@@ -6,13 +6,15 @@
     ],
     "credits": "",
     "coordinates": [
-        -1424.7025,
-        1287.8915
+        -1449.1093,
+        1282.1422,
+        123.0824
     ],
     "nexus_id": "20986",
     "description": "This mod improve the overhaul experience of the Megabuilding H10 by adding a tone of props and bring life in some of the dead areas of the building.\n\nThis is in addition to the H10 Megabuilding Unlocked and H10 Enhanced mod.",
     "category": "location-overhaul",
     "tags": [
         "infrastructure"
-    ]
+    ],
+    "yaw": 0.8092075
 }
