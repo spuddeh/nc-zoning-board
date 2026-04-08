@@ -31,9 +31,11 @@ NCZ.toNexusUid = function (modId) {
 };
 
 // Forward: CET (x, y) → Leaflet [lat, lng]
+// Derived from the Realistic Map 8k mod terrain quad UV mapping.
+// See docs/coordinate-system.md for the full derivation.
 NCZ.cetToLeaflet = function (cetX, cetY) {
-  const lat = (NCZ.CET_TO_LEAFLET_Y_SCALE * cetY) + NCZ.CET_TO_LEAFLET_Y_OFFSET;
-  const lng = (NCZ.CET_TO_LEAFLET_X_SCALE * cetX) + NCZ.CET_TO_LEAFLET_X_OFFSET;
+  const lng = (cetX - NCZ.WORLD_MIN_X) / (NCZ.WORLD_MAX_X - NCZ.WORLD_MIN_X) * 256;
+  const lat = (cetY - NCZ.WORLD_MAX_Y) / (NCZ.WORLD_MAX_Y - NCZ.WORLD_MIN_Y) * 256;
   return [lat, lng];
 };
 
