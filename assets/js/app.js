@@ -537,14 +537,7 @@ async function initMap() {
     map.setMaxBounds(pannableBounds);
   }
 
-  L.tileLayer("assets/tiles/{z}/{x}/{y}.png", {
-    minZoom: 0,
-    maxNativeZoom: 5,
-    maxZoom: 8,
-    tileSize: 256,
-    noWrap: true,
-    bounds: mapBounds,
-  }).addTo(map);
+  L.imageOverlay("assets/img/satellite_8k.webp", mapBounds).addTo(map);
 
   map.invalidateSize();
   map.fitBounds(mapBounds);
