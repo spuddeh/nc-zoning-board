@@ -73,14 +73,36 @@ NCZ.SEARCH_DEBOUNCE_MS = 200;
 NCZ.SITE_URL      = "https://nczoning.net";
 NCZ.URL_PARAM_MOD = "mod";
 
-// CET <-> Leaflet transform calibration
-NCZ.CET_TO_LEAFLET_X_SCALE = 0.0208623;
-NCZ.CET_TO_LEAFLET_Y_SCALE = 0.02101335;
-NCZ.CET_TO_LEAFLET_X_OFFSET = 132.8016;
-NCZ.CET_TO_LEAFLET_Y_OFFSET = -93.68566;
+// Map world extent (CET world-space)
+// Source: Realistic Map 8k mod terrain quad UV mapping — the authoritative projection
+// for the satellite image (night_city_8k_transparent.png) and terrain tiles.
+NCZ.WORLD_MIN_X = -6298;
+NCZ.WORLD_MAX_X =  5815;
+NCZ.WORLD_MIN_Y = -7684;
+NCZ.WORLD_MAX_Y =  4427;
+
+// CET <-> Leaflet transform derived coefficients (from WORLD_MIN/MAX)
+// Used by the scale indicator for Leaflet distance -> CET meters conversion
+NCZ.CET_TO_LEAFLET_X_SCALE = 256 / (NCZ.WORLD_MAX_X - NCZ.WORLD_MIN_X);  // 0.02113734
+NCZ.CET_TO_LEAFLET_Y_SCALE = 256 / (NCZ.WORLD_MAX_Y - NCZ.WORLD_MIN_Y);  // 0.02113385
+NCZ.CET_TO_LEAFLET_X_OFFSET = -NCZ.WORLD_MIN_X * NCZ.CET_TO_LEAFLET_X_SCALE;
+NCZ.CET_TO_LEAFLET_Y_OFFSET = -NCZ.WORLD_MAX_Y * NCZ.CET_TO_LEAFLET_Y_SCALE;
 // Set this if you want to calibrate CET units to physical meters.
 // Default assumes 1 CET unit ~= 1 meter.
 NCZ.CET_UNITS_PER_METER = 1;
+
+// District outline colours (from game Ink styles — docs/district-hierarchy.md)
+NCZ.DISTRICT_COLORS = {
+  city_center:    "#ffd741",  // MainColors.Yellow
+  watson:         "#ff3e34",  // MainColors.CombatRed
+  westbrook:      "#ff5100",  // MainColors.Orange
+  heywood:        "#1ded83",  // MainColors.Green
+  santo_domingo:  "#5ef6ff",  // MainColors.Blue
+  pacifica:       "#ff6158",  // MainColors.Red
+  dogtown:        "#00a32c",  // MainColors.DarkGreen
+  ncx_morro_rock: "#349197",  // MainColors.MildBlue
+  badlands:       "#c882ff",  // Bright violet — distinct from all other districts, visible on desert
+};
 
 // LocalStorage cache keys & TTLs
 NCZ.THEME_PREFERENCE_KEY = "nc_theme_id";

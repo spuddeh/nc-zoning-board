@@ -1,0 +1,15 @@
+=== Building Position Analysis ===
+Total instances (all districts): 151439
+
+Overall X range: -6430.84 -> 5835.88
+Overall Y range: -6943.12 -> 4881.79
+
+Per-district breakdown:
+  westbrook             X [ -1176.2,   1048.1]  Y [  -557.8,   2153.7]  n=20630
+  city_center           X [ -2880.8,   -800.9]  Y [  -423.9,    756.3]  n=26196
+  heywood               X [ -2657.1,   -439.8]  Y [ -1421.0,    369.3]  n=27508
+  pacifica              X [ -6430.8,   5835.9]  Y [ -6943.1,   4881.8]  n=17212
+  santo_domingo         X [ -1339.7,   1528.7]  Y [ -3486.8,   -241.1]  n=19079
+  watson                X [ -3233.8,      9.2]  Y [   616.6,   3906.5]  n=28544
+  ep1_dogtown           X [ -2521.6,  -1025.5]  Y [ -3121.7,  -1803.6]  n=7013
+  ep1_spaceport         X [ -5368.6,  -2980.5]  Y [  -565.1,   1213.0]  n=5257

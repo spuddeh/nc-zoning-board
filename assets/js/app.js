@@ -142,6 +142,9 @@ document.addEventListener("DOMContentLoaded", () => {
         // Ignore storage write failures (private mode / restricted browsers).
       }
     }
+
+    // Clear overlay tile cache — theme colours changed
+    if (NCZ._clearOverlayCache) NCZ._clearOverlayCache();
   }
 
   const initialThemeId = getInitialThemeId();
@@ -537,14 +540,62 @@ async function initMap() {
     map.setMaxBounds(pannableBounds);
   }
 
-  L.tileLayer("assets/tiles/{z}/{x}/{y}.png", {
-    minZoom: 0,
-    maxNativeZoom: 5,
-    maxZoom: 8,
-    tileSize: 256,
-    noWrap: true,
-    bounds: mapBounds,
-  }).addTo(map);
+
+  // ── Map controls (base layer + overlay toggles) ───────────────────
+  const MapControls = L.Control.extend({
+    options: { position: "bottomright" },
+    onAdd: function () {
+      const container = L.DomUtil.create("div", "leaflet-bar ncz-map-controls");
+      L.DomEvent.disableClickPropagation(container);
+      L.DomEvent.disableScrollPropagation(container);
+
+      const typeRow = L.DomUtil.create("div", "ncz-control-row", container);
+      const typeSelect = L.DomUtil.create("select", "ncz-control-select", typeRow);
+      typeSelect.innerHTML = '<option value="satellite">SAT</option><option value="terrain">SCHEMA</option>';
+      typeSelect.title = "Switch base map layer";
+
+      const toggleRow = L.DomUtil.create("div", "ncz-control-row ncz-control-toggles", container);
+      const overlayDefs = [
+        { id: "roads", label: "RD", title: "Toggle roads" },
+        { id: "buildings", label: "BD", title: "Toggle buildings" },
+        { id: "metro", label: "MT", title: "Toggle metro" },
+        { id: "districts", label: "DT", title: "Toggle districts" },
+        { id: "contours", label: "CN", title: "Toggle contours" },
+      ];
+      const toggleBtns = {};
+
+      for (const od of overlayDefs) {
+        const btn = L.DomUtil.create("a", "ncz-overlay-btn", toggleRow);
+        btn.href = "#";
+        btn.textContent = od.label;
+        btn.title = od.title;
+        btn.dataset.overlay = od.id;
+        L.DomEvent.on(btn, "click", function (e) {
+          L.DomEvent.preventDefault(e);
+          const active = this.classList.toggle("active");
+          NCZ.toggleOverlay(this.dataset.overlay, active);
+        });
+        // Districts active by default on both map types
+        if (od.id === "districts") btn.classList.add("active");
+        toggleBtns[od.id] = btn;
+      }
+
+      typeSelect.addEventListener("change", function () {
+        NCZ.switchBaseLayer(this.value);
+        const isSchematic = this.value === "terrain";
+        for (const od of overlayDefs) {
+          toggleBtns[od.id].classList.toggle("active", isSchematic);
+        }
+      });
+
+      return container;
+    },
+  });
+  new MapControls().addTo(map);
+
+  // ── Initialize overlay module (all layer logic lives in overlay.js) ─
+  NCZ.initOverlays(map, mapBounds);
+
 
   map.invalidateSize();
   map.fitBounds(mapBounds);
