@@ -7,12 +7,14 @@
     "credits": "",
     "coordinates": [
         -1397.5463,
-        -2119.9438
+        -2119.9438,
+        68.871
     ],
     "nexus_id": "28024",
     "description": "Unlocked all secret and locked areas of the Dogtown Stadium with minor fixes and additions.",
     "category": "location-overhaul",
     "tags": [
         "entertainment"
-    ]
+    ],
+    "yaw": -57.5
 }

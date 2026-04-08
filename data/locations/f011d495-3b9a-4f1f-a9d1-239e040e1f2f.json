@@ -7,12 +7,14 @@
     "credits": "",
     "coordinates": [
         -1716.1333,
-        2202.5403
+        2202.5403,
+        18.2
     ],
     "nexus_id": "27678",
     "description": "WELCOME BACK TO HELL! While Maelstorm Crimes are soaring, so is V on their way up to the Newly Enhanced Club! Fitted with Red Lights to match the Gangs Theme, Data Screens displaying the Gangs Illicit activities on the Black Market and even a MAXXED OUT Club Vibe, Thanks to the BURNING Passion of DJ Tinnitus endorsing the Club Renovations!",
     "category": "location-overhaul",
     "tags": [
         "entertainment"
-    ]
+    ],
+    "yaw": 148.43
 }

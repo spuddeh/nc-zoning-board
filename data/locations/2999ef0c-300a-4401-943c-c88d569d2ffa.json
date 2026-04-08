@@ -7,12 +7,14 @@
     "credits": "",
     "coordinates": [
         -1932.2175,
-        -42.149864
+        -42.149864,
+        -1.5324
     ],
     "nexus_id": "27207",
     "description": "Unlocked all the locked areas of the club, removed and fixed the broken stuff and added some.",
     "category": "location-overhaul",
     "tags": [
         "entertainment"
-    ]
+    ],
+    "yaw": -92.7
 }
