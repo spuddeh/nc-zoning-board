@@ -6,8 +6,9 @@
     ],
     "credits": "",
     "coordinates": [
-        -771.9979,
-        2968.7554
+        -716.1071,
+        2940.1138,
+        27.3555
     ],
     "nexus_id": "24713",
     "description": "Garage Car Shop modification and Player Home.",
@@ -16,5 +17,6 @@
         "apartment",
         "infrastructure",
         "shop"
-    ]
+    ],
+    "yaw": -169.65
 }

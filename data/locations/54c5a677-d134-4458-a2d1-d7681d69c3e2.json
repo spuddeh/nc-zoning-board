@@ -6,8 +6,9 @@
     ],
     "credits": "",
     "coordinates": [
-        -1293.3,
-        -274.9
+        -1272.2385,
+        -261.805,
+        55.7316
     ],
     "nexus_id": "24779",
     "description": "Militech regional headquarters has opened its top floor lounge, showroom and AV Port to the people of Night City!",
@@ -15,5 +16,6 @@
     "tags": [
         "corpo",
         "neomilitarism"
-    ]
+    ],
+    "yaw": -20.7352
 }

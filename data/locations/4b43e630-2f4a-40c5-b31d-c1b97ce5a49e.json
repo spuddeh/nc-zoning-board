@@ -6,8 +6,9 @@
     ],
     "credits": "",
     "coordinates": [
-        -45.621742,
-        -1767.6816
+        -49.3674,
+        -1768.9927,
+        -5.3439
     ],
     "nexus_id": "28381",
     "description": "Yoooooo Chooms Im back with another trash bin of an apartment for y'all, this time im taking you straight to the dirty depths of Santo Domingo, where 6th street runs the whole block, and you have kids outside your front door with firearms. What more could a tenant want in Night City !",
@@ -16,5 +17,6 @@
         "apartment",
         "entropism",
         "streetkid"
-    ]
+    ],
+    "yaw": -36.4336
 }

@@ -5,8 +5,9 @@
         "Kaoziun"
     ],
     "coordinates": [
-        -2410.2422,
-        109.02734
+        -2455.6133,
+        109.1816,
+        36.4526
     ],
     "nexus_id": "26023",
     "description": "V's Edgerunners mansion relocated and edited.",
@@ -14,5 +15,6 @@
     "tags": [
         "house",
         "neokitsch"
-    ]
+    ],
+    "yaw": 171.1977
 }
