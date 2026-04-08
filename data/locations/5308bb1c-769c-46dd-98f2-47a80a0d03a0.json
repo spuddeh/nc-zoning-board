@@ -6,13 +6,15 @@
     ],
     "credits": "",
     "coordinates": [
-        -1578.6,
-        1197.2
+        -1574.739,
+        1197.2,
+        17.0283
     ],
     "nexus_id": "23908",
     "description": "This is a standalone version of the arcade on Urmland Street.",
     "category": "new-location",
     "tags": [
         "entertainment"
-    ]
+    ],
+    "yaw": 128.2393
 }

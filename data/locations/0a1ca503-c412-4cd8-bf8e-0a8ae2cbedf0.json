@@ -6,8 +6,9 @@
     ],
     "credits": "",
     "coordinates": [
-        -2248.0488,
-        -1148.6309
+        -2252.9622,
+        -1143.7826,
+        40.74
     ],
     "nexus_id": "26708",
     "description": "Treat yourself to a refined, exclusive apartment in the Las Palapas tower, with a great view of the Wellsprings beach and all the modern comforts of Night City.",
@@ -15,5 +16,6 @@
     "tags": [
         "house",
         "neokitsch"
-    ]
+    ],
+    "yaw": 125.1237
 }
