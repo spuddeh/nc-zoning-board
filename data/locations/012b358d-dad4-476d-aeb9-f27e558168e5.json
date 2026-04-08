@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         -1888.7188,
-        -1826.6836
+        -1826.6836,
+        40.3663
     ],
     "nexus_id": "27419",
     "description": "A curated Radio EXT station with stream-safe music and original DJ voice work. Featuring a fully realized club and player home in Pacifica, built with World Builder. Optional lightweight AMM version included.",
@@ -16,5 +17,6 @@
         "apartment",
         "entertainment",
         "entropism"
-    ]
+    ],
+    "yaw": -68.5
 }

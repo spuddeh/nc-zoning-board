@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         -1098.735,
-        1455.1047
+        1455.1047,
+        4.3038
     ],
     "nexus_id": "21794",
     "description": "Shaitan, one of the legends of Night City, returns to the streets, this time with his best merchandise, including weapons, attachments, and mods.",
@@ -15,5 +16,6 @@
     "tags": [
         "neomilitarism",
         "shop"
-    ]
+    ],
+    "yaw": -120
 }

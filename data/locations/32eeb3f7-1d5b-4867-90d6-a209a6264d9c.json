@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         -2011.4167,
-        -2010.3208
+        -2010.3208,
+        22.5533
     ],
     "nexus_id": "10566",
     "description": "Small garage/apartment and rooftop cabana",
@@ -15,5 +16,6 @@
     "tags": [
         "apartment",
         "photos"
-    ]
+    ],
+    "yaw": -120
 }

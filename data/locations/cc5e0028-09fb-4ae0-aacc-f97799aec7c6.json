@@ -7,12 +7,14 @@
     "credits": "",
     "coordinates": [
         -1442.9069,
-        1011.4383
+        1011.4383,
+        16.825
     ],
     "nexus_id": "27242",
     "description": "Unlocked and enhanced the look of Afterlife club.",
     "category": "location-overhaul",
     "tags": [
         "entertainment"
-    ]
+    ],
+    "yaw": 173.09
 }

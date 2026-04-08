@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         -1458.9916,
-        1227.6635
+        1227.6635,
+        22.2293
     ],
     "nexus_id": "21152",
     "description": "This mod reopen the police station visible in the E3 48 minutes gameplay video.",
@@ -16,5 +17,6 @@
         "corpo",
         "infrastructure",
         "neomilitarism"
-    ]
+    ],
+    "yaw": 127.6169
 }

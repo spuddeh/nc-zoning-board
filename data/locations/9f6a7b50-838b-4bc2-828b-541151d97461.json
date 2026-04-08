@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         -78.23038,
-        -117.377304
+        -117.377304,
+        111.1668
     ],
     "nexus_id": "23424",
     "description": "After the events with SSI and their election win, the Peralezes decided it was time for a change.\nThey moved to a new home, leaving this one behind… and in a gesture of gratitude, gifted it to you, V, for all you did.\nIt’s yours now — a quiet place in the hills… mostly quiet.\nBut tell me, have you noticed that he is watching",
@@ -16,5 +17,6 @@
         "apartment",
         "corpo",
         "neokitsch"
-    ]
+    ],
+    "yaw": 145.8
 }
