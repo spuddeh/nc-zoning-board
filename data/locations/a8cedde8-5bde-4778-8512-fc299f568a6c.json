@@ -6,8 +6,9 @@
     ],
     "credits": "",
     "coordinates": [
-        -1938.4796,
-        -1671.82
+        -1930.3829,
+        -1675.9966,
+        12.9459
     ],
     "nexus_id": "26964",
     "description": "grungey hideout at pacifica pier",
@@ -15,5 +16,6 @@
     "tags": [
         "entropism",
         "house"
-    ]
+    ],
+    "yaw": 66.3221
 }
