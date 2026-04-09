@@ -514,30 +514,37 @@ async function initMap() {
   // Add zoom control manually to the bottom right
   L.control.zoom({ position: "bottomright" }).addTo(map);
 
-  const maxZoom = 5;
-  const southWest = map.unproject([0, 8192], maxZoom);
-  const northEast = map.unproject([8192, 0], maxZoom);
+  const maxNativeZoom = 6;
+  const southWest = map.unproject([0, 16384], maxNativeZoom);
+  const northEast = map.unproject([16384, 0], maxNativeZoom);
   const mapBounds = new L.LatLngBounds(southWest, northEast);
   const panEdgeFraction = 0.5; // Let each map edge travel about halfway toward screen center.
 
   function updatePannableBounds() {
     const size = map.getSize();
-    const scaleToMaxZoom = map.getZoomScale(maxZoom, map.getZoom());
+    const scaleToMaxZoom = map.getZoomScale(maxNativeZoom, map.getZoom());
     const padX = size.x * panEdgeFraction * scaleToMaxZoom;
     const padY = size.y * panEdgeFraction * scaleToMaxZoom;
-    const mapSouthWestPoint = map.project(mapBounds.getSouthWest(), maxZoom);
-    const mapNorthEastPoint = map.project(mapBounds.getNorthEast(), maxZoom);
+    const mapSouthWestPoint = map.project(mapBounds.getSouthWest(), maxNativeZoom);
+    const mapNorthEastPoint = map.project(mapBounds.getNorthEast(), maxNativeZoom);
 
     const pannableSouthWest = L.point(mapSouthWestPoint.x - padX, mapSouthWestPoint.y + padY);
     const pannableNorthEast = L.point(mapNorthEastPoint.x + padX, mapNorthEastPoint.y - padY);
     const pannableBounds = L.latLngBounds(
-      map.unproject(pannableSouthWest, maxZoom),
-      map.unproject(pannableNorthEast, maxZoom),
+      map.unproject(pannableSouthWest, maxNativeZoom),
+      map.unproject(pannableNorthEast, maxNativeZoom),
     );
     map.setMaxBounds(pannableBounds);
   }
 
-  L.imageOverlay("assets/img/satellite_8k.webp", mapBounds).addTo(map);
+  L.tileLayer("assets/tiles/{z}/{x}/{y}.webp", {
+    minZoom: 0,
+    maxNativeZoom: 6,
+    maxZoom: 8,
+    tileSize: 256,
+    noWrap: true,
+    bounds: mapBounds,
+  }).addTo(map);
 
   map.invalidateSize();
   map.fitBounds(mapBounds);

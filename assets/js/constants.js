@@ -75,7 +75,7 @@ NCZ.URL_PARAM_MOD = "mod";
 
 // Map world extent (CET world-space)
 // Source: Realistic Map 8k mod terrain quad UV mapping — the authoritative projection
-// for the satellite image (satellite_8k.webp) and terrain tiles.
+// for the satellite tile layer (16k WebP tiles) and terrain tiles.
 // See docs/coordinate-system.md for derivation and why TweakDB bounds differ.
 NCZ.WORLD_MIN_X = -6298;
 NCZ.WORLD_MAX_X =  5815;
