@@ -234,6 +234,7 @@
             <ul id="cluster-mod-list"></ul>
         </div>
         <div id="map"></div>
+        <div id="map-3d" style="display: none;"></div>
     </main>
 
     <!-- Leaflet JS -->
@@ -459,9 +460,21 @@
         </div>
     </div>
 
+    <!-- Three.js import map (module scripts below resolve from here) -->
+    <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+      }
+    }
+    </script>
+
     <!-- App Logic -->
     <script src="assets/js/utils.js"></script>
     <script src="assets/js/services.js"></script>
+    <script type="module" src="assets/js/three-scene.js"></script>
+    <script type="module" src="assets/js/three-markers.js"></script>
     <script src="assets/js/app.js"></script>
 </body>
 

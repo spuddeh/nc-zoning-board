@@ -479,11 +479,7 @@ function positionDynamicPopup(map, popup) {
   popupEl.classList.add(`ncz-popup-${direction}`);
 }
 
-function isRecentlyUpdated(mod) {
-  if (!mod._updatedAt) return false;
-  const cutoff = Date.now() - NCZ.RECENTLY_UPDATED_DAYS * 86400000;
-  return new Date(mod._updatedAt).getTime() > cutoff;
-}
+// isRecentlyUpdated moved to NCZ.isRecentlyUpdated in utils.js
 
 async function initMap() {
   const calibratedSimpleCrs = L.extend({}, L.CRS.Simple, {
@@ -935,7 +931,7 @@ async function initMap() {
           <span class="cluster-mod-layout">
             ${thumbMarkup}
             <span class="cluster-mod-content">
-              <span class="cluster-mod-name">${NCZ.escapeHtml(mod.name)}${isRecentlyUpdated(mod) ? ` <span class="badge-updated" title="Updated on Nexus within the last ${NCZ.RECENTLY_UPDATED_DAYS} days">${NCZ.UPDATED_LABEL}</span>` : ""}</span>
+              <span class="cluster-mod-name">${NCZ.escapeHtml(mod.name)}${NCZ.isRecentlyUpdated(mod) ? ` <span class="badge-updated" title="Updated on Nexus within the last ${NCZ.RECENTLY_UPDATED_DAYS} days">${NCZ.UPDATED_LABEL}</span>` : ""}</span>
               <span class="cluster-mod-separator"></span>
               <span class="cluster-mod-meta">by ${NCZ.escapeHtml(mod.authors.join(", "))}</span>
               <span class="cluster-mod-tags">
@@ -1052,8 +1048,7 @@ async function initMap() {
 
     mods.sort(NCZ.sortModsByUpdated).forEach((mod) => {
         const [lat, lng] = NCZ.cetToLeaflet(mod.coordinates[0], mod.coordinates[1]);
-        const catStyle =
-          NCZ.CATEGORY_STYLES[mod.category] || NCZ.CATEGORY_STYLES["other"];
+        const { catStyle, popupHtml, thumbSrc, fullSrc } = NCZ.prepareModRenderData(mod, nexusThumbs, tagsDict);
 
         // Custom Marker Icon (Diamond/Square for Night Corp)
         const icon = L.divIcon({
@@ -1081,100 +1076,10 @@ async function initMap() {
           pinTooltip.hide(marker);
         });
 
-        // Build Link based on nexus_id
-        const nexus_id_lower = String(mod.nexus_id).toLowerCase();
-        let nexusUrl = `https://www.nexusmods.com/cyberpunk2077/mods/${mod.nexus_id}`;
-        let nexusLabel = "View on Nexus";
-
-        if (nexus_id_lower === "wip") {
-          nexusUrl = "https://www.nexusmods.com/games/cyberpunk2077";
-          nexusLabel = "Status: WIP";
-        } else if (nexus_id_lower === "dummy") {
-          nexusUrl = "https://www.nexusmods.com/games/cyberpunk2077";
-          nexusLabel = "Status: Dummy/Test";
-        }
-
-        // Build Authors HTML
-        const authorsHtml = mod.authors
-          .map(
-            (author) => `
-                <a href="https://www.nexusmods.com/profile/${encodeURIComponent(author)}/mods?gameId=3333" target="_blank" class="ui-popup-action-link small"><img src="assets/img/nexus-mods_favicon.ico" class="ui-popup-action-link-icon" alt="" aria-hidden="true"> ${NCZ.escapeHtml(author)}</a>
-            `,
-          )
-          .join(" ");
-
-        // Build Tags HTML
-        const tagsHtml = (mod.tags || [])
-          .map((tag) => {
-            const def = tag === "nczoning"
-              ? "Sourced automatically from Nexus Mods"
-              : tagsDict[tag] || "";
-            return `<span class="tag-badge" title="${NCZ.escapeHtml(def)}">${NCZ.escapeHtml(tag)}</span>`;
-          })
-          .join("");
-
-        // Build Link for Suggesting Edits (Phase 2)
-        const [cX, cY, cZ] = mod.coordinates;
-        const yawParam = mod.yaw != null ? `&yaw=${mod.yaw}` : "";
-        const editUrl = `https://github.com/spuddeh/nc-zoning-board/issues/new?template=modify_location.yml&location_id=${mod.id}&mod_name=${encodeURIComponent(mod.name)}&authors=${encodeURIComponent(mod.authors.join(", "))}&coord_x=${cX}&coord_y=${cY}&coord_z=${cZ ?? ""}&yaw=${mod.yaw ?? ""}${yawParam}`;
-
-        // Resolve shareable mod identifier for copy-link feature
-        const isNumericNexusId = /^\d+$/.test(String(mod.nexus_id));
-        const modLinkId = isNumericNexusId ? String(mod.nexus_id) : mod.id;
-        const copyLinkUrl = `${NCZ.SITE_URL}?${NCZ.URL_PARAM_MOD}=${encodeURIComponent(modLinkId)}`;
-
-        // Use only Nexus thumbnails, skip manual images to prevent feature creep
-        const nexusThumb = nexusThumbs[String(mod.nexus_id)];
-        const thumbSrc = nexusThumb?.thumbnailUrl || null;
-        const fullSrc = nexusThumb?.pictureUrl || null;
         marker.modThumb = thumbSrc;
         marker.modFull = fullSrc;
 
-        const nexusAutoBadge = mod._source === "nexus-auto"
-          ? ` <span class="nexus-auto-badge" title="Sourced automatically from Nexus Mods" aria-hidden="true"></span>`
-          : "";
-        const hasPopupImage = Boolean(thumbSrc && fullSrc);
-        const updatedPopupBadge = isRecentlyUpdated(mod)
-          ? ` <span class="badge-updated" title="Updated on Nexus within the last ${NCZ.RECENTLY_UPDATED_DAYS} days">${NCZ.UPDATED_LABEL}</span>`
-          : "";
-        const creditNames = (mod.credits || "")
-          .split(",")
-          .map((name) => name.trim())
-          .filter(Boolean);
-        const creditsHtml = creditNames
-          .map((name) => `<span class="custom-popup-credit-name">${NCZ.escapeHtml(name)}</span>`)
-          .join(", ");
-
-        const popupContent = `
-                <div class="custom-popup-content" style="--popup-title-accent: ${catStyle.color};">
-                    <span class="popup-category-badge">${NCZ.escapeHtml(catStyle.label)}</span>
-                    ${updatedPopupBadge}
-                    ${
-                      hasPopupImage
-                        ? `
-                            <div class="custom-popup-header has-image">
-                            <div class="custom-popup-images">
-                                <img src="${NCZ.escapeHtml(thumbSrc)}" class="popup-thumb" referrerpolicy="no-referrer" data-full-src="${NCZ.escapeHtml(fullSrc)}">
-                            </div>
-                            </div>
-                        `
-                        : ""
-                    }
-                    <div class="custom-popup-title">${NCZ.escapeHtml(mod.name)}${nexusAutoBadge}</div>
-                    <div class="custom-popup-body">
-                        <div class="custom-popup-authors">${authorsHtml}</div>
-                        ${mod.credits ? `<div class="custom-popup-credits">Credits: ${creditsHtml || NCZ.escapeHtml(mod.credits)}</div>` : ""}
-                        <div class="custom-popup-desc">${NCZ.escapeHtml(mod.description || "No description provided.")}</div>
-                        ${tagsHtml ? `<div class="custom-popup-tags">${tagsHtml}</div>` : ""}
-                        <div class="popup-actions">
-                            <a href="${NCZ.escapeHtml(nexusUrl)}" target="_blank" class="ui-popup-action-link ui-popup-action-link-nexus">${NCZ.escapeHtml(nexusLabel)}</a>
-                            <button type="button" class="ui-popup-action-link ui-popup-action-link-copy-link tertiary" data-copy-url="${NCZ.escapeHtml(copyLinkUrl)}" aria-label="Copy link to this pin" title="Copy link"><span class="ui-popup-action-link-icon" aria-hidden="true"></span></button>
-                            ${!mod._source ? `<a href="${NCZ.escapeHtml(editUrl)}" target="_blank" class="ui-popup-action-link ui-popup-action-link-edit tertiary" aria-label="Suggest Edit" title="Suggest Edit"><span class="ui-popup-action-link-icon" aria-hidden="true"></span></a>` : ""}
-                        </div>
-                    </div>
-                </div>
-            `;
-        marker.bindPopup(popupContent, {
+        marker.bindPopup(popupHtml, {
           autoPan: false,
           offset: [0, 0],
           minWidth: 360,
@@ -1186,12 +1091,12 @@ async function initMap() {
         const li = document.createElement("li");
         li.className = "mod-item";
         li.dataset.category = mod.category;
-        li.dataset.tags = [...(mod.tags || []), ...(isRecentlyUpdated(mod) ? ["updated"] : [])].join(",");
+        li.dataset.tags = [...(mod.tags || []), ...(NCZ.isRecentlyUpdated(mod) ? ["updated"] : [])].join(",");
         li.dataset.authors = mod.authors.join(",");
         const sidebarBadge = mod._source === "nexus-auto"
           ? ` <span class="nexus-auto-badge" title="Sourced automatically from Nexus Mods" aria-hidden="true"></span>`
           : "";
-        const sidebarUpdatedBadge = isRecentlyUpdated(mod)
+        const sidebarUpdatedBadge = NCZ.isRecentlyUpdated(mod)
           ? ` <span class="badge-updated" title="Updated on Nexus within the last ${NCZ.RECENTLY_UPDATED_DAYS} days">${NCZ.UPDATED_LABEL}</span>`
           : "";
         li.innerHTML = `
@@ -1318,7 +1223,7 @@ async function initMap() {
     mods.forEach((mod) => (mod.tags || []).forEach((t) => usedTags.add(t)));
 
     // Prepend synthetic "updated" button if any mod is recently updated
-    if (mods.some(isRecentlyUpdated)) {
+    if (mods.some(NCZ.isRecentlyUpdated)) {
       const btn = document.createElement("button");
       btn.className = "tag-filter-btn";
       btn.textContent = NCZ.UPDATED_LABEL;
@@ -1431,21 +1336,12 @@ async function initMap() {
       hideClusterPanel();
       const visibleMarkers = [];
 
-      // Filter individual markers
-      allMarkers.forEach((marker) => {
-        const mod = marker.modData;
-        const matchesSearch =
-          mod.name.toLowerCase().includes(query) ||
-          mod.authors.some((a) => a.toLowerCase().includes(query));
-        const matchesCategory = activeCats.includes(mod.category);
-        const matchesTags =
-          activeTags.length === 0 ||
-          activeTags.some((t) => t === "updated" ? isRecentlyUpdated(mod) : (mod.tags || []).includes(t));
-        const matchesAuthor =
-          activeAuthors.length === 0 ||
-          activeAuthors.some((a) => mod.authors.includes(a));
+      // Compute which mods pass all filters (view-agnostic)
+      const visibleIds = NCZ.computeVisibleMods(mods, { query, activeCats, activeTags, activeAuthors });
 
-        if (matchesSearch && matchesCategory && matchesTags && matchesAuthor) {
+      // Apply to Leaflet markers
+      allMarkers.forEach((marker) => {
+        if (visibleIds.has(marker.modData.id)) {
           markerClusterGroup.addLayer(marker);
           visibleMarkers.push(marker);
         }
