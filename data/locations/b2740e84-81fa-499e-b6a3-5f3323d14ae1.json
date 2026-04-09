@@ -7,12 +7,14 @@
     "credits": "",
     "coordinates": [
         -817.1961,
-        -83.989334
+        -83.989334,
+        8.680855
     ],
     "nexus_id": "27035",
     "description": "Dicky Twisters has been Enhanced! Now with an Improved Parking Lot, More Signage and even Improved Interior Club Lighting, we know your visit will be memorable!!! Cum get twisted with us anytime of the day! (:",
     "category": "location-overhaul",
     "tags": [
         "entertainment"
-    ]
+    ],
+    "yaw": -0.9544913
 }

@@ -7,10 +7,12 @@
     "credits": "",
     "coordinates": [
         228.42104,
-        592.8148
+        592.8148,
+        121.95119
     ],
     "nexus_id": "26096",
     "description": "A memorial for a friend, located in the North Oak Columbarium.",
     "category": "other",
-    "tags": []
+    "tags": [],
+    "yaw": 0.23810945
 }

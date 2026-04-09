@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         674.18896,
-        -470.34335
+        -470.34335,
+        -5.3425
     ],
     "nexus_id": "24741",
     "description": "Small underground drug lab.",
@@ -15,5 +16,6 @@
     "tags": [
         "entropism",
         "streetkid"
-    ]
+    ],
+    "yaw": 62.1804
 }

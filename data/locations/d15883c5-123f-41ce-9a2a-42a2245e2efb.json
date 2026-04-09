@@ -7,12 +7,14 @@
     "credits": "",
     "coordinates": [
         -775.3824,
-        1108.1885
+        1108.1885,
+        61
     ],
     "nexus_id": "20072",
     "description": "Reopens The Atlantis from Johnny's flashback. Unlocks club entrance, adds real NPC, interactable bartenders, and fast travel point to the location.",
     "category": "location-overhaul",
     "tags": [
         "entertainment"
-    ]
+    ],
+    "yaw": 0.35631442
 }

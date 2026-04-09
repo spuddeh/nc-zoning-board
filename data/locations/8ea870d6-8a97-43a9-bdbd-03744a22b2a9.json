@@ -7,12 +7,14 @@
     "credits": "",
     "coordinates": [
         1014.8014,
-        -2582.2385
+        -2582.2385,
+        207.77574
     ],
     "nexus_id": "25770",
     "description": "Add various bodies of water across the game world at non-intrusive locations, fully customizable experience through Native Settings UI now !",
     "category": "location-overhaul",
     "tags": [
         "photos"
-    ]
+    ],
+    "yaw": 0.92545646
 }

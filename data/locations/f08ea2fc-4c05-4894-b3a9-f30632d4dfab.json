@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         4512.6216,
-        25.654678
+        25.654678,
+        159.11772
     ],
     "nexus_id": "26488",
     "description": "This mod adds a Corpo style retreat player home on a cliffside overlooking a canyon. It has Native Interactions and was inspired by Outdoor V Canyon by Ka0ziun. Version 10 adds a dockside area. Special thanks to MorganLeFaye79 for her props mod Victorian Style Sofa",
@@ -15,5 +16,6 @@
     "tags": [
         "apartment",
         "neokitsch"
-    ]
+    ],
+    "yaw": 0.99002445
 }

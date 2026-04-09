@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         -320.1562,
-        229.5967
+        229.5967,
+        213.07407
     ],
     "nexus_id": "22696",
     "description": "Add one of the most influential and enigmatic characters in all of Night City (Mr. Blue Eyes) along with his bodyguard Akira, offering you the entire iconic arsenal (ranged weapons and melee weapons).",
@@ -16,5 +17,6 @@
         "corpo",
         "neomilitarism",
         "shop"
-    ]
+    ],
+    "yaw": 0.82415396
 }

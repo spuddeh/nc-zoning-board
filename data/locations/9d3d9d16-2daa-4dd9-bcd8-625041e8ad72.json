@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         -1569.0581,
-        -1064.3286
+        -1064.3286,
+        9.2589
     ],
     "nexus_id": "28057",
     "description": "YO CHOOM GANGOON ever wanted to be a disgusting, poor, lowlife but never had the apartment that suited your immersiveness? FEAR NOT, because this flat is here to make you feel all types of nasty, vile, best of all BROKE!!!",
@@ -16,5 +17,6 @@
         "apartment",
         "entropism",
         "streetkid"
-    ]
+    ],
+    "yaw": -86.9561
 }

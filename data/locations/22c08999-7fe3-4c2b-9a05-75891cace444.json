@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         -509.99042,
-        -2886.1313
+        -2886.1313,
+        32.394943
     ],
     "nexus_id": "25410",
     "description": "3 toggleable racing tracks. Want to just rev up the engine and do some laps ? I gotchu choom.",
@@ -15,5 +16,6 @@
     "tags": [
         "infrastructure",
         "streetkid"
-    ]
+    ],
+    "yaw": -0.13441841
 }

@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         4676.289,
-        -2320.3206
+        -2320.3206,
+        269.4234
     ],
     "nexus_id": "8442",
     "description": "Scenic player home in the badlands",
@@ -15,5 +16,6 @@
     "tags": [
         "house",
         "photos"
-    ]
+    ],
+    "yaw": 70.7929
 }

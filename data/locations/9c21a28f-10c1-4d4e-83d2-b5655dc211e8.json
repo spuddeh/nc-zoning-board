@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         -771.9979,
-        2968.7554
+        2968.7554,
+        26.1781
     ],
     "nexus_id": "23052",
     "description": "Liberty Walk Garage for car modification shop mod.",
@@ -15,5 +16,6 @@
     "tags": [
         "infrastructure",
         "shop"
-    ]
+    ],
+    "yaw": 15.2547
 }
