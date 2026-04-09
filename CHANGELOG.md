@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-04-09
+
+### Coordinate Transform and Satellite Map
+
+- **Coordinate accuracy**: Replaced the 16-point in-game survey calibration with a mathematically exact transform derived from the [Realistic Map 8k mod](https://www.nexusmods.com/cyberpunk2077/mods/17811) terrain quad UV mapping. The old calibration had up to ~2 Leaflet unit (~16px at max zoom) drift at map edges; the new transform is exact by construction. Pin positions shift by up to ~0.25 units near the map centre and ~2 units at the far edges — visually imperceptible for most pins.
+  - Added `NCZ.WORLD_MIN_X/MAX_X/MIN_Y/MAX_Y` as named constants (single source of truth for world extent)
+  - `cetToLeaflet()` and `leafletDistanceMeters()` both derive from these constants — scale indicator accuracy improved automatically
+- **Satellite base layer**: Replaced the tile pyramid (`assets/tiles/{z}/{x}/{y}.png`, 256×256 tiles at zoom 0–5) with a single 9.6 MB WebP image overlay (`assets/img/satellite_8k.webp`). Eliminates tile-loading seams, simplifies serving, and leverages WebP compression for a smaller total payload.
+
 ## [0.3.0] - 2026-04-06
 
 ### Coordinate Expansion — Z and Yaw
