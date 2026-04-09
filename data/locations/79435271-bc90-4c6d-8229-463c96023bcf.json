@@ -7,12 +7,14 @@
     "credits": "",
     "coordinates": [
         -1388.1171,
-        1166.802
+        1166.802,
+        23.070549
     ],
     "nexus_id": "25051",
     "description": "A 25 car garage next to H10, made as an accessory for the Edgerunners mansion but made to work standalone as well.",
     "category": "location-overhaul",
     "tags": [
         "infrastructure"
-    ]
+    ],
+    "yaw": 0.75888515
 }

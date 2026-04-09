@@ -7,12 +7,14 @@
     "credits": "ProximaDust",
     "coordinates": [
         -637.181,
-        864.77386
+        864.77386,
+        19.1553
     ],
     "nexus_id": "16580",
     "description": "Off the leash !",
     "category": "location-overhaul",
     "tags": [
         "entertainment"
-    ]
+    ],
+    "yaw": 155
 }

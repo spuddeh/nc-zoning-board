@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         -1080.4222,
-        1670.4395
+        1670.4395,
+        18.3993
     ],
     "nexus_id": "27976",
     "description": "Ever wanted to rp truly feel like you're living in an actual dystopian hellscape where rent is high, your environment is disgusting, you walk outside, and the smell of piss smacks you in the face? Well lucky for you i created this apartment JUST FOR YOU.",
@@ -16,5 +17,6 @@
         "apartment",
         "entropism",
         "streetkid"
-    ]
+    ],
+    "yaw": -169
 }

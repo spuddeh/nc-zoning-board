@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         303.73785,
-        1035.5779
+        1035.5779,
+        233.92534
     ],
     "nexus_id": "22263",
     "description": "An enhanced version of the North Oak Arasaka Estate.",
@@ -16,5 +17,6 @@
         "corpo",
         "neokitsch",
         "neomilitarism"
-    ]
+    ],
+    "yaw": 0.71141267
 }

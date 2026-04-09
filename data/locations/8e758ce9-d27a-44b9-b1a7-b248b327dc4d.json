@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         -1658.3568,
-        1010.26654
+        1010.26654,
+        159.8267
     ],
     "nexus_id": "27515",
     "description": "cozy penthouse with wall to wall city views",
@@ -15,5 +16,6 @@
     "tags": [
         "apartment",
         "corpo"
-    ]
+    ],
+    "yaw": 167.1226
 }

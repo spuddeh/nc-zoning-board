@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         443.63907,
-        -2091.798
+        -2091.798,
+        15.9486
     ],
     "nexus_id": "24408",
     "description": "Player compound in Rancho Coronado with several amenities.",
@@ -15,5 +16,6 @@
     "tags": [
         "apartment",
         "neomilitarism"
-    ]
+    ],
+    "yaw": -133.3089
 }

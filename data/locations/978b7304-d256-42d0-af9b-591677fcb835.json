@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         449.86444,
-        -2046.914
+        -2046.914,
+        0.9917
     ],
     "nexus_id": "24335",
     "description": "Have you ever wanted to own your own home and property in the suburbs of Night City? There is now such a property available to purchase in the Rancho Coronado neighborhood in Santo Domingo !",
@@ -16,5 +17,6 @@
         "entropism",
         "house",
         "streetkid"
-    ]
+    ],
+    "yaw": -46.9069
 }

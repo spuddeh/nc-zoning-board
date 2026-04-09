@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         -1458.9739,
-        1037.459
+        1037.459,
+        32.2907
     ],
     "nexus_id": "28425",
     "description": "Apartment above Afterlife club.",
@@ -16,5 +17,6 @@
         "apartment",
         "entertainment",
         "entropism"
-    ]
+    ],
+    "yaw": 95.8628
 }

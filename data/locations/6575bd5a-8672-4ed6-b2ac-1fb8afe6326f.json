@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         -1279.1998,
-        1404.5665
+        1404.5665,
+        21.1161
     ],
     "nexus_id": "23896",
     "description": "Adds a Mox themed Tattoo Shop in Watson, Little China with character customization.",
@@ -16,5 +17,6 @@
         "kitsch",
         "shop",
         "streetkid"
-    ]
+    ],
+    "yaw": 85.7
 }

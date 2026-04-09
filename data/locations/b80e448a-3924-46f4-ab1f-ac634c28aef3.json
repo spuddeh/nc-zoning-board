@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         -1343.9843,
-        1204.115
+        1204.115,
+        114.8
     ],
     "nexus_id": "17300",
     "description": "A noir neokitsch mansion for your V !",
@@ -16,5 +17,6 @@
         "corpo",
         "house",
         "neokitsch"
-    ]
+    ],
+    "yaw": 0.24361488
 }

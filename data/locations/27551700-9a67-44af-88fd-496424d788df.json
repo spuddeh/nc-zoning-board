@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         5320.874,
-        -240.78528
+        -240.78528,
+        97.97386
     ],
     "nexus_id": "27141",
     "description": "Adds a simple campsite to the mod Outdoor V - Canyon Forest by Kaoziun.",
@@ -15,5 +16,6 @@
     "tags": [
         "apartment",
         "nomad"
-    ]
+    ],
+    "yaw": -0.8929913
 }

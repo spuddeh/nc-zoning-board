@@ -7,12 +7,14 @@
     "credits": "",
     "coordinates": [
         -1628.5947,
-        385.0413
+        385.0413,
+        7.6949844
     ],
     "nexus_id": "22478",
     "description": "After Club Owners Adam Ibrahimovic and Larry Fanghorns dispute over “suspicious malware” found on their Clubs Main Computer, the pair broke-up ! With New Management the Club has decided to Renovate the Club and upgrade ALL the Clubs Lighting and Dance Floor ! “Whoever” uploaded that suspicious malware awhile ago to break up the two, THANKS !",
     "category": "location-overhaul",
     "tags": [
         "entertainment"
-    ]
+    ],
+    "yaw": 0.19974548
 }

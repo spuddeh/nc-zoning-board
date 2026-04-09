@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         -1771.9393,
-        2170.6707
+        2170.6707,
+        18.4501
     ],
     "nexus_id": "23896",
     "description": "Adds a Maelstrom themed Tattoo Shop in Watson, Northside with character customization.",
@@ -16,5 +17,6 @@
         "entropism",
         "shop",
         "streetkid"
-    ]
+    ],
+    "yaw": -60
 }

@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         -1629.2701,
-        -2112.9873
+        -2112.9873,
+        39.0378
     ],
     "nexus_id": "22518",
     "description": "Secret Garage Apartment.",
@@ -15,5 +16,6 @@
     "tags": [
         "apartment",
         "neokitsch"
-    ]
+    ],
+    "yaw": -48.9816
 }

@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         -3760.2864,
-        1731.3693
+        1731.3693,
+        44.665695
     ],
     "nexus_id": "23677",
     "description": "The big boat offshore with more details.",
@@ -15,5 +16,6 @@
     "tags": [
         "corpo",
         "neomilitarism"
-    ]
+    ],
+    "yaw": 0.9999923
 }

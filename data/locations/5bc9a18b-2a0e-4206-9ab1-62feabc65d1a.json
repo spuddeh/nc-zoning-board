@@ -7,12 +7,14 @@
     "credits": "",
     "coordinates": [
         -817.1961,
-        -83.989334
+        -83.989334,
+        8.680855
     ],
     "nexus_id": "27101",
     "description": "Unlocked all the locked areas in the Dicky Twister Club.",
     "category": "location-overhaul",
     "tags": [
         "entertainment"
-    ]
+    ],
+    "yaw": 0.95912755
 }

@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         134.66187,
-        -1587.7252
+        -1587.7252,
+        8.256683
     ],
     "nexus_id": "26929",
     "description": "The Precinct in 2076. Before Vega and his C-team.",
@@ -15,5 +16,6 @@
     "tags": [
         "corpo",
         "neomilitarism"
-    ]
+    ],
+    "yaw": -0.9650959
 }
