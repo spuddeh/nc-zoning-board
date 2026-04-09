@@ -24,18 +24,18 @@ nc-zoning-board/
 │   │   ├── services.js     # API/fetch functions (Nexus thumbnails, auto-discovery, data loading)
 │   │   └── app.js          # Main app logic (map init, DOM events, sidebar, modals)
 │   ├── images/             # Static image assets
-│   └── tiles/              # Generated map tiles (zoom levels 0-5)
-│       └── {z}/{x}/{y}.png
+│   └── tiles/              # Generated map tiles (zoom levels 0-6)
+│       └── {z}/{x}/{y}.webp
 │
 ├── scripts/
 │   ├── build_mods.js       # Compiles data/locations/*.json -> mods.json
 │   ├── validate_tags.js    # Validates tags in data/ against tags.json
-│   └── generate_tiles.js   # Slices 8k source image into 256×256 tiles
+│   └── generate_tiles.js   # Slices 16k source image into 256×256 WebP tiles
 │
 ├── raw maps/               # Source map images (not committed — too large)
 │   ├── 4k/night_city.png   # 4096×4096, 27 MB
-│   ├── 8k/night_city.png   # 8192×8192, 108 MB (current tile source)
-│   ├── 16k/                # 16384×16384 split into 2×2 quadrants
+│   ├── 8k/night_city.png   # 8192×8192, 108 MB (archive)
+│   ├── 16k/night_city_16k.png  # 16384×16384, 529 MB (current tile source)
 │   └── 32k/                # 32768×32768 split into 4×4 quadrants
 │
 ├── .github/
@@ -107,8 +107,8 @@ Load order (linear dependency chain, no circular refs): `constants.js` → `util
 ### Map Layer (`app.js`)
 
 - Uses **Leaflet.js** with `L.CRS.Simple` (non-geographic coordinate reference system)
-- Map image is served as **256×256 tiles** at zoom levels 0–5 (8k source), with upscaled zoom to level 8
-- At max native zoom (5), the image is 32×32 = 1,024 tiles
+- Map image is served as **256×256 WebP tiles** at zoom levels 0–6 (16k source), with upscaled zoom to level 8
+- At max native zoom (6), the image is 64×64 = 4,096 tiles (5,461 total across all zoom levels)
 - Bounds are calculated via `map.unproject()` to align pixel coordinates with the tile grid
 
 ### Coordinate Transform (`utils.js`)

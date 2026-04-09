@@ -6,7 +6,7 @@ The NC Zoning Board is an interactive map and coordinate registry for Cyberpunk 
 
 ### What Works
 
-- ✅ 8k tiled map with zoom levels 0–8 (native to 5, upscaled to 8)
+- ✅ 16k WebP tiled map with zoom levels 0–8 (native to 6, upscaled to 8)
 - ✅ Transparent map background — tiles regenerated from source
 - ✅ CET coordinate transform (16-point calibrated, linear, accurate)
 - ✅ Mod pins with clickable popups (name, authors, description, Nexus link)

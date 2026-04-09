@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.2] - 2026-04-09
+
+### 16k WebP Tile Layer
+
+- **16k WebP tiles**: Upgraded satellite base layer from the single-image WebP overlay (9.6 MB blocking download) to 16k WebP tiles (zoom 0–6, 5,461 tiles). Generated directly from the lossless 16k PNG source at quality 90, effort 6. Max-zoom upscaling reduced from 8× to 4× for significantly sharper detail. Progressive tile loading eliminates the first-paint latency on GitHub Pages.
+
 ## [0.3.1] - 2026-04-09
 
 ### Coordinate Transform and Satellite Map
