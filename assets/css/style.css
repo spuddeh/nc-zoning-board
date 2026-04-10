@@ -21,6 +21,109 @@
     height: 100%;
 }
 
+#map-3d {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+/* View toggle (SAT | SCHEMA) — floats over the map in the bottom-right */
+#map-view-toggle {
+    position: absolute;
+    bottom: 80px; /* above Leaflet zoom controls */
+    right: var(--space-sm);
+    z-index: 1000;
+    display: flex;
+    gap: 2px;
+    background: var(--surface-panel);
+    border: var(--ui-border-thin) solid var(--secondary);
+    padding: 2px;
+}
+
+.map-view-btn {
+    background: transparent;
+    border: none;
+    color: var(--gray);
+    font-family: var(--font-heading);
+    font-size: var(--text-xs);
+    padding: var(--space-2xs) var(--space-sm);
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    transition: var(--transition-fast);
+
+    &:hover {
+        color: var(--white);
+    }
+
+    &.active {
+        background: var(--secondary);
+        color: var(--primary);
+    }
+}
+
+/* Controls reference + reset — bottom-left of #map-3d */
+#scene-controls {
+    position: absolute;
+    bottom: var(--space-sm);
+    right: var(--space-sm);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    background: var(--surface-panel);
+    border: var(--ui-border-thin) solid var(--secondary-20);
+    padding: var(--space-xs) var(--space-md);
+    pointer-events: auto;
+}
+
+.scene-controls-hint {
+    display: flex;
+    gap: var(--space-md);
+    font-family: var(--font-body);
+    font-size: var(--text-xs);
+    color: var(--gray);
+
+    & kbd {
+        font-family: var(--font-body);
+        color: var(--white);
+        background: none;
+        border: none;
+        padding: 0;
+    }
+}
+
+#scene-reset-btn {
+    background: transparent;
+    border: var(--ui-border-thin) solid var(--secondary-30);
+    color: var(--secondary);
+    font-family: var(--font-heading);
+    font-size: var(--text-xs);
+    padding: var(--space-2xs) var(--space-sm);
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    transition: var(--transition-fast);
+    white-space: nowrap;
+
+    &:hover {
+        background: var(--secondary);
+        color: var(--primary);
+        border-color: var(--secondary);
+    }
+}
+
+/* Loading indicator inside #map-3d */
+.scene-loading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: var(--secondary);
+    font-family: var(--font-heading);
+    font-size: var(--text-md);
+    letter-spacing: 0.1em;
+    pointer-events: none;
+}
+
 /* Sidebar Styling */
 #sidebar {
     position: absolute;
