@@ -7,7 +7,8 @@
     "credits": "",
     "coordinates": [
         308.1877,
-        -1031.1931
+        -1031.1931,
+        24.7109
     ],
     "nexus_id": "26683",
     "description": "WELCOME! The Crystal Palace Resort is now OPEN 24/7 hovering over Night City waiting for your arrival! The Resort has everything a RICH CORPO needs for a getaway, Shopping Strip, Casino/Resort, Pools and an Outdoor Kitchen! Feel free to Fly A Vehicle up to the Resort Landing Strip anytime OR take the NEW Fast Travel Station via Street Level !",
@@ -15,5 +16,6 @@
     "tags": [
         "entertainment",
         "kitsch"
-    ]
+    ],
+    "yaw": 56.3792
 }
