@@ -15,6 +15,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `#map-3d` container, Three.js import map, and module script stubs (`three-scene.js`, `three-markers.js`)
 - Added `docs/three-js-migration-plan.md`, `docs/three-js-scene.md`, `docs/dev-environment.md`
 
+#### Phase 2 — Roads, Metro, District Borders
+
+- Roads and metro GLBs (~7.6 MB Tier 2) load after terrain; roads X-axis inversion corrected via `rotation.y = Math.PI`
+- District borders rendered in both views using the same data (`data/subdistricts.json`):
+  - SAT: Leaflet GeoJSON layers
+  - SCHEMA: `Line2` fat lines with `depthTest: false` (always renders over terrain, matching the game's UI overlay approach)
+- Zoom-based district/subdistrict switching on both views — outer district borders hide when zoomed in, subdistricts appear
+- Districts without canonical subdistricts (Dogtown, Morro Rock) always show their border; `canonical: false` entries (casino) always visible
+- Shared appearance constants in `constants.js`: `NCZ.DISTRICT_LINE_WIDTH`, `NCZ.SUBDISTRICT_LINE_WIDTH`, `NCZ.DISTRICT_LINE_OPACITY`
+- Per-theme `--overlay-road-color` and `--overlay-metro-color` CSS vars
+- Overlay toggles: Districts toggle affects both views; Roads/Metro are SCHEMA-only and dim when on SAT
+
 #### Phase 1 — Terrain Scene + View Switching
 
 - **New default view**: SCHEMA (3D) replaces SAT as the landing view

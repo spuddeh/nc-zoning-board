@@ -121,3 +121,24 @@ NCZ.CLUSTER_PANEL_WIDTH_KEY = "nc_cluster_panel_width";
 NCZ.CLUSTER_PANEL_DEFAULT_WIDTH = 400;
 NCZ.CLUSTER_PANEL_MIN_WIDTH = 260;
 NCZ.CLUSTER_PANEL_MAX_WIDTH = 720;
+
+// District border colors — matched to game's main_colors.inkstyle
+NCZ.DISTRICT_COLORS = {
+  city_center:    "#ffd741",  // MainColors.Yellow
+  watson:         "#ff3e34",  // MainColors.CombatRed
+  westbrook:      "#ff5100",  // MainColors.Orange
+  heywood:        "#1ded83",  // MainColors.Green
+  santo_domingo:  "#5ef6ff",  // MainColors.Blue
+  pacifica:       "#ff6158",  // MainColors.Red
+  dogtown:        "#00a32c",  // MainColors.DarkGreen
+  ncx_morro_rock: "#349197",  // MainColors.MildBlue
+  badlands:       "#c882ff",  // Bright violet
+};
+
+// Overlay zoom thresholds (Leaflet zoom levels)
+NCZ.DISTRICT_ZOOM_THRESHOLD = 3;  // below = districts only, above = subdistricts
+
+// District border appearance — shared between SAT (Leaflet) and SCHEMA (Three.js)
+NCZ.DISTRICT_LINE_WIDTH     = 4;  // px — main district borders
+NCZ.SUBDISTRICT_LINE_WIDTH  = 3;  // px — subdistrict borders
+NCZ.DISTRICT_LINE_OPACITY   = 0.85;

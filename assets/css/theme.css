@@ -125,6 +125,10 @@ html.theme-night-corp {
     --scene-water:   #2a3f57;
     --scene-cliffs:  #566c88;
 
+    /* Overlay colors (roads/metro for SCHEMA, districts for both) */
+    --overlay-road-color:   #504b41;
+    --overlay-metro-color:  #dcaa28;
+
 }
 
 html.theme-arasaka {
@@ -159,6 +163,10 @@ html.theme-arasaka {
     --scene-terrain: #6b5f5c;
     --scene-water:   #2e2525;
     --scene-cliffs:  #6b5f5c;
+
+    /* Overlay colors */
+    --overlay-road-color:   #463c3a;
+    --overlay-metro-color:  #c82828;
 
 }
 
@@ -195,6 +203,10 @@ html.theme-militech {
     --scene-water:   #1e3040;
     --scene-cliffs:  #5e6448;
 
+    /* Overlay colors */
+    --overlay-road-color:   #5a5237;
+    --overlay-metro-color:  #fac800;
+
 }
 
 html.theme-aldecaldos {
@@ -229,6 +241,10 @@ html.theme-aldecaldos {
     --scene-terrain: #52606e;
     --scene-water:   #253340;
     --scene-cliffs:  #52606e;
+
+    /* Overlay colors */
+    --overlay-road-color:   #4b443c;
+    --overlay-metro-color:  #dc602c;
 
 }
 

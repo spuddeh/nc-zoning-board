@@ -233,6 +233,12 @@
             </div>
             <ul id="cluster-mod-list"></ul>
         </div>
+        <div id="overlay-controls">
+            <span class="overlay-controls-label">Overlays</span>
+            <label class="overlay-toggle"><input type="checkbox" data-overlay="districts" checked> Districts</label>
+            <label class="overlay-toggle schema-only"><input type="checkbox" data-overlay="roads" checked> Roads</label>
+            <label class="overlay-toggle schema-only"><input type="checkbox" data-overlay="metro" checked> Metro</label>
+        </div>
         <div id="map-view-toggle">
             <button class="map-view-btn active" data-view="schema" title="3D schematic view">SCHEMA</button>
             <button class="map-view-btn" data-view="sat" title="Satellite tile view">SAT</button>
@@ -487,6 +493,7 @@
     <!-- App Logic -->
     <script src="assets/js/utils.js"></script>
     <script src="assets/js/services.js"></script>
+    <script src="assets/js/overlay.js"></script>
     <script type="module" src="assets/js/three-scene.js"></script>
     <script type="module" src="assets/js/three-markers.js"></script>
     <script src="assets/js/app.js"></script>
