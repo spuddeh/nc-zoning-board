@@ -14,6 +14,9 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { Line2 } from 'three/addons/lines/Line2.js';
+import { LineGeometry } from 'three/addons/lines/LineGeometry.js';
+import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
 
 window.NCZ = window.NCZ || {};
 
@@ -127,6 +130,7 @@ const ThreeScene = (() => {
     controls.screenSpacePanning = true;
     controls.target.set(WORLD_CX, 0, -WORLD_CY);
     controls.update();
+    controls.addEventListener('change', updateDistrictZoom);
 
     window.addEventListener('resize', onResize);
 
@@ -145,6 +149,44 @@ const ThreeScene = (() => {
     camera.left   = -frustumH * aspect;
     camera.right  =  frustumH * aspect;
     camera.updateProjectionMatrix();
+    // LineMaterial needs the viewport resolution to compute pixel-width lines correctly
+    for (const mat of districtLineMaterials) {
+      mat.resolution.set(w, h);
+    }
+  }
+
+  // ── Layer registry ─────────────────────────────────────────────────────
+  // Named scene groups — toggled by setLayerVisibility()
+
+  const layers = {
+    roads:     null,
+    metro:     null,
+    districts: null,  // parent group — toggled as a unit
+  };
+
+  // Sub-groups inside layers.districts (parent group controls overall visibility):
+  let _districtOuter = null; // districts with subs — visible when zoomed OUT
+  let _districtSub   = null; // canonical subdistricts — visible when zoomed IN
+
+  // OrbitControls orthographic zoom changes camera.zoom (not frustum size).
+  // camera.zoom > threshold = zoomed in → swap outer→sub.
+  // Tuned to feel equivalent to Leaflet DISTRICT_ZOOM_THRESHOLD=3.
+  const SUBDISTRICT_ZOOM_THRESHOLD = 2.5;
+
+  function setLayerVisibility(name, visible) {
+    if (name === 'districts') {
+      if (layers.districts) layers.districts.visible = visible;
+      if (visible) updateDistrictZoom();
+      return;
+    }
+    if (layers[name]) layers[name].visible = visible;
+  }
+
+  function updateDistrictZoom() {
+    if (!_districtOuter || !_districtSub) return;
+    const zoomedIn = camera.zoom > SUBDISTRICT_ZOOM_THRESHOLD;
+    _districtOuter.visible = !zoomedIn;
+    _districtSub.visible   =  zoomedIn;
   }
 
   // ── GLB loading (tiered) ───────────────────────────────────────────────
@@ -152,15 +194,16 @@ const ThreeScene = (() => {
   async function loadTerrain() {
     setLoadingText('Loading terrain...');
     try {
+      // Tier 1: terrain + water + cliffs in parallel
       const [terrainScene, waterScene, cliffsScene] = await Promise.all([
         loadGLB('assets/glb/3dmap_terrain.glb'),
         loadGLB('assets/glb/3dmap_water.glb'),
         loadGLB('assets/glb/3dmap_cliffs.glb'),
       ]);
 
-      applyMaterial(terrainScene, makeHillshadeMaterial('--scene-terrain', '#1a3322'));
-      applyMaterial(waterScene,   makeFlatMaterial('--scene-water',         '#071420'));
-      applyMaterial(cliffsScene,  makeHillshadeMaterial('--scene-cliffs',   '#152a1c'));
+      applyMaterial(terrainScene, makeHillshadeMaterial('--scene-terrain', '#566c88'));
+      applyMaterial(waterScene,   makeFlatMaterial('--scene-water',         '#2a3f57'));
+      applyMaterial(cliffsScene,  makeHillshadeMaterial('--scene-cliffs',   '#566c88'));
 
       // Cliffs GLB entity localTransform offset (resolved from WolvenKit export):
       // CET pos (-2255, -3050) → GLB offset X=-2255, Z=+3050
@@ -173,10 +216,120 @@ const ThreeScene = (() => {
       fitCameraToBox(box);
 
       hideLoading();
+
+      // Tier 2: roads + metro (after terrain, during idle)
+      loadRoadsMetro();
+
+      // Tier 2: district lines from subdistricts.json
+      loadDistricts();
+
     } catch (err) {
       console.error('[NCZ] Terrain GLB load failed:', err);
       setLoadingText('Failed to load terrain. Check console for details.');
     }
+  }
+
+  async function loadRoadsMetro() {
+    try {
+      const [roadsScene, metroScene] = await Promise.all([
+        loadGLB('assets/glb/3dmap_roads.glb'),
+        loadGLB('assets/glb/3dmap_metro.glb'),
+      ]);
+
+      // Roads GLB has inverted X axis — rotate 180° around Y to correct
+      roadsScene.rotation.y = Math.PI;
+      metroScene.rotation.y = Math.PI;
+
+      const roadColor  = readThemeColor('--overlay-road-color',  '#504b41');
+      const metroColor = readThemeColor('--overlay-metro-color', '#dcaa28');
+
+      applyMaterial(roadsScene, new THREE.MeshBasicMaterial({ color: roadColor,  transparent: true, opacity: 0.8 }));
+      applyMaterial(metroScene, new THREE.MeshBasicMaterial({ color: metroColor, transparent: true, opacity: 0.9 }));
+
+      const roadsGroup = new THREE.Group();
+      roadsGroup.add(roadsScene);
+      const metroGroup = new THREE.Group();
+      metroGroup.add(metroScene);
+
+      layers.roads = roadsGroup;
+      layers.metro = metroGroup;
+
+      scene.add(roadsGroup, metroGroup);
+    } catch (err) {
+      console.error('[NCZ] Roads/metro GLB load failed:', err);
+    }
+  }
+
+  async function loadDistricts() {
+    try {
+      const data = await fetch('data/subdistricts.json').then(r => r.json());
+      const outerGroup  = new THREE.Group(); // districts with subs — zoom-out only
+      const alwaysGroup = new THREE.Group(); // no-sub districts + canonical:false subs — always visible
+      const subGroup    = new THREE.Group(); // canonical subdistricts — zoom-in only
+
+      for (const dist of data.districts) {
+        const color = new THREE.Color(window.NCZ.DISTRICT_COLORS[dist.id] || '#ffffff');
+        const canonicalSubs = (dist.subdistricts || []).filter(s => s.canonical !== false);
+        const hasSubs = canonicalSubs.length > 0;
+
+        // District outline — always group if no canonical subs, outer group otherwise
+        if (dist.polygon?.length) {
+          (hasSubs ? outerGroup : alwaysGroup).add(buildLine(dist.polygon, color, window.NCZ.DISTRICT_LINE_WIDTH));
+        }
+
+        for (const sub of dist.subdistricts || []) {
+          if (!sub.polygon?.length) continue;
+          if (sub.canonical === false) {
+            alwaysGroup.add(buildLine(sub.polygon, color, window.NCZ.SUBDISTRICT_LINE_WIDTH)); // casino etc — always visible
+          } else {
+            subGroup.add(buildLine(sub.polygon, color, window.NCZ.SUBDISTRICT_LINE_WIDTH));    // zoom-gated
+          }
+        }
+      }
+
+      // Wrap all three in a parent so districts toggle works as a unit
+      const parent = new THREE.Group();
+      parent.add(alwaysGroup, outerGroup, subGroup);
+      subGroup.visible  = false;
+      outerGroup.visible = true;
+
+      _districtOuter = outerGroup;
+      _districtSub   = subGroup;
+      layers.districts = parent;
+      scene.add(parent);
+    } catch (err) {
+      console.error('[NCZ] District lines load failed:', err);
+    }
+  }
+
+  // District line materials — stored so resolution can be updated on resize
+  const districtLineMaterials = [];
+
+  // Build a Line2 (fat line) from CET [x, y] ring points.
+  // depthTest:false means lines always render over terrain, matching the game's UI overlay approach.
+  function buildLine(ring, color, lineWidth) {
+    const positions = [];
+    for (const pt of ring) positions.push(pt[0], 0, -pt[1]);
+    // Close the ring
+    if (ring.length > 0) positions.push(ring[0][0], 0, -ring[0][1]);
+
+    const geometry = new LineGeometry();
+    geometry.setPositions(positions);
+
+    const { clientWidth: w, clientHeight: h } = renderer.domElement;
+    const material = new LineMaterial({
+      color,
+      linewidth: lineWidth,
+      resolution: new THREE.Vector2(w, h),
+      depthTest: false,
+      transparent: true,
+      opacity: 0.85,
+    });
+    districtLineMaterials.push(material);
+
+    const line = new Line2(geometry, material);
+    line.computeLineDistances();
+    return line;
   }
 
   function fitCameraToBox(box) {
@@ -241,7 +394,7 @@ const ThreeScene = (() => {
     // (requires storing material refs — deferred to keep Phase 1 focused)
   }
 
-  return { init, startRenderLoop, stopRenderLoop, resetCamera, updateMaterials };
+  return { init, startRenderLoop, stopRenderLoop, resetCamera, setLayerVisibility, updateMaterials };
 })();
 
 window.NCZ.ThreeScene = ThreeScene;

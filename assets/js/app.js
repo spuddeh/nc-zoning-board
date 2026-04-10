@@ -547,14 +547,25 @@ async function initMap() {
   updatePannableBounds();
   map.on("zoomend resize", updatePannableBounds);
 
+  // Initialise SAT district overlay
+  NCZ.Overlay.init(map);
+
   // View switching (SAT ↔ SCHEMA)
   const mapEl   = document.getElementById("map");
   const map3dEl = document.getElementById("map-3d");
+  let activeView = null;
 
   function switchView(viewName) {
+    activeView = viewName;
     document.querySelectorAll(".map-view-btn").forEach(btn => {
       btn.classList.toggle("active", btn.dataset.view === viewName);
     });
+
+    // Dim SCHEMA-only overlay toggles when in SAT mode
+    document.querySelectorAll(".overlay-toggle.schema-only").forEach(el => {
+      el.classList.toggle("sat-active", viewName === "sat");
+    });
+
     if (viewName === "schema") {
       mapEl.style.display   = "none";
       map3dEl.style.display = "block";
@@ -574,6 +585,20 @@ async function initMap() {
 
   document.getElementById("scene-reset-btn").addEventListener("click", () => {
     NCZ.ThreeScene.resetCamera();
+  });
+
+  // Overlay toggles — delegate to the right renderer based on active view
+  document.querySelectorAll("[data-overlay]").forEach(checkbox => {
+    checkbox.addEventListener("change", () => {
+      const overlay = checkbox.dataset.overlay;
+      const visible = checkbox.checked;
+      if (overlay === "districts") {
+        NCZ.Overlay.setDistricts(visible);           // SAT: Leaflet GeoJSON
+        NCZ.ThreeScene.setLayerVisibility("districts", visible); // SCHEMA: THREE.Line
+      } else {
+        NCZ.ThreeScene.setLayerVisibility(overlay, visible);     // SCHEMA only
+      }
+    });
   });
 
   switchView("schema");
