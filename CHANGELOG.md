@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Three.js 3D Schematic Map (in progress — dev branch)
+
+#### Phase 0 — View-Agnostic Data Layer
+
+- Extracted shared popup/filter logic from `app.js` into the `NCZ` namespace so both Leaflet and Three.js views consume the same code: `NCZ.isRecentlyUpdated`, `NCZ.cetToThree`, `NCZ.buildPopupHtml`, `NCZ.prepareModRenderData`, `NCZ.computeVisibleMods`
+- Added `#map-3d` container, Three.js import map, and module script stubs (`three-scene.js`, `three-markers.js`)
+- Added `docs/three-js-migration-plan.md`, `docs/three-js-scene.md`, `docs/dev-environment.md`
+
+#### Phase 1 — Terrain Scene + View Switching
+
+- **New default view**: SCHEMA (3D) replaces SAT as the landing view
+- Live Three.js scene rendering terrain, water, and cliffs GLBs (~28 MB Tier 1)
+- Orthographic camera with OrbitControls: left-drag pan, right-drag tilt (max ~70°), scroll zoom
+- Hillshade lighting matching the game's `DarkEdgeWidth` shader (DirectionalLight from NW + AmbientLight 0.35)
+- Cliffs correctly offset via WolvenKit entity localTransform (`-2255, 0, 3050`)
+- Terrain/cliffs colors derived from game material data (`BaseColorScale RGB(86,108,136)`); per-theme `--scene-terrain/water/cliffs` CSS vars
+- SCHEMA/SAT view toggle with tooltips; controls reference and Reset view button
+
 ## [0.3.2] - 2026-04-09
 
 ### 16k WebP Tile Layer
