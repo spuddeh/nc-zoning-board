@@ -547,6 +547,37 @@ async function initMap() {
   updatePannableBounds();
   map.on("zoomend resize", updatePannableBounds);
 
+  // View switching (SAT ↔ SCHEMA)
+  const mapEl   = document.getElementById("map");
+  const map3dEl = document.getElementById("map-3d");
+
+  function switchView(viewName) {
+    document.querySelectorAll(".map-view-btn").forEach(btn => {
+      btn.classList.toggle("active", btn.dataset.view === viewName);
+    });
+    if (viewName === "schema") {
+      mapEl.style.display   = "none";
+      map3dEl.style.display = "block";
+      NCZ.ThreeScene.init("map-3d");
+      NCZ.ThreeScene.startRenderLoop();
+    } else {
+      map3dEl.style.display = "none";
+      mapEl.style.display   = "block";
+      NCZ.ThreeScene.stopRenderLoop();
+      map.invalidateSize();
+    }
+  }
+
+  document.querySelectorAll(".map-view-btn").forEach(btn => {
+    btn.addEventListener("click", () => switchView(btn.dataset.view));
+  });
+
+  document.getElementById("scene-reset-btn").addEventListener("click", () => {
+    NCZ.ThreeScene.resetCamera();
+  });
+
+  switchView("schema");
+
   // 2. State & UI Elements
   const markerClusterGroup = L.markerClusterGroup({
     spiderfyOnMaxZoom: false,

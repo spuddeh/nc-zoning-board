@@ -233,8 +233,22 @@
             </div>
             <ul id="cluster-mod-list"></ul>
         </div>
-        <div id="map"></div>
-        <div id="map-3d" style="display: none;"></div>
+        <div id="map-view-toggle">
+            <button class="map-view-btn active" data-view="schema" title="3D schematic view">SCHEMA</button>
+            <button class="map-view-btn" data-view="sat" title="Satellite tile view">SAT</button>
+        </div>
+        <div id="map" style="display: none;"></div>
+        <div id="map-3d">
+            <div class="scene-loading">Loading terrain...</div>
+            <div id="scene-controls">
+                <div class="scene-controls-hint">
+                    <span><kbd>Left drag</kbd> Pan</span>
+                    <span><kbd>Right drag</kbd> Tilt</span>
+                    <span><kbd>Scroll</kbd> Zoom</span>
+                </div>
+                <button id="scene-reset-btn" title="Reset camera to top-down view">Reset view</button>
+            </div>
+        </div>
     </main>
 
     <!-- Leaflet JS -->
