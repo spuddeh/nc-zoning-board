@@ -1,22 +1,22 @@
 {
-    "id": "e0eab8d4-f4f5-4578-b204-8df439cc2bcf",
-    "name": "Vault 404 ( Fallout Shelter )",
-    "authors": [
-        "TheRealJonCross"
-    ],
-    "credits": "",
-    "coordinates": [
-        1783.8954,
-        -111.595184,
-        52.3207
-    ],
-    "nexus_id": "26988",
-    "description": "WELCOME VAULT DWELLER to your new home!.........FOREVER! Vault 404 is proudly funded by the Vault-Tec AND Arasaka Corporation ensuring you have EVERYTHING YOU NEED to live a FULL LIFE in complete isolation! Vault-Tec ensures our Vault dwellers have a Room of their own, a Green Room, Gym and their very own Bathroom! What more can you need?!?!?!",
-    "category": "new-location",
-    "tags": [
-        "apartment",
-        "corpo",
-        "kitsch"
-    ],
-    "yaw": 125.0649
+  "id": "e0eab8d4-f4f5-4578-b204-8df439cc2bcf",
+  "name": "Vault 404 ( Fallout Shelter )",
+  "authors": [
+    "TheRealJonCross"
+  ],
+  "coordinates": [
+    1794.2333,
+    -112.7607,
+    52.5362
+  ],
+  "yaw": 107.9555,
+  "nexus_id": "26988",
+  "category": "new-location",
+  "description": "WELCOME VAULT DWELLER to your new home!.........FOREVER! Vault 404 is proudly funded by the Vault-Te...",
+  "tags": [
+    "apartment",
+    "corpo",
+    "kitsch"
+  ],
+  "credits": "Kaoziun"
 }
