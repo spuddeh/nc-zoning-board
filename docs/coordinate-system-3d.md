@@ -16,7 +16,7 @@ What `GetPlayer():GetWorldPosition()` returns. What mod authors use. What our lo
 What the WolvenKit-exported GLB meshes (terrain, roads, water, cliffs, metro) use internally.
 - **GLB_X** = CET_X (east/west, same axis, same units, same origin)
 - **GLB_Z** = -CET_Y (north/south, negated)
-- **GLB_Y** = elevation (height) — **but inverted: positive Y = downward in the rendered scene**
+- **GLB_Y** = elevation (height) — positive Y is upward (correct rendering)
 - Terrain bbox: X[-8000, 8000], Y[-99, 879], Z[-8000, 8001]
 - The terrain covers MORE area than the CET world bounds (extra ocean and outer badlands). CET coordinates sit inside the terrain's XZ range at 1:1 scale — **there is no scaling factor**, the terrain just extends further.
 
@@ -29,21 +29,9 @@ Decoded from `*_data.png` textures via `TRANS_MIN/MAX` and `CUBE_SIZE` values.
 - Rotation: quaternion from Block 2, used for yaw extraction
 - These decode directly to **CET coordinates** — verified against player CET Z positions (within 1–6 units).
 
-## Key Finding: GLB Y Axis Is Inverted
+## Coordinate System Validation
 
-Confirmed experimentally by placing test cubes at known Y values:
-- **Red cube at Y=-500: appeared ABOVE terrain on screen**
-- **Green cube at Y=500: appeared BELOW terrain on screen**
-
-This means positive GLB_Y renders downward in our Three.js scene. Mountains (high GLB_Y) appear as valleys and valleys (low GLB_Y) appear as mountains when the camera is tilted.
-
-### Why This Happens
-The camera is set up with `camera.up = (0, 0, -1)` to put CET north (+CET_Y = -GLB_Z) at the top of the screen. This works perfectly for top-down viewing. But when OrbitControls tilts the camera, the `up` vector interacts with the polar angle to invert the Y axis on screen — higher Y values map to lower screen positions.
-
-### Why `scale.y = -1` Doesn't Fix It
-Applying `scale.y = -1` to GLB meshes flips the face winding, turning the mesh inside-out. With `DoubleSide` materials the faces still render but the geometry itself is inverted — convex shapes become concave, mountains become craters.
-
-Negating vertex Y positions and flipping face winding also fails because the terrain becomes geographically scrambled (water renders above terrain).
+The GLB Y axis correctly represents elevation (positive = upward). Terrain and building positions render at the correct heights with proper shading and ordering.
 
 ## Verified Data Relationships
 

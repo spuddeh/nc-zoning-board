@@ -109,7 +109,7 @@ const ThreeScene = (() => {
     // Z = -WORLD_CY because GLB_Z = -CET_Y.
     camera.position.set(WORLD_CX, 10000, -WORLD_CY);
     camera.lookAt(WORLD_CX, 0, -WORLD_CY);
-    camera.up.set(0, 0, -1);  // north faces up on screen
+    camera.up.set(0, 1, 0);  // Standard Three.js up vector
     camera.updateProjectionMatrix();
 
     // Lighting — hillshade from NW, matching game's DarkEdgeWidth effect
@@ -353,10 +353,6 @@ const ThreeScene = (() => {
 
         // surfY = terrain surface Y from raycast. Position center at surfY + h/2
         // so box base sits on terrain surface.
-        // NOTE: Y axis is inverted in the current scene (positive Y = down).
-        // The Phase 3 fix plan (docs/phase3-fix-plan.md) addresses this with scene
-        // group rotation. For now, buildings render correctly from top-down but
-        // appear inverted when tilted.
         dummy.position.set(cetX, surfY + h / 2, -cetY);
         // Yaw rotation: game Z-axis rotation = Three.js Y-axis rotation
         // Game uses CET where Z is up; Three.js Y is up. Same rotation axis.
@@ -441,13 +437,12 @@ const ThreeScene = (() => {
     animationId = requestAnimationFrame(renderLoop);
     controls.update();
     renderer.render(scene, camera);
-    // Compute tilt: 0° = top-down, 70° = max tilt
-    // Use polar angle from OrbitControls, inverted since our up=(0,0,-1)
-    // makes polarAngle=0 correspond to max tilt and maxPolarAngle to top-down
+    // Compute tilt: 0° = horizontal, 90° = straight down (top-down)
+    // Convert OrbitControls polarAngle (distance from up vector) to camera tilt angle
+    // tilt = 90° - polarAngle
     if (tiltDisplay) {
-      const maxTilt = Math.round(controls.maxPolarAngle * 180 / Math.PI);
-      const polar = Math.round(controls.getPolarAngle() * 180 / Math.PI);
-      const tilt = maxTilt - polar;
+      const polarDegrees = controls.getPolarAngle() * 180 / Math.PI;
+      const tilt = Math.round(90 - polarDegrees);
       tiltDisplay.textContent = `Tilt: ${tilt}°`;
     }
   }
@@ -475,10 +470,17 @@ const ThreeScene = (() => {
     camera.top    =  frustumH;
     camera.bottom = -frustumH;
     camera.updateProjectionMatrix();
+
+    // Reset to top-down view: target at sea level, camera directly above
     controls.target.set(WORLD_CX, 0, -WORLD_CY);
     camera.position.set(WORLD_CX, 10000, -WORLD_CY);
     camera.lookAt(WORLD_CX, 0, -WORLD_CY);
-    controls.reset();
+    camera.up.set(0, 1, 0);
+
+    // Reset OrbitControls state (polar angle = π/2 for top-down)
+    controls.autoRotate = false;
+    controls.autoRotateSpeed = 0;
+    controls.update();
   }
 
   function updateMaterials() {

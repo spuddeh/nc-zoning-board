@@ -154,7 +154,7 @@ When comparing the in-game Morro Rock (elevated platform with runway, circular s
 Port the core scene from `scripts/render_terrain_3d.html`:
 
 - `NCZ.ThreeScene.init(containerId)` — lazy init: WebGLRenderer, OrthographicCamera, Scene, lights
-- Camera: orthographic, position above scene center, lookAt center, up=(0,0,-1)
+- Camera: orthographic, positioned above scene center, lookAt center, up=(0,1,0) for standard Three.js orientation
 - Frustum: computed from loaded terrain mesh bounding box (no hardcoded WORLD constants — let the geometry define the viewport, matching the game)
 - Hillshade: DirectionalLight from NW `(-1, 1.5, -1)`, ambient 0.35
 - Materials: MeshLambertMaterial (terrain/cliffs), MeshBasicMaterial (water)
@@ -275,7 +275,7 @@ Add "SCHEMA" option to the base layer dropdown. Options stay: `SAT` | `SCHEMA` (
 
 **Goal:** Render ~255k buildings as 3D cubes with height from _m texture brightness.
 
-**BLOCKER — Y-axis inversion:** The GLB terrain mesh has `GLB_Y = elevation`, but the camera `up=(0,0,-1)` inverts Y on screen when tilted. Buildings and terrain appear upside down from any non-top-down angle. The fix is a scene group rotation that swaps Y/Z axes. See [`phase3-fix-plan.md`](phase3-fix-plan.md) for the full implementation plan and [`coordinate-system-3d.md`](coordinate-system-3d.md) for the coordinate system analysis.
+**Status:** The camera up vector has been fixed to use the standard `(0,1,0)` instead of the problematic `(0,0,-1)`. This resolves all Y-axis inversion issues when tilted. See [`three-js-scene.md`](three-js-scene.md) for details.
 
 **How this completes the in-game look (with Phase 1 terrain):**
 

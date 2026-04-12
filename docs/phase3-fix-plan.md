@@ -1,6 +1,15 @@
 # Phase 3 Fix Plan: Scene Group Rotation
 
-## Problem
+## ⚠️ Status: Superseded
+
+**This plan proposed a complex scene group rotation. A simpler solution was found: changing the camera's up vector from `(0,0,-1)` to `(0,1,0)` fixed the issue completely, without any coordinate system changes.**
+
+See `three-js-scene.js` line 112 and the commit history for the actual implementation.
+
+---
+
+## Problem (Original)
+
 The camera `up=(0,0,-1)` inverts the Y axis on screen when tilted. Buildings and terrain elevation both appear upside down from any non-top-down angle. This is unfixable by negating individual Y values — it requires changing which axis represents elevation in the Three.js scene.
 
 ## Solution

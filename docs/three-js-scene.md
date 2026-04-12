@@ -137,11 +137,9 @@ When the user switches theme, `NCZ.ThreeScene.updateMaterials()` is called to re
 
 For full details on the three coordinate systems (CET, GLB, building instance textures) and how they relate, see [`coordinate-system-3d.md`](coordinate-system-3d.md).
 
-### Current state (Phase 3 — known issue)
+### Camera Up Vector
 
-The GLB meshes use `GLB_X = CET_X`, `GLB_Z = -CET_Y`, `GLB_Y = elevation`. The camera uses `up=(0,0,-1)` for north-up rendering. This works correctly from top-down but **inverts the Y axis on screen when tilted** — mountains appear as valleys and buildings extend downward.
-
-The fix (scene group rotation to swap Y/Z axes) is documented in [`phase3-fix-plan.md`](phase3-fix-plan.md).
+The camera uses the standard Three.js up vector `up=(0,1,0)`. This ensures correct rendering at all camera angles — when tilted, the Y-axis orientation is preserved and buildings correctly extend upward from terrain.
 
 ### CET → Three.js mapping
 
