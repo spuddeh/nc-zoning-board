@@ -36,6 +36,7 @@ Output:
 """
 
 import json
+import math
 import os
 import sys
 import time
@@ -214,11 +215,22 @@ def decode_district(name, d):
             if hx == 0.0 and hy == 0.0:
                 continue
 
-            # Store pr, pg as raw UVs for _m sampling
+            # Quaternion from Block 2 → yaw angle (rotation around game Z / Three.js Y)
+            rr, rg, rb, ra = (px[y, x + block_w, c] for c in range(4))
+            qx_ = rr * 2.0 - 1.0
+            qy_ = rg * 2.0 - 1.0
+            qz_ = rb * 2.0 - 1.0
+            qw_ = ra * 2.0 - 1.0
+            # Yaw = rotation around up axis (game Z). Extract via atan2.
+            yaw = math.atan2(2.0 * (qw_ * qz_ + qx_ * qy_),
+                             1.0 - 2.0 * (qy_ ** 2 + qz_ ** 2))
+
+            # Store pr, pg as raw UVs for _m sampling.
+            # hx/hy/hz are all half-extents; store full extents (×2) for consistency.
             instances.append([
                 float(cx), float(cy), float(cz),
-                float(hx * 2), float(hy * 2), float(hz),
-                float(pr), float(pg),
+                float(hx * 2), float(hy * 2), float(hz * 2),
+                float(pr), float(pg), round(float(yaw), 4),
             ])
 
     print(f"    -> {len(instances):,} instances")
@@ -259,7 +271,7 @@ def main():
             hz_range = (hz_max - hz_min) if hz_max > hz_min else 1.0
 
         for inst in raw:
-            cx, cy, cz, w, dep, hz, pr, pg = inst
+            cx, cy, cz, w, dep, hz, pr, pg, yaw = inst
 
             if m_arr is not None:
                 raw_b = sample_brightness(m_arr, pr, pg)  # uint8 0-255
@@ -272,7 +284,7 @@ def main():
             all_instances.append([
                 round(cx, 2), round(cy, 2), round(cz, 2),
                 round(w, 2), round(dep, 2), round(hz, 2),
-                brightness, dist_idx,
+                brightness, dist_idx, yaw,
             ])
 
     os.makedirs(DATA_DIR, exist_ok=True)

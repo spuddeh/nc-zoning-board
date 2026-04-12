@@ -275,6 +275,8 @@ Add "SCHEMA" option to the base layer dropdown. Options stay: `SAT` | `SCHEMA` (
 
 **Goal:** Render ~255k buildings as 3D cubes with height from _m texture brightness.
 
+**BLOCKER — Y-axis inversion:** The GLB terrain mesh has `GLB_Y = elevation`, but the camera `up=(0,0,-1)` inverts Y on screen when tilted. Buildings and terrain appear upside down from any non-top-down angle. The fix is a scene group rotation that swaps Y/Z axes. See [`phase3-fix-plan.md`](phase3-fix-plan.md) for the full implementation plan and [`coordinate-system-3d.md`](coordinate-system-3d.md) for the coordinate system analysis.
+
 **How this completes the in-game look (with Phase 1 terrain):**
 
 The in-game map at Morro Rock shows three layers working together:

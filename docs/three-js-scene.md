@@ -135,25 +135,23 @@ When the user switches theme, `NCZ.ThreeScene.updateMaterials()` is called to re
 
 ## Coordinate System
 
-The Three.js scene uses CET coordinates directly. The GLB meshes exported from the game are already in CET space — no projection is needed.
+For full details on the three coordinate systems (CET, GLB, building instance textures) and how they relate, see [`coordinate-system-3d.md`](coordinate-system-3d.md).
+
+### Current state (Phase 3 — known issue)
+
+The GLB meshes use `GLB_X = CET_X`, `GLB_Z = -CET_Y`, `GLB_Y = elevation`. The camera uses `up=(0,0,-1)` for north-up rendering. This works correctly from top-down but **inverts the Y axis on screen when tilted** — mountains appear as valleys and buildings extend downward.
+
+The fix (scene group rotation to swap Y/Z axes) is documented in [`phase3-fix-plan.md`](phase3-fix-plan.md).
+
+### CET → Three.js mapping
 
 ```javascript
-// utils.js
 NCZ.cetToThree = function(cetX, cetY, cetZ) {
   return [cetX, cetZ || 0, -cetY];
 };
 ```
 
-**Why `-cetY` for Three.js Z:** CET Y increases going north (into the screen). Three.js Z increases coming out of the screen. Negating maps them correctly.
-
-Compare with the satellite view's `NCZ.cetToLeaflet()`, which projects into the 256×256 Leaflet tile space. The two coordinate systems are completely decoupled — the Realistic Map mod constants (`WORLD_MIN_X`, `WORLD_MAX_X` etc.) are only used for the satellite tile alignment and have no role in the Three.js scene.
-
-### Pin positioning
-
-```javascript
-// CET [X, Y, Z] → Three.js Vector3
-pin.position.set(cetX, cetZ || 0, -cetY);
-```
+CET and GLB share the same XZ coordinate space at 1:1 scale. The terrain GLB extends beyond CET world bounds (extra ocean/outer terrain) but coordinates within the city area match exactly.
 
 ---
 
@@ -184,35 +182,58 @@ mesh.rotation.y = Math.PI;
 
 | Layer | Material type | Color source |
 |-------|--------------|--------------|
-| Terrain | `MeshLambertMaterial` | `--overlay-terrain` CSS var |
-| Water | `MeshBasicMaterial` | `--overlay-water` CSS var |
-| Cliffs | `MeshLambertMaterial` | `--overlay-terrain` CSS var |
-| Roads | `MeshBasicMaterial` | `--overlay-road` CSS var |
-| Metro | `MeshBasicMaterial` | `--overlay-metro` CSS var |
-| Buildings | `MeshLambertMaterial` + vertex colors | Base: `--overlay-building-fill`, modulated by brightness |
+| Terrain | `MeshLambertMaterial` (flatShading, DoubleSide) | `--scene-terrain` CSS var |
+| Water | `MeshBasicMaterial` (DoubleSide) | `--scene-water` CSS var |
+| Cliffs | `MeshLambertMaterial` (flatShading, DoubleSide) | `--scene-cliffs` CSS var |
+| Roads | `MeshBasicMaterial` | `--overlay-road-color` CSS var |
+| Metro | `MeshBasicMaterial` | `--overlay-metro-color` CSS var |
+| Buildings | `MeshBasicMaterial` | `--scene-terrain` CSS var, per-instance brightness via `setColorAt()` |
 
 ---
 
 ## Buildings
 
-~255k buildings rendered as instanced cubes. Source data: `data/buildings.json` (32 MB, authoritative) → `data/buildings_3d.json` (~5 MB compact format, built by `scripts/build_buildings_3d.js`).
+~254k buildings rendered as instanced cubes via `THREE.InstancedMesh`.
+
+### Data pipeline
+
+```
+*_data.png (WolvenKit export, per-district instance textures)
+    ↓ scripts/build_buildings_3d.py
+    ↓   Decodes position, scale, quaternion→yaw, brightness from _m texture
+data/buildings_3d.json (~13 MB)
+    ↓ scripts/fix_building_heights.py
+    ↓   Raycasts terrain GLB to get surface Y at each building XZ
+data/buildings_3d.json (cetZ replaced with terrain surface Y)
+```
+
+### Format
 
 ```javascript
-// buildings_3d.json format
 {
   "instances": [
-    [cetX, cetY, cetZ, width, depth, height, brightness, districtIndex],
+    [cetX, cetY, surfaceY, width, depth, height, brightness, districtIndex, yaw],
     ...
   ],
-  "districts": ["city_center", "watson", ...]
+  "districts": ["westbrook", "city_center", ...]
 }
 ```
 
-Rendered as a single `THREE.InstancedMesh` with ~5 draw calls total regardless of building count.
+- `cetX, cetY` — building center in CET world coordinates
+- `surfaceY` — terrain mesh surface Y at the building's XZ position (from raycast)
+- `width, depth` — full footprint extents (2 × half-extent from texture)
+- `height` — full building height (2 × half-extent from texture)
+- `brightness` — 0–1 from `_m` texture, normalised per-district
+- `districtIndex` — index into the `districts` array
+- `yaw` — rotation around the up axis in radians (from quaternion in texture Block 2)
 
-Building color = `--overlay-building-fill` CSS var modulated per-instance by brightness (0.88–1.00 range, same remapping as the 2D canvas overlay). Taller buildings are brighter, matching the in-game map shading.
+### Rendering
 
-**Do not use `data/building_structures.json`** — this was an experimental contour vectorisation that produced incorrect merged blobs. It is not a valid data source for 3D buildings.
+Rendered as a single `THREE.InstancedMesh` (~5 draw calls total). Each instance has position, rotation (yaw around Y), and scale applied via `Object3D.updateMatrix()`.
+
+Building color uses `--scene-terrain` CSS var. Per-instance brightness modulation via `setColorAt()` (requires Three.js `USE_INSTANCING_COLOR`).
+
+**Do not use `data/building_structures.json`** — experimental contour vectorisation that produced incorrect merged blobs.
 
 ---
 
