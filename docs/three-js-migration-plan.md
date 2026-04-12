@@ -154,7 +154,7 @@ When comparing the in-game Morro Rock (elevated platform with runway, circular s
 Port the core scene from `scripts/render_terrain_3d.html`:
 
 - `NCZ.ThreeScene.init(containerId)` — lazy init: WebGLRenderer, OrthographicCamera, Scene, lights
-- Camera: orthographic, position above scene center, lookAt center, up=(0,0,-1)
+- Camera: orthographic, positioned above scene center, lookAt center, up=(0,1,0) for standard Three.js orientation
 - Frustum: computed from loaded terrain mesh bounding box (no hardcoded WORLD constants — let the geometry define the viewport, matching the game)
 - Hillshade: DirectionalLight from NW `(-1, 1.5, -1)`, ambient 0.35
 - Materials: MeshLambertMaterial (terrain/cliffs), MeshBasicMaterial (water)
@@ -274,6 +274,8 @@ Add "SCHEMA" option to the base layer dropdown. Options stay: `SAT` | `SCHEMA` (
 ## Phase 3: Buildings as Instanced Cubes
 
 **Goal:** Render ~255k buildings as 3D cubes with height from _m texture brightness.
+
+**Status:** The camera up vector has been fixed to use the standard `(0,1,0)` instead of the problematic `(0,0,-1)`. This resolves all Y-axis inversion issues when tilted. See [`three-js-scene.md`](three-js-scene.md) for details.
 
 **How this completes the in-game look (with Phase 1 terrain):**
 

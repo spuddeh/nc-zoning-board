@@ -110,6 +110,8 @@ Ambient: **0.35** (35% minimum brightness for fully shadowed faces).
 
 ## Three.js Scene Setup
 
+**Note:** The code snippets below are from `scripts/render_terrain_3d.html`, a development/visualization tool. The main app uses `assets/js/three-scene.js` which uses the standard `up=(0,1,0)` for proper orientation.
+
 ```javascript
 // Orthographic camera — top-down view
 const camera = new THREE.OrthographicCamera(
@@ -117,7 +119,7 @@ const camera = new THREE.OrthographicCamera(
 );
 camera.position.set(WORLD_CX, 10000, -WORLD_CY);
 camera.lookAt(WORLD_CX, 0, -WORLD_CY);
-camera.up.set(0, 0, -1);  // north = -Z in GLB space
+camera.up.set(0, 1, 0);  // standard Three.js up vector
 
 // Layer order:
 // 1. Background (black)

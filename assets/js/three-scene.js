@@ -23,6 +23,7 @@ window.NCZ = window.NCZ || {};
 const AMBIENT_INTENSITY = 0.35;
 const SUN_DIR = new THREE.Vector3(-1, 1.5, -1).normalize();
 
+
 // World centre in CET space (from Realistic Map mod quad UV mapping)
 const WORLD_CX =  ((-6298 + 5815) / 2);   //  -241.5
 const WORLD_CY = ((-7684 + 4427) / 2);    // -1628.5
@@ -108,7 +109,7 @@ const ThreeScene = (() => {
     // Z = -WORLD_CY because GLB_Z = -CET_Y.
     camera.position.set(WORLD_CX, 10000, -WORLD_CY);
     camera.lookAt(WORLD_CX, 0, -WORLD_CY);
-    camera.up.set(0, 0, -1);  // north faces up on screen
+    camera.up.set(0, 1, 0);  // Standard Three.js up vector
     camera.updateProjectionMatrix();
 
     // Lighting — hillshade from NW, matching game's DarkEdgeWidth effect
@@ -162,6 +163,7 @@ const ThreeScene = (() => {
     roads:     null,
     metro:     null,
     districts: null,  // parent group — toggled as a unit
+    buildings: null,
   };
 
   // Sub-groups inside layers.districts (parent group controls overall visibility):
@@ -205,6 +207,7 @@ const ThreeScene = (() => {
       applyMaterial(waterScene,   makeFlatMaterial('--scene-water',         '#2a3f57'));
       applyMaterial(cliffsScene,  makeHillshadeMaterial('--scene-cliffs',   '#566c88'));
 
+
       // Cliffs GLB entity localTransform offset (resolved from WolvenKit export):
       // CET pos (-2255, -3050) → GLB offset X=-2255, Z=+3050
       cliffsScene.position.set(-2255, 0, 3050);
@@ -223,6 +226,9 @@ const ThreeScene = (() => {
       // Tier 2: district lines from subdistricts.json
       loadDistricts();
 
+      // Tier 3: buildings instanced mesh
+      loadBuildings();
+
     } catch (err) {
       console.error('[NCZ] Terrain GLB load failed:', err);
       setLoadingText('Failed to load terrain. Check console for details.');
@@ -239,6 +245,9 @@ const ThreeScene = (() => {
       // Roads GLB has inverted X axis — rotate 180° around Y to correct
       roadsScene.rotation.y = Math.PI;
       metroScene.rotation.y = Math.PI;
+
+
+
 
       const roadColor  = readThemeColor('--overlay-road-color',  '#504b41');
       const metroColor = readThemeColor('--overlay-metro-color', '#dcaa28');
@@ -302,6 +311,76 @@ const ThreeScene = (() => {
     }
   }
 
+  // ── Buildings (Tier 3) ─────────────────────────────────────────────────
+  // ~254k instanced cubes. Each instance: [cetX, cetY, cetZ, width, depth, height, brightness, districtIdx]
+
+  async function loadBuildings() {
+    try {
+      const data = await fetch('data/buildings_3d.json').then(r => r.json());
+      const instances = data.instances;
+      const count = instances.length;
+
+
+      const baseColor = readThemeColor('--scene-terrain', '#566c88');
+      const geometry  = new THREE.BoxGeometry(1, 1, 1);
+      // Buildings and terrain now share CET coordinate space (terrain scaled by GLB_TO_CET).
+      // terrainY in the data was raycasted against the scaled-down terrain mesh.
+      // Building height (h) is in CET units from the instance texture — needs the same
+      // GLB_TO_CET scaling so building proportions match the scaled terrain.
+      const buildingColor = readThemeColor('--scene-terrain', '#566c88');
+      // MeshBasicMaterial: not affected by light normals — avoids the inverted-Y
+      // lighting issue where Lambert shading makes the camera-facing face dark.
+      const material = new THREE.MeshBasicMaterial({ color: buildingColor });
+      const mesh     = new THREE.InstancedMesh(geometry, material, count);
+      mesh.renderOrder = 1;
+
+      const dummy = new THREE.Object3D();
+      const color = new THREE.Color();
+
+      for (let i = 0; i < count; i++) {
+        const inst = instances[i];
+        const cetX    = inst[0];
+        const cetY    = inst[1];
+        const surfY   = inst[2];  // terrain surface Y from raycast
+        const width   = inst[3];
+        const depth   = inst[4];
+        const height  = inst[5];
+        const brightness = inst[6];
+        // inst[7] = districtIdx
+        const yaw     = inst[8] || 0;  // radians, rotation around game Z (= Three.js Y)
+
+        const h = Math.max(height, 0.5);
+
+        // surfY = terrain surface Y from raycast. Position center at surfY + h/2
+        // so box base sits on terrain surface.
+        dummy.position.set(cetX, surfY + h / 2, -cetY);
+        // Yaw rotation: game Z-axis rotation = Three.js Y-axis rotation
+        // Game uses CET where Z is up; Three.js Y is up. Same rotation axis.
+        dummy.rotation.set(0, yaw, 0);  // CET Z-up yaw → Three.js Y-up rotation (same direction)
+        dummy.scale.set(width, h, depth);
+        dummy.updateMatrix();
+        mesh.setMatrixAt(i, dummy.matrix);
+
+        const b = 0.5 + brightness * 0.6;
+        color.setRGB(
+          Math.min(baseColor.r * b, 1),
+          Math.min(baseColor.g * b, 1),
+          Math.min(baseColor.b * b, 1),
+        );
+        mesh.setColorAt(i, color);
+      }
+
+      mesh.instanceMatrix.needsUpdate = true;
+      mesh.instanceColor.needsUpdate  = true;
+
+      layers.buildings = mesh;
+      scene.add(mesh);
+      console.log(`[NCZ] Buildings: ${count.toLocaleString()} instances loaded`);
+    } catch (err) {
+      console.error('[NCZ] Buildings load failed:', err);
+    }
+  }
+
   // District line materials — stored so resolution can be updated on resize
   const districtLineMaterials = [];
 
@@ -352,10 +431,20 @@ const ThreeScene = (() => {
 
   // ── Render loop ────────────────────────────────────────────────────────
 
+  const tiltDisplay = document.getElementById('scene-tilt-display');
+
   function renderLoop() {
     animationId = requestAnimationFrame(renderLoop);
-    controls.update(); // required for damping
+    controls.update();
     renderer.render(scene, camera);
+    // Compute tilt: 0° = horizontal, 90° = straight down (top-down)
+    // Convert OrbitControls polarAngle (distance from up vector) to camera tilt angle
+    // tilt = 90° - polarAngle
+    if (tiltDisplay) {
+      const polarDegrees = controls.getPolarAngle() * 180 / Math.PI;
+      const tilt = Math.round(90 - polarDegrees);
+      tiltDisplay.textContent = `Tilt: ${tilt}°`;
+    }
   }
 
   function startRenderLoop() {
@@ -381,10 +470,17 @@ const ThreeScene = (() => {
     camera.top    =  frustumH;
     camera.bottom = -frustumH;
     camera.updateProjectionMatrix();
+
+    // Reset to top-down view: target at sea level, camera directly above
     controls.target.set(WORLD_CX, 0, -WORLD_CY);
     camera.position.set(WORLD_CX, 10000, -WORLD_CY);
     camera.lookAt(WORLD_CX, 0, -WORLD_CY);
-    controls.reset();
+    camera.up.set(0, 1, 0);
+
+    // Reset OrbitControls state (polar angle = π/2 for top-down)
+    controls.autoRotate = false;
+    controls.autoRotateSpeed = 0;
+    controls.update();
   }
 
   function updateMaterials() {
