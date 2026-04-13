@@ -34,6 +34,19 @@ const ThreeScene = (() => {
   let animationId = null;
   let initialized = false;
   let loadingEl = null;
+  let _dirLight      = null; // stored so setSunPosition can update it live
+  let _ambLight      = null;
+  let _shadowsOn     = false; // tracks the checkbox state — off by default
+  let _sunSphere     = null; // visible sun disc — shown during showcase only
+
+  // Material refs — stored so updateMaterials() can re-apply theme colors live
+  let terrainMat = null;
+  let waterMat   = null;
+  let cliffsMat  = null;
+  let roadsMat   = null;
+  let metroMat   = null;
+  let buildingMesh       = null;  // InstancedMesh
+  let buildingBrightness = null;  // Float32Array — per-instance brightness values
 
   // ── Helpers ────────────────────────────────────────────────────────────
 
@@ -51,12 +64,6 @@ const ThreeScene = (() => {
     });
   }
 
-  function makeFlatMaterial(colorVar, fallback) {
-    return new THREE.MeshBasicMaterial({
-      color: readThemeColor(colorVar, fallback),
-      side: THREE.DoubleSide,
-    });
-  }
 
   function applyMaterial(root, material) {
     root.traverse(child => {
@@ -87,10 +94,20 @@ const ThreeScene = (() => {
     const container = document.getElementById(containerId);
     loadingEl = container.querySelector('.scene-loading');
 
-    // Renderer
+    // Renderer — pass updateStyle:false so Three.js never writes px dimensions
+    // onto the canvas element. The canvas is kept at width/height:100% in CSS
+    // so it always fills #map-3d without ever pushing surrounding layout elements.
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setPixelRatio(window.devicePixelRatio);
-    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.setSize(container.clientWidth, container.clientHeight, false);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type    = THREE.PCFSoftShadowMap;
+    // Take the canvas out of document flow so its pixel-buffer dimensions
+    // can never push or displace surrounding layout elements.
+    // inset:0 stretches it to fill #map-3d on all four sides — no explicit
+    // width/height needed (and adding them alongside inset:0 can cause squishing).
+    renderer.domElement.style.position = 'absolute';
+    renderer.domElement.style.inset    = '0';
     container.appendChild(renderer.domElement);
 
     // Scene background matches theme primary color
@@ -112,11 +129,41 @@ const ThreeScene = (() => {
     camera.up.set(0, 1, 0);  // Standard Three.js up vector
     camera.updateProjectionMatrix();
 
-    // Lighting — hillshade from NW, matching game's DarkEdgeWidth effect
-    const dirLight = new THREE.DirectionalLight(0xffffff, 1.0 - AMBIENT_INTENSITY);
-    dirLight.position.copy(SUN_DIR);
-    scene.add(dirLight);
-    scene.add(new THREE.AmbientLight(0xffffff, AMBIENT_INTENSITY));
+    // Lighting — direction set to current real sun position via SunCalc if available,
+    // otherwise falls back to the default NW hillshade direction.
+    _dirLight = new THREE.DirectionalLight(0xffffff, 1.0 - AMBIENT_INTENSITY);
+    _dirLight.position.copy(SUN_DIR).multiplyScalar(8000);
+
+    // Shadow map: 4096² covers the ~14 000-unit world at ~3.4 units/texel.
+    // Frustum centred on Night City (WORLD_CX, 0, -WORLD_CY).
+    _dirLight.castShadow                    = false; // off by default; checkbox enables it
+    _dirLight.shadow.mapSize.set(4096, 4096);
+    _dirLight.shadow.camera.left            = -7000;
+    _dirLight.shadow.camera.right           =  7000;
+    _dirLight.shadow.camera.top             =  7000;
+    _dirLight.shadow.camera.bottom          = -7000;
+    _dirLight.shadow.camera.near            =    10;
+    _dirLight.shadow.camera.far             = 25000;
+    _dirLight.shadow.bias                   = -0.001;
+    _dirLight.shadow.normalBias             =  0.02;
+
+    // Centre the shadow frustum on Night City, not the world origin
+    _dirLight.target.position.set(WORLD_CX, 0, -WORLD_CY);
+
+    scene.add(_dirLight);
+    scene.add(_dirLight.target);
+    _ambLight = new THREE.AmbientLight(0xffffff, AMBIENT_INTENSITY);
+    scene.add(_ambLight);
+    // Sun position is applied by app.js via the slider once terrain has loaded.
+
+    // Visible sun sphere — hidden by default, shown during showcase only.
+    // Radius 600 units at 20 000 distance ≈ 1.7° apparent diameter (≈3× real sun).
+    _sunSphere = new THREE.Mesh(
+      new THREE.SphereGeometry(600, 16, 16),
+      new THREE.MeshBasicMaterial({ color: 0xffcc44 })
+    );
+    _sunSphere.visible = false;
+    scene.add(_sunSphere);
 
     // OrbitControls — left=pan, right=tilt, middle=zoom
     controls = new OrbitControls(camera, renderer.domElement);
@@ -144,12 +191,13 @@ const ThreeScene = (() => {
     if (!container || container.style.display === 'none') return;
     const w = container.clientWidth;
     const h = container.clientHeight;
-    renderer.setSize(w, h);
+    renderer.setSize(w, h, false); // updateStyle:false — CSS width/height stay at 100%
     const aspect = w / h;
     const frustumH = (camera.top - camera.bottom) / 2;
     camera.left   = -frustumH * aspect;
     camera.right  =  frustumH * aspect;
     camera.updateProjectionMatrix();
+    // flyCamera resize is handled in flyover.js
     // LineMaterial needs the viewport resolution to compute pixel-width lines correctly
     for (const mat of districtLineMaterials) {
       mat.resolution.set(w, h);
@@ -203,9 +251,19 @@ const ThreeScene = (() => {
         loadGLB('assets/glb/3dmap_cliffs.glb'),
       ]);
 
-      applyMaterial(terrainScene, makeHillshadeMaterial('--scene-terrain', '#566c88'));
-      applyMaterial(waterScene,   makeFlatMaterial('--scene-water',         '#2a3f57'));
-      applyMaterial(cliffsScene,  makeHillshadeMaterial('--scene-cliffs',   '#566c88'));
+      terrainMat = makeHillshadeMaterial('--scene-terrain', '#566c88');
+      waterMat   = makeHillshadeMaterial('--scene-water',     '#2a3f57');
+      cliffsMat  = makeHillshadeMaterial('--scene-cliffs',   '#566c88');
+      applyMaterial(terrainScene, terrainMat);
+      applyMaterial(waterScene,   waterMat);
+      applyMaterial(cliffsScene,  cliffsMat);
+
+      // Shadow flags — terrain and cliffs cast and receive (hills shadow valleys);
+      // water receives only (no hard shadow edges on flat ocean); buildings skipped.
+      terrainScene.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+      waterScene.traverse(c =>   { if (c.isMesh) { c.receiveShadow = true; } });
+      cliffsScene.traverse(c =>  { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+
 
 
       // Cliffs GLB entity localTransform offset (resolved from WolvenKit export):
@@ -219,6 +277,11 @@ const ThreeScene = (() => {
       fitCameraToBox(box);
 
       hideLoading();
+
+      // Trigger the sun slider so app.js applies the correct initial sun position.
+      // Done here (post-terrain) because ThreeScene.setSunPosition now exists and
+      // the directional light is in the scene — the slider fires too early otherwise.
+      document.getElementById('scene-sun-slider')?.dispatchEvent(new Event('input'));
 
       // Tier 2: roads + metro (after terrain, during idle)
       loadRoadsMetro();
@@ -252,8 +315,10 @@ const ThreeScene = (() => {
       const roadColor  = readThemeColor('--overlay-road-color',  '#504b41');
       const metroColor = readThemeColor('--overlay-metro-color', '#dcaa28');
 
-      applyMaterial(roadsScene, new THREE.MeshBasicMaterial({ color: roadColor,  transparent: true, opacity: 0.8 }));
-      applyMaterial(metroScene, new THREE.MeshBasicMaterial({ color: metroColor, transparent: true, opacity: 0.9 }));
+      roadsMat = new THREE.MeshBasicMaterial({ color: roadColor,  transparent: true, opacity: 0.8 });
+      metroMat = new THREE.MeshBasicMaterial({ color: metroColor, transparent: true, opacity: 0.9 });
+      applyMaterial(roadsScene, roadsMat);
+      applyMaterial(metroScene, metroMat);
 
       const roadsGroup = new THREE.Group();
       roadsGroup.add(roadsScene);
@@ -323,15 +388,10 @@ const ThreeScene = (() => {
 
       const baseColor = readThemeColor('--scene-terrain', '#566c88');
       const geometry  = new THREE.BoxGeometry(1, 1, 1);
-      // Buildings and terrain now share CET coordinate space (terrain scaled by GLB_TO_CET).
-      // terrainY in the data was raycasted against the scaled-down terrain mesh.
-      // Building height (h) is in CET units from the instance texture — needs the same
-      // GLB_TO_CET scaling so building proportions match the scaled terrain.
-      const buildingColor = readThemeColor('--scene-terrain', '#566c88');
-      // MeshBasicMaterial: not affected by light normals — avoids the inverted-Y
-      // lighting issue where Lambert shading makes the camera-facing face dark.
-      const material = new THREE.MeshBasicMaterial({ color: buildingColor });
-      const mesh     = new THREE.InstancedMesh(geometry, material, count);
+      // MeshBasicMaterial: not affected by light normals — avoids Lambert shading artifacts.
+      const material      = new THREE.MeshBasicMaterial({ color: baseColor });
+      const mesh          = new THREE.InstancedMesh(geometry, material, count);
+      const brightnessArr = new Float32Array(count);
       mesh.renderOrder = 1;
 
       const dummy = new THREE.Object3D();
@@ -346,6 +406,7 @@ const ThreeScene = (() => {
         const depth   = inst[4];
         const height  = inst[5];
         const brightness = inst[6];
+        brightnessArr[i] = brightness;
         // inst[7] = districtIdx
         const yaw     = inst[8] || 0;  // radians, rotation around game Z (= Three.js Y)
 
@@ -373,7 +434,10 @@ const ThreeScene = (() => {
       mesh.instanceMatrix.needsUpdate = true;
       mesh.instanceColor.needsUpdate  = true;
 
-      layers.buildings = mesh;
+      buildingMesh       = mesh;
+      buildingBrightness = brightnessArr;
+      layers.buildings   = mesh;
+      mesh.castShadow    = true; // cast shadows onto terrain; receiveShadow off (MeshBasicMaterial ignores lighting)
       scene.add(mesh);
       console.log(`[NCZ] Buildings: ${count.toLocaleString()} instances loaded`);
     } catch (err) {
@@ -458,6 +522,21 @@ const ThreeScene = (() => {
     }
   }
 
+  // ── Flyover API ────────────────────────────────────────────────────────
+  // Called by flyover.js — kept minimal to avoid exposing internals.
+
+  function renderFrame(cam) {
+    if (renderer && scene) renderer.render(scene, cam);
+  }
+
+  function setControlsEnabled(enabled) {
+    if (controls) controls.enabled = enabled;
+  }
+
+  function getCanvasElement() {
+    return renderer ? renderer.domElement : null;
+  }
+
   // ── Theme update ───────────────────────────────────────────────────────
   // Called by app.js when the user switches theme.
 
@@ -485,12 +564,182 @@ const ThreeScene = (() => {
 
   function updateMaterials() {
     if (!scene) return;
+
     scene.background = readThemeColor('--primary', '#0a192f');
-    // Material updates for individual meshes come in Phase 6
-    // (requires storing material refs — deferred to keep Phase 1 focused)
+
+    if (terrainMat) terrainMat.color.copy(readThemeColor('--scene-terrain',      '#566c88'));
+    if (waterMat)   waterMat.color.copy(readThemeColor('--scene-water',           '#2a3f57'));
+    if (cliffsMat)  cliffsMat.color.copy(readThemeColor('--scene-cliffs',         '#566c88'));
+    if (roadsMat)   roadsMat.color.copy(readThemeColor('--overlay-road-color',    '#504b41'));
+    if (metroMat)   metroMat.color.copy(readThemeColor('--overlay-metro-color',   '#dcaa28'));
+
+    // Re-tint all 254k building instances against the new base color
+    if (buildingMesh && buildingBrightness) {
+      const base  = readThemeColor('--scene-terrain', '#566c88');
+      const col   = new THREE.Color();
+      const count = buildingBrightness.length;
+      for (let i = 0; i < count; i++) {
+        const b = 0.5 + buildingBrightness[i] * 0.6;
+        col.setRGB(Math.min(base.r * b, 1), Math.min(base.g * b, 1), Math.min(base.b * b, 1));
+        buildingMesh.setColorAt(i, col);
+      }
+      buildingMesh.instanceColor.needsUpdate = true;
+      buildingMesh.material.color.copy(base);
+    }
   }
 
-  return { init, startRenderLoop, stopRenderLoop, resetCamera, setLayerVisibility, updateMaterials };
+  // Snapshot current material colors — call before applyTheme so the old
+  // values are captured for use as the "from" end of a transition lerp.
+  function captureColors() {
+    return {
+      bg:      scene?.background?.clone() ?? null,
+      terrain: terrainMat?.color.clone()  ?? null,
+      water:   waterMat?.color.clone()    ?? null,
+      cliffs:  cliffsMat?.color.clone()   ?? null,
+      roads:   roadsMat?.color.clone()    ?? null,
+      metro:   metroMat?.color.clone()    ?? null,
+    };
+  }
+
+  // Lerp scene/material colors from a snapshot to explicit THREE.Color targets.
+  // Used by the flyover beat cycle — no CSS read, no building update, no overhead.
+  function transitionToColors(from, to, durationMs = 800) {
+    if (!scene) return;
+    if (from.bg && scene.background) scene.background.copy(from.bg);
+    if (from.terrain && terrainMat)   terrainMat.color.copy(from.terrain);
+    if (from.water   && waterMat)     waterMat.color.copy(from.water);
+    if (from.cliffs  && cliffsMat)    cliffsMat.color.copy(from.cliffs);
+    if (from.roads   && roadsMat)     roadsMat.color.copy(from.roads);
+    if (from.metro   && metroMat)     metroMat.color.copy(from.metro);
+
+    const start = performance.now();
+    function step() {
+      const rawT = Math.min((performance.now() - start) / durationMs, 1);
+      const t    = rawT * rawT * (3 - 2 * rawT);
+      if (scene.background && from.bg && to.bg) scene.background.lerpColors(from.bg, to.bg, t);
+      if (terrainMat && from.terrain && to.terrain) terrainMat.color.lerpColors(from.terrain, to.terrain, t);
+      if (waterMat   && from.water   && to.water)   waterMat.color.lerpColors(from.water,   to.water,   t);
+      if (cliffsMat  && from.cliffs  && to.cliffs)  cliffsMat.color.lerpColors(from.cliffs, to.cliffs,  t);
+      if (roadsMat   && from.roads   && to.roads)   roadsMat.color.lerpColors(from.roads,   to.roads,   t);
+      if (metroMat   && from.metro   && to.metro)   metroMat.color.lerpColors(from.metro,   to.metro,   t);
+      if (rawT < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  // Smoothly lerp scene/material colors from a captured snapshot to the
+  // current CSS custom property values (new theme already applied).
+  // Buildings snap immediately via updateMaterials(); only the main scene
+  // colors are lerped to keep the per-frame cost low.
+  function transitionMaterials(from, durationMs = 1000) {
+    if (!scene) return;
+
+    // Restore materials to their pre-theme-change state
+    if (from.bg && scene.background) scene.background.copy(from.bg);
+    if (from.terrain && terrainMat)   terrainMat.color.copy(from.terrain);
+    if (from.water   && waterMat)     waterMat.color.copy(from.water);
+    if (from.cliffs  && cliffsMat)    cliffsMat.color.copy(from.cliffs);
+    if (from.roads   && roadsMat)     roadsMat.color.copy(from.roads);
+    if (from.metro   && metroMat)     metroMat.color.copy(from.metro);
+
+    // Read target values from CSS (new theme class already on <html>)
+    const to = {
+      bg:      readThemeColor('--primary',             '#0a192f'),
+      terrain: readThemeColor('--scene-terrain',       '#566c88'),
+      water:   readThemeColor('--scene-water',         '#2a3f57'),
+      cliffs:  readThemeColor('--scene-cliffs',        '#566c88'),
+      roads:   readThemeColor('--overlay-road-color',  '#504b41'),
+      metro:   readThemeColor('--overlay-metro-color', '#dcaa28'),
+    };
+
+    const start = performance.now();
+    function step() {
+      const rawT = Math.min((performance.now() - start) / durationMs, 1);
+      const t    = rawT * rawT * (3 - 2 * rawT); // smoothstep
+
+      if (scene.background && from.bg) scene.background.lerpColors(from.bg, to.bg, t);
+      if (terrainMat && from.terrain)  terrainMat.color.lerpColors(from.terrain, to.terrain, t);
+      if (waterMat   && from.water)    waterMat.color.lerpColors(from.water,   to.water,   t);
+      if (cliffsMat  && from.cliffs)   cliffsMat.color.lerpColors(from.cliffs, to.cliffs,  t);
+      if (roadsMat   && from.roads)    roadsMat.color.lerpColors(from.roads,   to.roads,   t);
+      if (metroMat   && from.metro)    metroMat.color.lerpColors(from.metro,   to.metro,   t);
+
+      if (rawT < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  // ── Sun / hillshade control ────────────────────────────────────────────────
+  // azimuthRad: from south, positive westward (SunCalc convention)
+  // altitudeRad: elevation above horizon (0 = horizon, π/2 = zenith)
+  //
+  // GLB space axes: East = +X, South = +Z, West = -X, North = -Z, Up = +Y
+  // So az=0 (south) → Z+; az=π/2 (west) → X-; az=-π/2 (east) → X+
+  function setSunPosition(azimuthRad, altitudeRad) {
+    if (!_dirLight || !_ambLight) return;
+    const el = altitudeRad;
+    const az = azimuthRad;
+
+    // Scale position so the shadow camera sits well above the scene.
+    // At sunrise/sunset el is small — we floor the Y component so the
+    // shadow camera never dips below the terrain.
+    const SHADOW_DIST = 8000;
+    _dirLight.position.set(
+      -Math.cos(el) * Math.sin(az)  * SHADOW_DIST,
+       Math.max(0.1, Math.sin(el))  * SHADOW_DIST,
+       Math.cos(el) * Math.cos(az)  * SHADOW_DIST,
+    );
+
+    // Disable shadow casting when the sun is below ~5° — avoids infinitely long
+    // degenerate shadow projections at the very start/end of the flyover.
+    // Only cast shadows if the user has enabled them AND the sun is above 5°
+    _dirLight.castShadow = _shadowsOn && (el * 180 / Math.PI) > 5;
+
+    // Colour: warm orange at horizon → neutral white above ~20°
+    const elevDeg = el * 180 / Math.PI;
+    const t = Math.min(1, Math.max(0, elevDeg / 20));
+    _dirLight.color.setRGB(1, 0.45 + t * 0.55, 0.1 + t * 0.9);
+
+    // Intensity: dims near the horizon, full above ~30°
+    const intensity = 0.2 + 0.8 * Math.min(1, Math.max(0, elevDeg / 30));
+    _dirLight.intensity = (1 - AMBIENT_INTENSITY) * intensity;
+    _ambLight.intensity =      AMBIENT_INTENSITY  * Math.max(0.4, intensity);
+
+    // Move and recolour the visible sun sphere.
+    // Centred on Night City (WORLD_CX, 0, -WORLD_CY) so it hangs over the map.
+    if (_sunSphere) {
+      const SUN_SPHERE_DIST = 20000;
+      const nx = -Math.cos(el) * Math.sin(az);
+      const ny =  Math.sin(el); // unclamped — terrain naturally occludes it at sunrise/sunset
+      const nz =  Math.cos(el) * Math.cos(az);
+      _sunSphere.position.set(
+        WORLD_CX + nx * SUN_SPHERE_DIST,
+        ny * SUN_SPHERE_DIST,
+        -WORLD_CY + nz * SUN_SPHERE_DIST,
+      );
+      // Warm orange at horizon → bright yellow at noon, slightly more saturated than the light
+      _sunSphere.material.color.setRGB(
+        Math.min(1, _dirLight.color.r * 1.3),
+        Math.min(1, _dirLight.color.g * 1.15),
+        Math.min(1, _dirLight.color.b * 0.8),
+      );
+    }
+  }
+
+  function setSunSphereVisible(visible) {
+    if (_sunSphere) _sunSphere.visible = visible;
+  }
+
+  function setShadowsEnabled(enabled) {
+    _shadowsOn = enabled;
+    // Re-evaluate castShadow: respect both the user toggle and the elevation floor
+    if (_dirLight) {
+      const elevDeg = Math.asin(Math.min(1, _dirLight.position.y / 8000)) * 180 / Math.PI;
+      _dirLight.castShadow = _shadowsOn && elevDeg > 5;
+    }
+  }
+
+  return { init, startRenderLoop, stopRenderLoop, resetCamera, setLayerVisibility, updateMaterials, renderFrame, setControlsEnabled, getCanvasElement, captureColors, transitionMaterials, transitionToColors, setSunPosition, setShadowsEnabled, setSunSphereVisible };
 })();
 
 window.NCZ.ThreeScene = ThreeScene;

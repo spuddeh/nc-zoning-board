@@ -248,6 +248,44 @@ html.theme-aldecaldos {
 
 }
 
+html.theme-synthwave {
+    --primary: #1a0533;
+    --secondary: #ff2d78;
+    --tertiary: #ff9d00;
+
+    --gray: #8a6a9a;
+
+    --white: #ffe4f5;
+    --dark-accent: #2d0a52;
+
+    /* Themed surfaces */
+    --surface-panel: rgba(26, 5, 51, 0.95);
+    --surface-hover: rgba(255, 45, 120, 0.08);
+    --surface-panel-90: rgba(26, 5, 51, 0.9);
+    --surface-tooltip-95: rgba(13, 3, 26, 0.95);
+    --surface-tooltip-85: rgba(13, 3, 26, 0.85);
+    --surface-nav-80: rgba(26, 5, 51, 0.8);
+    --white-78: rgba(255, 228, 245, 0.78);
+    --white-86: rgba(255, 228, 245, 0.86);
+
+    /* Theme category colors */
+    --category-location-overhaul: var(--secondary);
+    --category-location-overhaul-glow: var(--secondary-40);
+    --category-new-location: var(--tertiary);
+    --category-new-location-glow: var(--tertiary-40);
+    --category-other: var(--gray);
+    --category-other-glow: var(--gray-40);
+
+    /* 3D scene — deep purple terrain, violet ocean */
+    --scene-terrain: #4a2e6e;
+    --scene-water:   #1a0840;
+    --scene-cliffs:  #4a2e6e;
+
+    /* Overlay colors — magenta metro, dark purple roads */
+    --overlay-road-color:   #3d2d52;
+    --overlay-metro-color:  #e0196a;
+}
+
 /* Global reset */
 * {
     margin: 0;

@@ -50,6 +50,14 @@
     margin-bottom: 2px;
 }
 
+.overlay-perf-warn {
+    font-size: var(--text-2xs);
+    color: var(--tertiary);
+    opacity: 0.7;
+    margin-left: 2px;
+    cursor: help;
+}
+
 .overlay-toggle {
     display: flex;
     align-items: center;
@@ -131,6 +139,82 @@
     }
 }
 
+/* Sun / time-of-day slider */
+#scene-sun-control {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    cursor: pointer;
+}
+
+#scene-sun-icon {
+    font-size: var(--text-sm);
+    line-height: 1;
+    color: var(--tertiary);
+}
+
+#scene-sun-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 90px;
+    height: 2px;
+    background: var(--secondary-30);
+    border-radius: 1px;
+    cursor: pointer;
+    outline: none;
+
+    &::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--tertiary);
+        cursor: pointer;
+    }
+
+    &::-moz-range-thumb {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--tertiary);
+        border: none;
+        cursor: pointer;
+    }
+}
+
+#scene-sun-time {
+    font-family: var(--font-heading);
+    font-size: var(--text-xs);
+    color: var(--tertiary);
+    min-width: 2.8rem;
+    letter-spacing: 0.05em;
+}
+
+#scene-flyover-btn {
+    background: transparent;
+    border: var(--ui-border-thin) solid var(--secondary-30);
+    color: var(--secondary);
+    font-family: var(--font-heading);
+    font-size: var(--text-xs);
+    padding: var(--space-2xs) var(--space-sm);
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    transition: var(--transition-fast);
+    white-space: nowrap;
+
+    &:hover {
+        background: var(--secondary);
+        color: var(--primary);
+        border-color: var(--secondary);
+    }
+
+    &.active {
+        background: var(--secondary);
+        color: var(--primary);
+        border-color: var(--secondary);
+    }
+}
+
 #scene-reset-btn {
     background: transparent;
     border: var(--ui-border-thin) solid var(--secondary-30);
@@ -161,6 +245,68 @@
     font-size: var(--text-md);
     letter-spacing: 0.1em;
     pointer-events: none;
+}
+
+
+/* Showcase fullscreen — applied directly to #map-3d, no ancestor cascade needed */
+#map-3d.showcase-fullscreen {
+    position: fixed;
+    inset: 0;
+    z-index: 9000;
+    width: 100vw;
+    height: 100vh;
+}
+
+
+/* Flyover start-screen — opening title card */
+#flyover-start-screen {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    pointer-events: none;
+    z-index: 10;
+    animation: flyover-fade 3s ease forwards;
+
+    &.hidden {
+        display: none;
+    }
+}
+
+@keyframes flyover-fade {
+    0%   { opacity: 0; }
+    15%  { opacity: 1; }
+    70%  { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+.flyover-title {
+    font-family: var(--font-heading);
+    font-size: var(--text-2xl);
+    letter-spacing: 0.15em;
+    color: var(--white);
+    text-transform: uppercase;
+}
+
+.flyover-subtitle {
+    font-family: var(--font-heading);
+    font-size: var(--text-sm);
+    letter-spacing: 0.2em;
+    color: var(--gray);
+    text-transform: uppercase;
+}
+
+.flyover-esc-hint {
+    font-family: var(--font-heading);
+    font-size: var(--text-2xs);
+    letter-spacing: 0.15em;
+    color: var(--gray);
+    opacity: 0.5;
+    margin-top: 1.5rem;
+    text-transform: uppercase;
 }
 
 /* Sidebar Styling */
