@@ -271,6 +271,7 @@ const ThreeScene = (() => {
       cliffsScene.traverse(c =>  { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
 
 
+
       // Cliffs GLB entity localTransform offset (resolved from WolvenKit export):
       // CET pos (-2255, -3050) → GLB offset X=-2255, Z=+3050
       cliffsScene.position.set(-2255, 0, 3050);
@@ -393,8 +394,9 @@ const ThreeScene = (() => {
 
       const baseColor = readThemeColor('--scene-terrain', '#566c88');
       const geometry  = new THREE.BoxGeometry(1, 1, 1);
-      const material  = new THREE.MeshBasicMaterial({ color: baseColor });
-      const mesh      = new THREE.InstancedMesh(geometry, material, count);
+      // MeshBasicMaterial: not affected by light normals — avoids Lambert shading artifacts.
+      const material      = new THREE.MeshBasicMaterial({ color: baseColor });
+      const mesh          = new THREE.InstancedMesh(geometry, material, count);
       const brightnessArr = new Float32Array(count);
       mesh.renderOrder = 1;
 
@@ -441,9 +443,7 @@ const ThreeScene = (() => {
       buildingMesh       = mesh;
       buildingBrightness = brightnessArr;
       layers.buildings   = mesh;
-      // Buildings cast shadows onto terrain (impactful at low sun angles).
-      // receiveShadow left false — MeshBasicMaterial ignores lighting anyway.
-      mesh.castShadow = true;
+      mesh.castShadow    = true; // cast shadows onto terrain; receiveShadow off (MeshBasicMaterial ignores lighting)
       scene.add(mesh);
       console.log(`[NCZ] Buildings: ${count.toLocaleString()} instances loaded`);
     } catch (err) {
