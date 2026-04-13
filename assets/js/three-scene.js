@@ -38,6 +38,7 @@ const ThreeScene = (() => {
   let _ambLight      = null;
   let _shadowsOn     = false; // tracks the checkbox state — off by default
   let _sunSphere     = null; // visible sun disc — shown during showcase only
+  let _sunAz = Math.PI * 0.25, _sunEl = Math.PI * 0.35; // last setSunPosition args
 
   // Material refs — stored so updateMaterials() can re-apply theme colors live
   let terrainMat = null;
@@ -115,39 +116,23 @@ const ThreeScene = (() => {
     return { texture: tex, width, height };
   }
 
-  // Load a _m.xbm.json as a CompressedTexture (BC4/RGTC1) when the
-  // EXT_texture_compression_rgtc extension is available, giving the GPU all
-  // 10 pre-built mip levels at original quality. Falls back to a JS BC4
-  // decompressor → float DataTexture on GPUs that lack the extension.
+  // Load a _m.xbm.json surface texture.
+  // The Bytes field is BC4/RGTC1 compressed. Three.js CompressedTexture does not
+  // support RGTC1 upload internally, so we always decompress mip 0 in JS and let
+  // WebGL generate mipmaps. The JS BC4 result is pixel-identical to GPU decompression.
   async function loadXbmMTexture(jsonPath) {
     const json     = await fetch(jsonPath).then(r => r.json());
     const blob     = json.Data.RootChunk.renderTextureResource.renderResourceBlobPC.Data;
     const { width, height } = blob.header.sizeInfo;
-    const mipCount = blob.header.textureInfo.mipCount;
     const bStr     = atob(blob.textureData.Bytes);
     const rawBytes = new Uint8Array(bStr.length);
     for (let i = 0; i < bStr.length; i++) rawBytes[i] = bStr.charCodeAt(i);
 
-    const ext = renderer.extensions.get('EXT_texture_compression_rgtc');
-    if (ext) {
-      const mipmaps = [];
-      let offset = 0;
-      for (let level = 0; level < mipCount; level++) {
-        const mipW = Math.max(1, width  >> level);
-        const mipH = Math.max(1, height >> level);
-        const bytes = Math.max(1, Math.ceil(mipW / 4)) * Math.max(1, Math.ceil(mipH / 4)) * 8;
-        mipmaps.push({ data: rawBytes.slice(offset, offset + bytes), width: mipW, height: mipH });
-        offset += bytes;
-      }
-      const tex = new THREE.CompressedTexture(mipmaps, width, height,
-        ext.COMPRESSED_RED_RGTC1_EXT);
-      tex.needsUpdate = true;
-      return tex;
-    }
-
-    // Fallback: decompress BC4 mip 0 in JS
-    const pixels  = decompressBC4Mip0(rawBytes, width, height);
+    const pixels = decompressBC4Mip0(rawBytes, width, height);
     const tex = new THREE.DataTexture(pixels, width, height, THREE.RedFormat, THREE.FloatType);
+    tex.generateMipmaps = true;
+    tex.minFilter = THREE.LinearMipmapLinearFilter;
+    tex.magFilter = THREE.LinearFilter;
     tex.needsUpdate = true;
     return tex;
   }
@@ -563,6 +548,73 @@ const ThreeScene = (() => {
     }
   `;
 
+  // Minimal depth-only vertex shader for shadow casting.
+  // Identical transform to BUILDING_VERT but no varyings — just gl_Position.
+  // Depth buffer is written automatically by the rasteriser.
+  const BUILDING_DEPTH_VERT = `
+    uniform mat4 projectionMatrix;
+    uniform mat4 viewMatrix;
+    in vec3 position;
+    uniform sampler2D uDataTex;
+    uniform float     uBlockW;
+    uniform vec3      uTransMin;
+    uniform vec3      uTransMax;
+    uniform vec2      uOffset;
+    uniform float     uCubeSize;
+
+    vec3 applyQuat(vec4 q, vec3 v) {
+      return v + 2.0 * cross(q.xyz, cross(q.xyz, v) + q.w * v);
+    }
+
+    void main() {
+      int bw = int(uBlockW);
+      int id = gl_InstanceID;
+      int tx = id % bw;
+      int ty = id / bw;
+
+      vec4 posRaw = texelFetch(uDataTex, ivec2(tx,          ty), 0);
+      vec4 rotRaw = texelFetch(uDataTex, ivec2(tx + bw,     ty), 0);
+      vec4 sclRaw = texelFetch(uDataTex, ivec2(tx + 2 * bw, ty), 0);
+
+      if (posRaw.a < 0.01) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }
+
+      vec3 cetCenter = vec3(
+        uTransMin.x + (uTransMax.x - uTransMin.x) * posRaw.r + uOffset.x,
+        uTransMin.y + (uTransMax.y - uTransMin.y) * posRaw.g + uOffset.y,
+        uTransMin.z + (uTransMax.z - uTransMin.z) * posRaw.b
+      );
+      vec4 q_cet       = normalize(rotRaw * 2.0 - 1.0);
+      vec3 halfExt     = sclRaw.rgb * uCubeSize;
+      vec3 halfExtThree = vec3(halfExt.x, halfExt.z, halfExt.y);
+      vec3 scaledPos   = position * halfExtThree * 2.0;
+      vec4 q_three     = normalize(vec4(q_cet.x, q_cet.z, -q_cet.y, q_cet.w));
+      vec3 worldPos    = vec3(cetCenter.x, cetCenter.z, -cetCenter.y)
+                       + applyQuat(q_three, scaledPos);
+      gl_Position = projectionMatrix * viewMatrix * vec4(worldPos, 1.0);
+    }
+  `;
+  // Three.js PCFSoftShadowMap reads shadow depth from RGBA-packed color channels.
+  // Must use Three.js's exact packDepthToRGBA algorithm (from packing.glsl.js)
+  // so unpackRGBAToDepth in the shadow receiving shader decodes it correctly.
+  const BUILDING_DEPTH_FRAG = `
+    precision highp float;
+    out vec4 f;
+    const float PackUpscale = 256.0 / 255.0;
+    const float ShiftRight8 = 1.0 / 256.0;
+    const float Inv255 = 1.0 / 255.0;
+    const vec4 PackFactors = vec4( 1.0, 256.0, 65536.0, 16777216.0 );
+    void main() {
+      float v = gl_FragCoord.z;
+      if ( v <= 0.0 ) { f = vec4( 0.0 ); return; }
+      if ( v >= 1.0 ) { f = vec4( 1.0 ); return; }
+      float vuf;
+      float af = modf( v * PackFactors.a, vuf );
+      float bf = modf( vuf * ShiftRight8, vuf );
+      float gf = modf( vuf * ShiftRight8, vuf );
+      f = vec4( vuf * Inv255, gf * PackUpscale, bf * PackUpscale, af );
+    }
+  `;
+
   const BUILDING_FRAG = `
     precision mediump float;
     uniform sampler2D uMTex;
@@ -630,18 +682,31 @@ const ThreeScene = (() => {
           },
         });
 
-        // InstancedBufferGeometry + Mesh: gives gl_InstanceID without the
-        // instanceMatrix memory overhead of InstancedMesh.
-        const geo = new THREE.InstancedBufferGeometry();
-        geo.index = baseGeo.index;
-        geo.setAttribute('position', baseGeo.getAttribute('position'));
-        geo.setAttribute('normal',   baseGeo.getAttribute('normal'));
-        geo.setAttribute('uv',       baseGeo.getAttribute('uv'));
-        geo.instanceCount = instanceCount;
+        // InstancedMesh: isInstancedMesh=true makes Three.js shadow pass use
+        // drawElementsInstanced, giving gl_InstanceID to customDepthMaterial.
+        // instanceMatrix is allocated but unused — our shader reads transforms
+        // from uDataTex via gl_InstanceID instead.
+        const mesh = new THREE.InstancedMesh(baseGeo, mat, instanceCount);
+        const identity = new THREE.Matrix4();
+        for (let i = 0; i < instanceCount; i++) mesh.setMatrixAt(i, identity);
+        mesh.instanceMatrix.needsUpdate = true;
 
-        const mesh = new THREE.Mesh(geo, mat);
         mesh.frustumCulled = false;
         mesh.castShadow    = true;
+
+        mesh.customDepthMaterial = new THREE.RawShaderMaterial({
+          glslVersion:    THREE.GLSL3,
+          vertexShader:   BUILDING_DEPTH_VERT,
+          fragmentShader: BUILDING_DEPTH_FRAG,
+          uniforms: {
+            uDataTex:  { value: dataTex },
+            uBlockW:   { value: blockW },
+            uTransMin: { value: new THREE.Vector3(...meta.transMin) },
+            uTransMax: { value: new THREE.Vector3(...meta.transMax) },
+            uOffset:   { value: new THREE.Vector2(...meta.offset) },
+            uCubeSize: { value: meta.cubeSize },
+          },
+        });
 
         group.add(mesh);
         buildingMeshes.push(mesh);
@@ -885,6 +950,8 @@ const ThreeScene = (() => {
   // So az=0 (south) → Z+; az=π/2 (west) → X-; az=-π/2 (east) → X+
   function setSunPosition(azimuthRad, altitudeRad) {
     if (!_dirLight || !_ambLight) return;
+    _sunAz = azimuthRad;
+    _sunEl = altitudeRad;
     const el = altitudeRad;
     const az = azimuthRad;
 
@@ -957,7 +1024,30 @@ const ThreeScene = (() => {
     }
   }
 
-  return { init, startRenderLoop, stopRenderLoop, resetCamera, setLayerVisibility, updateMaterials, renderFrame, setControlsEnabled, getCanvasElement, captureColors, transitionMaterials, transitionToColors, setSunPosition, setShadowsEnabled, setSunSphereVisible };
+  function getCameraState() {
+    if (!controls || !camera) return null;
+    return {
+      target:   controls.target.toArray(),
+      position: camera.position.toArray(),
+      zoom:     camera.zoom,
+      polar:    controls.getPolarAngle(),
+      azimuth:  controls.getAzimuthalAngle(),
+      sunAz:    _sunAz,
+      sunEl:    _sunEl,
+    };
+  }
+
+  function setCameraState(s) {
+    if (!controls || !camera) return;
+    controls.target.fromArray(s.target);
+    camera.position.fromArray(s.position);
+    camera.zoom = s.zoom;
+    controls.update();
+    camera.updateProjectionMatrix();
+    if (s.sunAz !== undefined) setSunPosition(s.sunAz, s.sunEl);
+  }
+
+  return { init, startRenderLoop, stopRenderLoop, resetCamera, setLayerVisibility, updateMaterials, renderFrame, setControlsEnabled, getCanvasElement, captureColors, transitionMaterials, transitionToColors, setSunPosition, setShadowsEnabled, setSunSphereVisible, getCameraState, setCameraState };
 })();
 
 window.NCZ.ThreeScene = ThreeScene;
