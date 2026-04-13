@@ -174,3 +174,68 @@ NCZ.ThreeScene.setCameraState(JSON.parse('...'));
 ```
 
 Useful for taking consistent comparison screenshots. If the showcase flyover is running, pause it before restoring sun state — the flyover will override it on the next tick.
+
+---
+
+## Future Work — Shadow Receiving and Road/Metro Lighting
+
+### Buildings: switch to MeshLambertMaterial + onBeforeCompile
+
+Buildings currently use `RawShaderMaterial` (can't receive shadows) rather than `MeshLambertMaterial` + `onBeforeCompile` (would receive shadows automatically).
+
+The `onBeforeCompile` fragility concern ("version bumps break patch strings") doesn't hold — we're already pinned to Three.js r170 for all other materials. A version bump requires full testing anyway.
+
+**Path to shadow receiving:**
+
+1. Replace per-district `RawShaderMaterial` with `MeshLambertMaterial`
+2. Use `onBeforeCompile` to inject custom vertex transform and UV generation:
+
+```javascript
+const mat = new THREE.MeshLambertMaterial({ map: mTex, color: baseColor });
+mat.onBeforeCompile = (shader) => {
+    // Add DataTexture uniforms
+    shader.uniforms.uDataTex  = { value: dataTex };
+    shader.uniforms.uBlockW   = { value: blockW };
+    shader.uniforms.uTransMin = { value: new THREE.Vector3(...meta.transMin) };
+    shader.uniforms.uTransMax = { value: new THREE.Vector3(...meta.transMax) };
+    shader.uniforms.uOffset   = { value: new THREE.Vector2(...meta.offset) };
+    shader.uniforms.uCubeSize = { value: meta.cubeSize };
+
+    // Replace Three.js's vertex transform with DataTexture-based instancing
+    shader.vertexShader = shader.vertexShader
+        .replace('#include <begin_vertex>', `/* DataTexture TRS decode via gl_InstanceID */`)
+        .replace('#include <project_vertex>', `gl_Position = projectionMatrix * viewMatrix * vec4(worldPos, 1.0);`);
+};
+mat.receiveShadow = true; // Three.js injects shadow sampling automatically
+```
+
+3. Set `mesh.receiveShadow = true`
+4. The `customDepthMaterial` for shadow casting stays unchanged
+
+**Benefits:** buildings receive shadows from terrain, cliffs, and each other. Lambert shading and edge highlight would need to move into the `onBeforeCompile` patches, but the shadow system comes free.
+
+### Roads and Metro: switch to MeshLambertMaterial
+
+Roads and metro currently use `MeshBasicMaterial` — they don't respond to the directional light at all. On a tilted camera they look flat compared to Lambert-shaded terrain.
+
+**Path:**
+
+```javascript
+roadsMat = new THREE.MeshLambertMaterial({
+    color: readThemeColor('--overlay-road-color', '#504b41'),
+    flatShading: true,
+});
+roadsScene.traverse(c => {
+    if (c.isMesh) {
+        c.material = roadsMat;
+        c.castShadow    = true;  // roads cast shadows onto terrain below (bridges, elevated)
+        c.receiveShadow = true;  // roads receive building shadows
+    }
+});
+```
+
+**Note on elevated roads:** `3dmap_roads.glb` contains elevated road segments (bridges, overpasses). These would cast visible shadows onto terrain beneath them — a real visual improvement. Metro tracks similarly sit on elevated structures in some districts.
+
+**Theme update:** `updateMaterials()` already handles `roadsMat` and `metroMat` via `.color.copy()`. Switching material type requires updating those references.
+
+Shadow casting on roads is particularly worthwhile — elevated road sections are some of the most visually prominent structures in the city and their shadows would significantly improve depth perception on the tilted view.
