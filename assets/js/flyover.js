@@ -1,0 +1,418 @@
+/**
+ * NC Zoning Board — Flyover Showcase
+ * Namespace: NCZ.Flyover
+ *
+ * Cinematic flyover tour synced to "Good Morning Night City" (57.417s per loop).
+ * Uses a PerspectiveCamera rendered via NCZ.ThreeScene.renderFrame(), leaving
+ * the main orthographic camera and OrbitControls untouched.
+ *
+ * To include or exclude this feature, add/remove flyover.js in index.html.
+ * Requires NCZ.ThreeScene (three-scene.js) to be loaded first.
+ */
+
+import * as THREE from 'three';
+
+window.NCZ = window.NCZ || {};
+
+const Flyover = (() => {
+
+  // ── Waypoints ─────────────────────────────────────────────────────────────
+  // [camX, camY, camZ, tarX, tarY, tarZ, durationMs]
+  // GLB space: X = CET_X, Y = elevation, Z = -CET_Y.
+  // durationMs = travel time TO this waypoint (0 = start position).
+  //
+  // Synced to "Good Morning Night City" (57.417 s total).
+  // Audacity label → waypoint map:
+  //
+  //   WP  Time (s)  Location          Note
+  //    0    0.000   Ocean             build-up music, bare terrain
+  //    1    6.948   Coastline    ★    "Good Morning Night City"
+  //    2   10.948   Watson            low sweep
+  //    3   14.842   Heywood      ★    top-down
+  //    4   20.842   City Center       low / between towers
+  //    5   26.977   Santo Domingo ★   top-down
+  //    6   34.743   Westbrook    ★    top-down
+  //    7   43.377   Pacifica     ★    top-down
+  //    8   48.077   Dogtown           low sweep
+  //    9   52.747   Badlands          rising, looking east — districts off here
+  //   10   57.417   Rocky Ridge       high, looking back west at the city
+
+  const FLYOVER_WAYPOINTS = [
+    //  #   cam position (GLB)        look-at target (GLB)         dur(ms)
+    //  0 — Open ocean, sea-level, city glowing on the horizon
+    [  -5800,   250,     400,        -2500,    200,      400,          0],
+    //  1 — Skim the coastline as "Good Morning Night City" hits  @6.948s
+    [  -3200,   150,     500,          800,    300,      800,       6948],
+    //  2 — Watson: near-ground sweep south, city core on the horizon ahead  @10.948s
+    //      Low and nearly horizontal — unnamed flythrough, no top-down
+    [  -1000,   120,   -3000,          600,    120,     -900,       4000],
+    //  3 — HEYWOOD top-down  @14.842s  ★ district beat
+    //      CET ≈ (200, -1500) → GLB target (200, 0, 1500); camera offset north
+    [    200,  2800,    1100,          200,      0,     1500,       3894],
+    //  4 — City Center: banking sweep west across the skyline  @20.842s
+    //      Medium height — enough to clear terrain, shallow horizontal gaze
+    [    700,   600,    -500,         -400,    300,    -1400,       6000],
+    //  5 — Santo Domingo: near-ground south, looking north — city skyline ahead  @26.977s
+    //      Flat terrain reads as industrial outskirts; city visible in the distance
+    [    600,   250,    4000,          300,    300,     1200,       6135],
+    //  6 — Westbrook: sweeping in from the east, city grid visible to the west  @34.743s
+    [   3000,   600,   -2000,          500,    200,    -1000,       7766],
+    //  7 — PACIFICA top-down  @43.377s
+    //      CET ≈ (-3200, -2000) → GLB target (-3200, 0, 2000)
+    [  -3200,  2800,    1600,        -3200,      0,     2000,       8634],
+    //  8 — Dogtown: low sweep through the stadium district  @48.077s
+    [  -3000,   250,    2500,        -1500,    200,     1500,       4700],
+    //  9 — Badlands: rising, camera looking east (city behind) — districts off  @52.747s
+    [   2500,   500,    2000,         4500,    200,     3500,       4670],
+    // 10 — Rocky Ridge: high, full city silhouette on the western horizon  @57.417s
+    [   4500,  1500,    4000,            0,    100,        0,       4670],
+  ];
+
+  // ── Layer events ──────────────────────────────────────────────────────────
+  // Fired the instant a waypoint is reached.
+  // Opening reveal: staggered via scheduleLayerReveal() during the ocean approach.
+  // Closing:        districts only — turned off at WP9 while city is behind camera.
+
+  // ── Theme cross-dissolve ──────────────────────────────────────────────────
+  // Captures scene colors before the theme changes, then lerps all materials
+  // from the old values to the new ones over ~1 second — no black flash,
+  // just a smooth meld from one palette to the next.
+
+  function applyThemeSmooth(themeId, durationMs = 1000) {
+    if (!NCZ.applyTheme || !NCZ.ThreeScene?.captureColors) {
+      NCZ.applyTheme?.(themeId);
+      return;
+    }
+    const from = NCZ.ThreeScene.captureColors();  // snapshot current colors
+    NCZ.applyTheme(themeId);                      // CSS class + materials snap
+    NCZ.ThreeScene.transitionMaterials(from, durationMs); // lerp back from old
+  }
+
+  const FLYOVER_EVENTS = {
+    // WP 0 — Ocean: snap to Night Corp, all layers off (loop start)
+    0: () => {
+      NCZ.ThreeScene.setLayerVisibility('roads',     false);
+      NCZ.ThreeScene.setLayerVisibility('metro',     false);
+      NCZ.ThreeScene.setLayerVisibility('buildings', false);
+      NCZ.ThreeScene.setLayerVisibility('districts', false);
+      NCZ.applyTheme?.('night-corp');
+    },
+    9: () => NCZ.ThreeScene.setLayerVisibility('districts', false),
+  };
+
+  // ── Beat-cycle visualiser ─────────────────────────────────────────────────
+  // Exact beat timestamps from the Audacity beat finder (cluster-start beats,
+  // ~1.34s apart — the track's bass pulse). Checked each animation frame
+  // against audio.currentTime so theme changes lock to the actual audio.
+
+  const BEAT_TIMESTAMPS_MS = [
+     7019,  8405,  9703, 11069, 12386, 13736, 15070, 16441, 17719,
+    19071, 20405, 21755, 23054, 24422, 25719, 27071, 28421, 29774,
+    31088, 32341, 33674, 35054, 36386, 39107, 40386, 41684, 43071,
+    44421, 45738, 47088, 48386, 49722, 52403,
+  ];
+
+  const BEAT_DISSOLVE_MS = 938; // 70% of 1340ms — settles before the next beat
+
+  // Pre-built color targets per theme. Order = rotation sequence.
+  const BEAT_COLORS = [
+    { bg: new THREE.Color('#0a192f'), terrain: new THREE.Color('#566c88'), water: new THREE.Color('#2a3f57'), cliffs: new THREE.Color('#566c88'), roads: new THREE.Color('#504b41'), metro: new THREE.Color('#dcaa28') }, // Night Corp
+    { bg: new THREE.Color('#2c3023'), terrain: new THREE.Color('#5e6448'), water: new THREE.Color('#1e3040'), cliffs: new THREE.Color('#5e6448'), roads: new THREE.Color('#5a5237'), metro: new THREE.Color('#fac800') }, // Militech
+    { bg: new THREE.Color('#110d0e'), terrain: new THREE.Color('#6b5f5c'), water: new THREE.Color('#2e2525'), cliffs: new THREE.Color('#6b5f5c'), roads: new THREE.Color('#463c3a'), metro: new THREE.Color('#c82828') }, // Arasaka
+    { bg: new THREE.Color('#101518'), terrain: new THREE.Color('#52606e'), water: new THREE.Color('#253340'), cliffs: new THREE.Color('#52606e'), roads: new THREE.Color('#4b443c'), metro: new THREE.Color('#dc602c') }, // Aldecaldos
+    { bg: new THREE.Color('#1a0533'), terrain: new THREE.Color('#4a2e6e'), water: new THREE.Color('#1a0840'), cliffs: new THREE.Color('#4a2e6e'), roads: new THREE.Color('#3d2d52'), metro: new THREE.Color('#e0196a') }, // Synthwave
+  ];
+
+  let _beatColorIndex = 0; // which palette fires next (continues across loops)
+  let _lastBeatIndex  = 0; // which timestamp we've last checked (resets each loop)
+  let _audio          = null;
+
+  // ── Flyover sun animation ─────────────────────────────────────────────────
+  // Maps audio.currentTime to real sunrise→sunset at Morro Bay, CA —
+  // the real-world location of Night City. Computed once per flyover start.
+
+  const MORRO_BAY = { lat: 35.370781, lng: -120.851173 };
+  let _sunriseMs = null; // epoch ms of today's sunrise
+  let _sunsetMs  = null; // epoch ms of today's sunset
+
+  function initFlyoverSun() {
+    if (typeof SunCalc === 'undefined') return;
+    // Use summer solstice — longest day, widest sun arc, most dramatic hillshading.
+    // Year doesn't affect the solar geometry meaningfully at this precision.
+    const solstice = new Date(new Date().getFullYear(), 5, 21); // June 21
+    const times = SunCalc.getTimes(solstice, MORRO_BAY.lat, MORRO_BAY.lng);
+    _sunriseMs = times.sunrise.getTime();
+    _sunsetMs  = times.sunset.getTime();
+  }
+
+  function updateFlyoverSun(audioCurrentTime) {
+    if (!_sunriseMs || !_sunsetMs || !NCZ.ThreeScene?.setSunPosition) return;
+    const t = Math.min(1, Math.max(0, audioCurrentTime / 57.417));
+    const epochMs = _sunriseMs + (_sunsetMs - _sunriseMs) * t;
+    const pos = SunCalc.getPosition(new Date(epochMs), MORRO_BAY.lat, MORRO_BAY.lng);
+    NCZ.ThreeScene.setSunPosition(pos.azimuth, pos.altitude);
+  }
+
+  function triggerBeat() {
+    if (!NCZ.ThreeScene?.captureColors || !NCZ.ThreeScene?.transitionToColors) return;
+    const from = NCZ.ThreeScene.captureColors();
+    const to   = BEAT_COLORS[_beatColorIndex % BEAT_COLORS.length];
+    _beatColorIndex++;
+    NCZ.ThreeScene.transitionToColors(from, to, BEAT_DISSOLVE_MS);
+  }
+
+  function checkBeats() {
+    if (!_audio) return;
+    const audioMs = _audio.currentTime * 1000;
+    while (_lastBeatIndex < BEAT_TIMESTAMPS_MS.length &&
+           audioMs >= BEAT_TIMESTAMPS_MS[_lastBeatIndex]) {
+      triggerBeat();
+      _lastBeatIndex++;
+    }
+  }
+
+  // ── Layer reveal ──────────────────────────────────────────────────────────
+  // Stagger Roads → Metro → Buildings → Districts across the 6.948s ocean
+  // approach so all four are visible before "Good Morning" is announced.
+
+  let _layerRevealTimers = [];
+
+  function scheduleLayerReveal() {
+    _layerRevealTimers.forEach(clearTimeout);
+    _layerRevealTimers = [
+      setTimeout(() => NCZ.ThreeScene.setLayerVisibility('roads',     true), 1500),
+      setTimeout(() => NCZ.ThreeScene.setLayerVisibility('metro',     true), 3000),
+      setTimeout(() => NCZ.ThreeScene.setLayerVisibility('buildings', true), 4500),
+      // Districts omitted — cleaner showcase without boundary lines
+    ];
+  }
+
+  function clearLayerReveal() {
+    _layerRevealTimers.forEach(clearTimeout);
+    _layerRevealTimers = [];
+  }
+
+  // ── Fade overlay ─────────────────────────────────────────────────────────
+  // Created on demand when showcase starts, removed from the DOM entirely on exit.
+
+  let _fadeEl = null;
+
+  function createFade() {
+    const map3d = document.getElementById('map-3d');
+    if (!map3d || _fadeEl) return;
+    _fadeEl = document.createElement('div');
+    Object.assign(_fadeEl.style, {
+      position: 'absolute', inset: '0',
+      background: '#000', opacity: '1',
+      pointerEvents: 'none', zIndex: '9', transition: 'none',
+    });
+    map3d.appendChild(_fadeEl);
+  }
+
+  function fadeIn() {
+    if (!_fadeEl) return;
+    // Element starts at opacity:1 — transition to transparent
+    void _fadeEl.offsetWidth; // force reflow so transition fires from 1 not 0
+    _fadeEl.style.transition = 'opacity 2s ease';
+    _fadeEl.style.opacity    = '0';
+  }
+
+  function fadeToBlack(callback) {
+    if (!_fadeEl) { if (callback) callback(); return; }
+    _fadeEl.style.transition = 'opacity 2s ease';
+    _fadeEl.style.opacity    = '1';
+    if (callback) setTimeout(callback, 2000);
+  }
+
+  function resetFade() {
+    if (_fadeEl) { _fadeEl.remove(); _fadeEl = null; }
+  }
+
+  // ── Start screen ──────────────────────────────────────────────────────────
+  // Opening title card — shown during the fade-in at the start of the showcase.
+
+  let _startScreenEl    = null;
+  let _startScreenTimer = null;
+
+  function showStartScreen() {
+    if (!_startScreenEl) _startScreenEl = document.getElementById('flyover-start-screen');
+    if (!_startScreenEl) return;
+
+    if (_startScreenTimer !== null) { clearTimeout(_startScreenTimer); _startScreenTimer = null; }
+
+    _startScreenEl.classList.remove('hidden');
+    void _startScreenEl.offsetWidth;
+    _startScreenEl.style.animation = 'none';
+    void _startScreenEl.offsetWidth;
+    _startScreenEl.style.animation = '';
+
+    _startScreenTimer = setTimeout(() => {
+      _startScreenEl.classList.add('hidden');
+      _startScreenTimer = null;
+    }, 3000);
+  }
+
+  function hideStartScreen() {
+    if (_startScreenTimer !== null) { clearTimeout(_startScreenTimer); _startScreenTimer = null; }
+    if (_startScreenEl) _startScreenEl.classList.add('hidden');
+  }
+
+  // ── Camera & state ────────────────────────────────────────────────────────
+
+  let flyCamera       = null;
+  let flyActive       = false;
+  let flyFrameId      = null;
+  let flySeg          = 0;
+  let flySegStart     = 0;
+  let _savedTheme     = null; // theme ID active when showcase started
+  let _onAudioEnded   = null; // reference kept so we can remove it on early exit
+
+  const _flyPos = new THREE.Vector3();
+  const _flyTar = new THREE.Vector3();
+
+  function smoothstep(t) { return t * t * (3 - 2 * t); }
+
+  // ── Public API ────────────────────────────────────────────────────────────
+
+  function startFlyover() {
+    if (flyActive) return;
+    flyActive = true;
+
+    NCZ.ThreeScene.stopRenderLoop();
+    NCZ.ThreeScene.setControlsEnabled(false);
+
+    if (!flyCamera) {
+      const canvas = NCZ.ThreeScene.getCanvasElement();
+      flyCamera = new THREE.PerspectiveCamera(55, canvas.clientWidth / canvas.clientHeight, 1, 120000);
+    }
+
+    // Save the active theme so it can be restored when showcase exits
+    _savedTheme = Array.from(document.documentElement.classList)
+      .find(c => c.startsWith('theme-'))?.replace('theme-', '') ?? 'night-corp';
+
+    // Start audio — beats and sun position are driven by audio.currentTime each frame
+    _audio = document.getElementById('flyover-audio');
+    _lastBeatIndex  = 0;
+    _beatColorIndex = 0;
+    if (_audio) {
+      _audio.currentTime = 0;
+      _audio.play().catch(() => {});
+      // Drive the end-of-showcase from the audio clock, not the waypoint clock,
+      // so the fade always starts at the exact moment the track ends.
+      _audio.addEventListener('ended', _onAudioEnded = () => {
+        if (!flyActive) return;
+        if (flyFrameId !== null) { cancelAnimationFrame(flyFrameId); flyFrameId = null; }
+        fadeToBlack(() => {
+          document.dispatchEvent(new CustomEvent('flyover:ended'));
+          resetFade();
+        });
+      }, { once: true });
+    }
+
+    initFlyoverSun();
+    NCZ.ThreeScene.setShadowsEnabled?.(true);    // always on during showcase
+    NCZ.ThreeScene.setSunSphereVisible?.(true);  // show the sun in the sky
+    FLYOVER_EVENTS[0]();
+    scheduleLayerReveal();
+    // Create fade overlay, show title card, then fade the scene in from black
+    createFade();
+    showStartScreen();
+    fadeIn();
+
+    const [cx, cy, cz, tx, ty, tz] = FLYOVER_WAYPOINTS[0];
+    flyCamera.position.set(cx, cy, cz);
+    flyCamera.up.set(0, 1, 0);
+    flyCamera.lookAt(tx, ty, tz);
+
+    flySeg      = 0;
+    flySegStart = performance.now();
+    flyoverLoop();
+  }
+
+  function stopFlyover() {
+    if (!flyActive) return;
+    flyActive = false;
+    if (flyFrameId !== null) { cancelAnimationFrame(flyFrameId); flyFrameId = null; }
+    clearLayerReveal();
+    if (_audio) {
+      _audio.pause();
+      _audio.currentTime = 0;
+      if (_onAudioEnded) { _audio.removeEventListener('ended', _onAudioEnded); _onAudioEnded = null; }
+    }
+    hideStartScreen();
+    resetFade();
+    // Restore all layers
+    NCZ.ThreeScene.setLayerVisibility('roads',     true);
+    NCZ.ThreeScene.setLayerVisibility('metro',     true);
+    NCZ.ThreeScene.setLayerVisibility('buildings', true);
+    NCZ.ThreeScene.setLayerVisibility('districts', true);
+    NCZ.ThreeScene.setControlsEnabled(true);
+    NCZ.ThreeScene.startRenderLoop();
+    // Restore shadow state to match the checkbox (showcase always enables them)
+    const shadowsCheckbox = document.getElementById('overlay-shadows');
+    NCZ.ThreeScene.setShadowsEnabled?.(shadowsCheckbox?.checked ?? false);
+    NCZ.ThreeScene.setSunSphereVisible?.(false);
+    // Restore whichever theme the user had before showcase started
+    if (_savedTheme) { applyThemeSmooth(_savedTheme); _savedTheme = null; }
+    // Restore sun position — flyover leaves the sun at near-sunset which darkens terrain
+    document.getElementById('scene-sun-slider')?.dispatchEvent(new Event('input'));
+  }
+
+  function flyoverLoop() {
+    if (!flyActive) return;
+    flyFrameId = requestAnimationFrame(flyoverLoop);
+
+    const now     = performance.now();
+    const nextSeg = flySeg + 1;
+
+    if (nextSeg >= FLYOVER_WAYPOINTS.length) {
+      // Last waypoint reached — hold this frame and wait for audio.ended to trigger the fade.
+      // If audio isn't available, fall back to fading immediately.
+      if (!_audio) {
+        cancelAnimationFrame(flyFrameId);
+        flyFrameId = null;
+        fadeToBlack(() => { document.dispatchEvent(new CustomEvent('flyover:ended')); resetFade(); });
+      }
+      // With audio: just keep rendering the last frame; audio.ended fires the fade.
+      return;
+    }
+
+    const dur  = FLYOVER_WAYPOINTS[nextSeg][6];
+    const rawT = Math.min((now - flySegStart) / dur, 1);
+    const t    = smoothstep(rawT);
+
+    const [ax, ay, az, atx, aty, atz] = FLYOVER_WAYPOINTS[flySeg];
+    const [bx, by, bz, btx, bty, btz] = FLYOVER_WAYPOINTS[nextSeg];
+
+    _flyPos.set(ax + (bx - ax) * t, ay + (by - ay) * t, az + (bz - az) * t);
+    _flyTar.set(atx + (btx - atx) * t, aty + (bty - aty) * t, atz + (btz - atz) * t);
+
+    checkBeats();
+    if (_audio) updateFlyoverSun(_audio.currentTime);
+
+    flyCamera.position.copy(_flyPos);
+    flyCamera.up.set(0, 1, 0);
+    flyCamera.lookAt(_flyTar);
+    NCZ.ThreeScene.renderFrame(flyCamera);
+
+    if (rawT >= 1) {
+      flySeg++;
+      flySegStart = now;
+      FLYOVER_EVENTS[flySeg]?.();
+    }
+  }
+
+  // Resize handler — keeps flyCamera aspect correct if window is resized during showcase
+  window.addEventListener('resize', () => {
+    if (!flyCamera || !flyActive) return;
+    const canvas = NCZ.ThreeScene.getCanvasElement();
+    if (!canvas) return;
+    flyCamera.aspect = canvas.clientWidth / canvas.clientHeight;
+    flyCamera.updateProjectionMatrix();
+  });
+
+  return { startFlyover, stopFlyover };
+
+})();
+
+window.NCZ.Flyover = Flyover;

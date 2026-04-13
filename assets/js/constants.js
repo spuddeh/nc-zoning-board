@@ -34,6 +34,13 @@ NCZ.THEMES = [
     logo: "assets/img/aldecaldos.png",
     logoAlt: "Aldecaldos",
   },
+  {
+    id: "synthwave",
+    label: "Synthwave",
+    className: "theme-synthwave",
+    logo: "assets/img/synthwave-logo.png",
+    logoAlt: "Synthwave",
+  },
 ];
 
 // Category visual styles (color, label, CSS class)
