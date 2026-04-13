@@ -50,20 +50,20 @@ const ThreeScene = (() => {
   let buildingMaterials  = [];    // parallel ShaderMaterial array for theme updates
 
   // District metadata — sourced directly from 3dmap_triangle_soup.Material.json.
-  // dataTex: _data.xbm.json (16-bit RGBA instance data: position/rotation/scale)
-  // mTex:    _m.xbm.json   (BC4 compressed greyscale surface detail texture)
+  // dataDds: _data.dds (DXGI_FORMAT_R16G16B16A16_UNORM — raw 16-bit RGBA instance data)
+  // mDds:    _m.dds   (DXGI_FORMAT_R8_UNORM — 8-bit greyscale surface detail, 10 mips)
   // transMin/transMax: district-local CET XYZ bounds (before district offset)
   // offset: world XY offset applied to decoded positions (no Z offset)
   // cubeSize: half-extent multiplier (from CubeSize shader parameter)
   const DISTRICT_META = [
-    { name: 'westbrook',     dataTex: 'assets/xbm/westbrook_data.xbm.json',    mTex: 'assets/xbm/westbrook_m.xbm.json',    cubeSize: 197.0,        transMin: [-1078.94739, -1148.69434, -18.4205875],  transMax: [1155.12,      1562.87903,  507.894714],  offset: [  -97.209,    590.849] },
-    { name: 'city_center',   dataTex: 'assets/xbm/city_center_data.xbm.json',  mTex: 'assets/xbm/city_center_m.xbm.json',  cubeSize: 168.289993,   transMin: [ -770.609192, -530.549133, -40.6581497],  transMax: [1316.82483,    649.75531,  642.893127],  offset: [-2116.637,    106.508] },
-    { name: 'heywood',       dataTex: 'assets/xbm/heywood_data.xbm.json',      mTex: 'assets/xbm/heywood_m.xbm.json',      cubeSize: 197.236832,   transMin: [-1080.35107,  -418.153046, -38.4002304],  transMax: [1136.94556,   1372.15979,  374.181305],  offset: [-1576.732,  -1002.811] },
-    { name: 'pacifica',      dataTex: 'assets/xbm/pacifica_data.xbm.json',     mTex: 'assets/xbm/pacifica_m.xbm.json',     cubeSize: 305.600006,   transMin: [-4008.396,   -4575.14941, -51.9539986],  transMax: [8258.31641,   7254.10059,  264.306946],  offset: [-2422.441,  -2368.156] },
-    { name: 'santo_domingo', dataTex: 'assets/xbm/santo_domingo_data.xbm.json',mTex: 'assets/xbm/santo_domingo_m.xbm.json',cubeSize: 139.342102,   transMin: [-1328.95288, -1880.02502, -37.5960007],  transMax: [1555.26318,   1369.01294,  332.348328],  offset: [  -15.944,  -1610.080] },
-    { name: 'watson',        dataTex: 'assets/xbm/watson_data.xbm.json',       mTex: 'assets/xbm/watson_m.xbm.json',       cubeSize: 237.175003,   transMin: [-1254.46997, -1258.68469, -24.7028503],  transMax: [1988.5448,    2032.52405,  475.268005],  offset: [-1979.372,   1873.951] },
-    { name: 'ep1_dogtown',   dataTex: 'assets/xbm/dogtown_data.xbm.json',      mTex: 'assets/xbm/dogtown_m.xbm.json',      cubeSize: 198.020691,   transMin: [-2650.0,     -3126.6084,   -0.750015974], transMax: [-1025.51855, -1803.58118,  493.576111],  offset: [    0.0,        0.0  ] },
-    { name: 'ep1_spaceport', dataTex: 'assets/xbm/spaceport_data.xbm.json',    mTex: 'assets/xbm/spaceport_m.xbm.json',    cubeSize: 115.298218,   transMin: [-1168.5874,   -765.104614, -41.4592323],  transMax: [1219.45483,   1018.70129,  296.498138],  offset: [-4200.000,    200.000] },
+    { name: 'westbrook',     dataDds: 'assets/dds/westbrook_data.dds',    mDds: 'assets/dds/westbrook_m.dds',    cubeSize: 197.0,        transMin: [-1078.94739, -1148.69434, -18.4205875],  transMax: [1155.12,      1562.87903,  507.894714],  offset: [  -97.209,    590.849] },
+    { name: 'city_center',   dataDds: 'assets/dds/city_center_data.dds',  mDds: 'assets/dds/city_center_m.dds',  cubeSize: 168.289993,   transMin: [ -770.609192, -530.549133, -40.6581497],  transMax: [1316.82483,    649.75531,  642.893127],  offset: [-2116.637,    106.508] },
+    { name: 'heywood',       dataDds: 'assets/dds/heywood_data.dds',      mDds: 'assets/dds/heywood_m.dds',      cubeSize: 197.236832,   transMin: [-1080.35107,  -418.153046, -38.4002304],  transMax: [1136.94556,   1372.15979,  374.181305],  offset: [-1576.732,  -1002.811] },
+    { name: 'pacifica',      dataDds: 'assets/dds/pacifica_data.dds',     mDds: 'assets/dds/pacifica_m.dds',     cubeSize: 305.600006,   transMin: [-4008.396,   -4575.14941, -51.9539986],  transMax: [8258.31641,   7254.10059,  264.306946],  offset: [-2422.441,  -2368.156] },
+    { name: 'santo_domingo', dataDds: 'assets/dds/santo_domingo_data.dds',mDds: 'assets/dds/santo_domingo_m.dds',cubeSize: 139.342102,   transMin: [-1328.95288, -1880.02502, -37.5960007],  transMax: [1555.26318,   1369.01294,  332.348328],  offset: [  -15.944,  -1610.080] },
+    { name: 'watson',        dataDds: 'assets/dds/watson_data.dds',       mDds: 'assets/dds/watson_m.dds',       cubeSize: 237.175003,   transMin: [-1254.46997, -1258.68469, -24.7028503],  transMax: [1988.5448,    2032.52405,  475.268005],  offset: [-1979.372,   1873.951] },
+    { name: 'ep1_dogtown',   dataDds: 'assets/dds/dogtown_data.dds',      mDds: 'assets/dds/dogtown_m.dds',      cubeSize: 198.020691,   transMin: [-2650.0,     -3126.6084,   -0.750015974], transMax: [-1025.51855, -1803.58118,  493.576111],  offset: [    0.0,        0.0  ] },
+    { name: 'ep1_spaceport', dataDds: 'assets/dds/spaceport_data.dds',    mDds: 'assets/dds/spaceport_m.dds',    cubeSize: 115.298218,   transMin: [-1168.5874,   -765.104614, -41.4592323],  transMax: [1219.45483,   1018.70129,  296.498138],  offset: [-4200.000,    200.000] },
   ];
 
   // ── Helpers ────────────────────────────────────────────────────────────
@@ -95,70 +95,38 @@ const ThreeScene = (() => {
     });
   }
 
-  // ── XBM texture loaders ─────────────────────────────────────────────────
+  // ── DDS loaders ─────────────────────────────────────────────────────────
+  // DDS files exported by WolvenKit use DX10 extended headers (FourCC='DX10').
+  // Standard header = 128 bytes, DX10 extension = 20 bytes → pixel data at offset 148.
+  // _data.dds: DXGI_FORMAT_R16G16B16A16_UNORM — raw 16-bit RGBA, 1 mip, no compression.
+  // _m.dds:    DXGI_FORMAT_R8_UNORM            — 8-bit greyscale, 10 mips, no compression.
+  const DDS_PIXEL_OFFSET = 148;
 
-  // Load a _data.xbm.json as a full-precision DataTexture.
-  // The xbm.json Bytes field contains raw 16-bit RGBA pixel data (little-endian uint16).
-  // Converted to float32 [0,1] so the shader can sample it with a plain sampler2D.
-  async function loadXbmDataTexture(jsonPath) {
-    const json   = await fetch(jsonPath).then(r => r.json());
-    const blob   = json.Data.RootChunk.renderTextureResource.renderResourceBlobPC.Data;
-    const { width, height } = blob.header.sizeInfo;
-    const bStr   = atob(blob.textureData.Bytes);
-    const uint16 = new Uint16Array(bStr.length / 2);
-    for (let i = 0; i < uint16.length; i++)
-      uint16[i] = bStr.charCodeAt(i * 2) | (bStr.charCodeAt(i * 2 + 1) << 8);
-    const f32 = new Float32Array(uint16.length);
-    for (let i = 0; i < uint16.length; i++) f32[i] = uint16[i] / 65535.0;
-    const tex = new THREE.DataTexture(f32, width, height, THREE.RGBAFormat, THREE.FloatType);
-    tex.magFilter = tex.minFilter = THREE.NearestFilter;
-    tex.needsUpdate = true;
-    return { texture: tex, width, height };
+  // Load _data.dds → Uint16Array of raw 16-bit RGBA pixel values.
+  // Width and height are read from the DDS header (offsets 16 and 12).
+  async function loadDataDds(path) {
+    const buf    = await fetch(path).then(r => r.arrayBuffer());
+    const header = new Uint32Array(buf, 0, 32);
+    const width  = header[4];   // DDS header offset 16 = uint32 index 4
+    const height = header[3];   // DDS header offset 12 = uint32 index 3
+    const pixels = new Uint16Array(buf, DDS_PIXEL_OFFSET);
+    return { pixels, width, height };
   }
 
-  // Load a _m.xbm.json surface texture.
-  // The Bytes field is BC4/RGTC1 compressed. Three.js CompressedTexture does not
-  // support RGTC1 upload internally, so we always decompress mip 0 in JS and let
-  // WebGL generate mipmaps. The JS BC4 result is pixel-identical to GPU decompression.
-  async function loadXbmMTexture(jsonPath) {
-    const json     = await fetch(jsonPath).then(r => r.json());
-    const blob     = json.Data.RootChunk.renderTextureResource.renderResourceBlobPC.Data;
-    const { width, height } = blob.header.sizeInfo;
-    const bStr     = atob(blob.textureData.Bytes);
-    const rawBytes = new Uint8Array(bStr.length);
-    for (let i = 0; i < bStr.length; i++) rawBytes[i] = bStr.charCodeAt(i);
-
-    const pixels = decompressBC4Mip0(rawBytes, width, height);
-    const tex = new THREE.DataTexture(pixels, width, height, THREE.RedFormat, THREE.FloatType);
+  // Load _m.dds → DataTexture (mip 0 only, WebGL generates the rest).
+  // R8_UNORM: each pixel is one uint8 byte, normalised to [0,1] on GPU.
+  async function loadMDds(path) {
+    const buf    = await fetch(path).then(r => r.arrayBuffer());
+    const header = new Uint32Array(buf, 0, 32);
+    const width  = header[4];
+    const height = header[3];
+    const mip0   = new Uint8Array(buf, DDS_PIXEL_OFFSET, width * height);
+    const tex    = new THREE.DataTexture(mip0, width, height, THREE.RedFormat, THREE.UnsignedByteType);
     tex.generateMipmaps = true;
     tex.minFilter = THREE.LinearMipmapLinearFilter;
     tex.magFilter = THREE.LinearFilter;
     tex.needsUpdate = true;
     return tex;
-  }
-
-  // Minimal BC4 (RGTC1 unsigned) decompressor — mip 0 only, used as fallback.
-  function decompressBC4Mip0(data, width, height) {
-    const out     = new Float32Array(width * height);
-    const blocksX = Math.ceil(width  / 4);
-    const blocksY = Math.ceil(height / 4);
-    for (let by = 0; by < blocksY; by++) {
-      for (let bx = 0; bx < blocksX; bx++) {
-        const base = (by * blocksX + bx) * 8;
-        const a0 = data[base] / 255.0, a1 = data[base + 1] / 255.0;
-        let bits = 0n;
-        for (let i = 0; i < 6; i++) bits |= BigInt(data[base + 2 + i]) << BigInt(i * 8);
-        const lut = [a0, a1];
-        if (a0 > a1) { for (let i = 2; i < 8; i++) lut.push(((8-i)*a0 + (i-1)*a1) / 7); }
-        else         { for (let i = 2; i < 6; i++) lut.push(((6-i)*a0 + (i-1)*a1) / 5); lut.push(0, 1); }
-        for (let py = 0; py < 4; py++) for (let px = 0; px < 4; px++) {
-          const dx = bx*4+px, dy = by*4+py;
-          if (dx < width && dy < height)
-            out[dy * width + dx] = lut[Number((bits >> BigInt((py*4+px)*3)) & 7n)];
-        }
-      }
-    }
-    return out;
   }
 
   function setLoadingText(text) {
@@ -461,257 +429,71 @@ const ThreeScene = (() => {
   }
 
   // ── Buildings ──────────────────────────────────────────────────────────
-  // GPU texture instancing: vertex shader reads position/rotation/scale directly
-  // from the _data.xbm DataTexture via gl_InstanceID — matching 3d_map_cubes.mt.
-  // No buildings_3d.json, no CPU matrix computation. Full 16-bit precision.
-
-  const BUILDING_VERT = `
-    uniform mat4 viewMatrix;
-    uniform mat4 projectionMatrix;
-    in vec3 position;
-    in vec3 normal;
-    in vec2 uv;
-
-    uniform sampler2D uDataTex;   // 16-bit RGBA float [0,1]: pos | rot | scale per row
-    uniform float     uBlockW;    // texture width / 3 (instances per row)
-    uniform vec3      uTransMin;  // district-local CET min (XYZ)
-    uniform vec3      uTransMax;  // district-local CET max (XYZ)
-    uniform vec2      uOffset;    // world XY offset (no Z offset for buildings)
-    uniform float     uCubeSize;  // half-extent multiplier
-
-    out vec2 vMUv;
-    out vec2 vLocalUv;
-    out vec3 vWorldNormal;
-
-    // Rodrigues quaternion rotation: v' = v + 2w(q×v) + 2(q×(q×v))
-    vec3 applyQuat(vec4 q, vec3 v) {
-      return v + 2.0 * cross(q.xyz, cross(q.xyz, v) + q.w * v);
-    }
-
-    void main() {
-      int bw  = int(uBlockW);
-      int id  = gl_InstanceID;
-      int tx  = id % bw;
-      int ty  = id / bw;
-
-      // Sample three data blocks (position | rotation | scale), all [0,1]
-      vec4 posRaw = texelFetch(uDataTex, ivec2(tx,          ty), 0);
-      vec4 rotRaw = texelFetch(uDataTex, ivec2(tx + bw,     ty), 0);
-      vec4 sclRaw = texelFetch(uDataTex, ivec2(tx + 2 * bw, ty), 0);
-
-      // Invalid slot — collapse to a clipped vertex
-      if (posRaw.a < 0.01) {
-        vMUv = vLocalUv = vec2(0.0);
-        vWorldNormal = vec3(0.0, 1.0, 0.0);
-        gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
-        return;
-      }
-
-      // Decode CET world position (district-local → world)
-      vec3 cetCenter = vec3(
-        uTransMin.x + (uTransMax.x - uTransMin.x) * posRaw.r + uOffset.x,
-        uTransMin.y + (uTransMax.y - uTransMin.y) * posRaw.g + uOffset.y,
-        uTransMin.z + (uTransMax.z - uTransMin.z) * posRaw.b
-      );
-
-      // Decode quaternion: remap [0,1] → [-1,1], normalise
-      vec4 q_cet = normalize(rotRaw * 2.0 - 1.0);  // (qx, qy, qz, qw) CET Z-up
-
-      // Decode half-extents (CET local space)
-      vec3 halfExt = sclRaw.rgb * uCubeSize;
-
-      // Remap half-extents CET → Three.js axes (CET X→X, CET Z→Y, CET Y→Z)
-      vec3 halfExtThree = vec3(halfExt.x, halfExt.z, halfExt.y);
-
-      // Scale BoxGeometry vertex (vertices at ±0.5, full extent = halfExt * 2)
-      vec3 scaledPos = position * halfExtThree * 2.0;
-
-      // Remap quaternion CET (Z-up) → Three.js (Y-up):
-      //   CET X → Three.js X, CET Z → Three.js Y, CET Y → Three.js -Z
-      vec4 q_three = normalize(vec4(q_cet.x, q_cet.z, -q_cet.y, q_cet.w));
-
-      // Apply rotation, translate to Three.js world position
-      vec3 rotatedPos = applyQuat(q_three, scaledPos);
-      vec3 cetThree   = vec3(cetCenter.x, cetCenter.z, -cetCenter.y);
-      vec3 worldPos   = cetThree + rotatedPos;
-
-      vWorldNormal = normalize(applyQuat(q_three, normal));
-
-      // _m UV: world-space planar projection in CET XY from vertex world position
-      //   worldPos.x = CET X,  -worldPos.z = CET Y
-      vMUv = vec2(
-        (worldPos.x - uOffset.x - uTransMin.x) / (uTransMax.x - uTransMin.x),
-        (-worldPos.z - uOffset.y - uTransMin.y) / (uTransMax.y - uTransMin.y)
-      );
-      vLocalUv    = uv;
-      gl_Position = projectionMatrix * viewMatrix * vec4(worldPos, 1.0);
-    }
-  `;
-
-  // Minimal depth-only vertex shader for shadow casting.
-  // Identical transform to BUILDING_VERT but no varyings — just gl_Position.
-  // Depth buffer is written automatically by the rasteriser.
-  const BUILDING_DEPTH_VERT = `
-    uniform mat4 projectionMatrix;
-    uniform mat4 viewMatrix;
-    in vec3 position;
-    uniform sampler2D uDataTex;
-    uniform float     uBlockW;
-    uniform vec3      uTransMin;
-    uniform vec3      uTransMax;
-    uniform vec2      uOffset;
-    uniform float     uCubeSize;
-
-    vec3 applyQuat(vec4 q, vec3 v) {
-      return v + 2.0 * cross(q.xyz, cross(q.xyz, v) + q.w * v);
-    }
-
-    void main() {
-      int bw = int(uBlockW);
-      int id = gl_InstanceID;
-      int tx = id % bw;
-      int ty = id / bw;
-
-      vec4 posRaw = texelFetch(uDataTex, ivec2(tx,          ty), 0);
-      vec4 rotRaw = texelFetch(uDataTex, ivec2(tx + bw,     ty), 0);
-      vec4 sclRaw = texelFetch(uDataTex, ivec2(tx + 2 * bw, ty), 0);
-
-      if (posRaw.a < 0.01) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }
-
-      vec3 cetCenter = vec3(
-        uTransMin.x + (uTransMax.x - uTransMin.x) * posRaw.r + uOffset.x,
-        uTransMin.y + (uTransMax.y - uTransMin.y) * posRaw.g + uOffset.y,
-        uTransMin.z + (uTransMax.z - uTransMin.z) * posRaw.b
-      );
-      vec4 q_cet       = normalize(rotRaw * 2.0 - 1.0);
-      vec3 halfExt     = sclRaw.rgb * uCubeSize;
-      vec3 halfExtThree = vec3(halfExt.x, halfExt.z, halfExt.y);
-      vec3 scaledPos   = position * halfExtThree * 2.0;
-      vec4 q_three     = normalize(vec4(q_cet.x, q_cet.z, -q_cet.y, q_cet.w));
-      vec3 worldPos    = vec3(cetCenter.x, cetCenter.z, -cetCenter.y)
-                       + applyQuat(q_three, scaledPos);
-      gl_Position = projectionMatrix * viewMatrix * vec4(worldPos, 1.0);
-    }
-  `;
-  // Three.js PCFSoftShadowMap reads shadow depth from RGBA-packed color channels.
-  // Must use Three.js's exact packDepthToRGBA algorithm (from packing.glsl.js)
-  // so unpackRGBAToDepth in the shadow receiving shader decodes it correctly.
-  const BUILDING_DEPTH_FRAG = `
-    precision highp float;
-    out vec4 f;
-    const float PackUpscale = 256.0 / 255.0;
-    const float ShiftRight8 = 1.0 / 256.0;
-    const float Inv255 = 1.0 / 255.0;
-    const vec4 PackFactors = vec4( 1.0, 256.0, 65536.0, 16777216.0 );
-    void main() {
-      float v = gl_FragCoord.z;
-      if ( v <= 0.0 ) { f = vec4( 0.0 ); return; }
-      if ( v >= 1.0 ) { f = vec4( 1.0 ); return; }
-      float vuf;
-      float af = modf( v * PackFactors.a, vuf );
-      float bf = modf( vuf * ShiftRight8, vuf );
-      float gf = modf( vuf * ShiftRight8, vuf );
-      f = vec4( vuf * Inv255, gf * PackUpscale, bf * PackUpscale, af );
-    }
-  `;
-
-  const BUILDING_FRAG = `
-    precision mediump float;
-    uniform sampler2D uMTex;
-    uniform vec3 uBaseColor;
-    uniform vec3 uEdgeColor;
-    uniform float uEdgeThickness;
-    uniform float uEdgeSharpness;
-    uniform vec3 uSunDir;
-    uniform float uAmbient;
-    in vec2 vMUv;
-    in vec2 vLocalUv;
-    in vec3 vWorldNormal;
-    out vec4 fragColor;
-    void main() {
-      float m = texture(uMTex, clamp(vMUv, 0.0, 1.0)).r;
-      float texBrightness = 0.3 + m * 0.7;
-      float diffuse = max(dot(normalize(vWorldNormal), uSunDir), 0.0);
-      float light = uAmbient + (1.0 - uAmbient) * diffuse;
-      vec3 color = uBaseColor * texBrightness * light;
-      // Edge highlight — matches EdgeColor/EdgeThickness/EdgeSharpnessPower in 3d_map_cubes.mt
-      float edgeDist = min(min(vLocalUv.x, 1.0 - vLocalUv.x), min(vLocalUv.y, 1.0 - vLocalUv.y));
-      float edgeFactor = 1.0 - pow(clamp(edgeDist / uEdgeThickness, 0.0, 1.0), uEdgeSharpness);
-      color = mix(color, uEdgeColor, edgeFactor);
-      fragColor = vec4(color, 1.0);
-    }
-  `;
+  // CPU decodes _data.dds (16-bit RGBA) → InstancedMesh matrices.
+  // MeshLambertMaterial + onBeforeCompile adds _m.dds planar UV and edge highlight.
+  // Shadow casting/receiving handled automatically by Three.js.
 
   async function loadBuildings() {
     try {
-      const baseGeo   = new THREE.BoxGeometry(1, 1, 1);
-      const group     = new THREE.Group();
-      const baseColor = readThemeColor('--scene-terrain', '#566c88');
+      const baseGeo = new THREE.BoxGeometry(1, 1, 1);
+      const group   = new THREE.Group();
+      const dummy   = new THREE.Object3D();
 
       for (const meta of DISTRICT_META) {
         setLoadingText(`Loading buildings [${meta.name}]…`);
 
-        // Load _data.xbm.json → 16-bit float DataTexture
-        const { texture: dataTex, width: texW, height: texH } =
-          await loadXbmDataTexture(meta.dataTex);
-        const blockW         = Math.floor(texW / 3);
-        const blockH         = Math.min(texH, blockW);
-        const instanceCount  = blockW * blockH;
+        // ── _data.dds → CPU decode → instance matrices ─────────────────
+        const { pixels, width: texW, height: texH } = await loadDataDds(meta.dataDds);
+        const blockW = Math.floor(texW / 3);
+        const blockH = Math.min(texH, blockW);
 
-        // Load _m.xbm.json → BC4 CompressedTexture (or float fallback)
-        const mTex = await loadXbmMTexture(meta.mTex);
+        // Pre-allocate mesh for max possible instances; trim count after decode.
+        const mat  = buildBuildingMaterial(meta, await loadMDds(meta.mDds));
+        const mesh = new THREE.InstancedMesh(baseGeo, mat, blockW * blockH);
 
-        const mat = new THREE.RawShaderMaterial({
-          glslVersion:    THREE.GLSL3,
-          vertexShader:   BUILDING_VERT,
-          fragmentShader: BUILDING_FRAG,
-          uniforms: {
-            uDataTex:       { value: dataTex },
-            uBlockW:        { value: blockW },
-            uTransMin:      { value: new THREE.Vector3(...meta.transMin) },
-            uTransMax:      { value: new THREE.Vector3(...meta.transMax) },
-            uOffset:        { value: new THREE.Vector2(...meta.offset) },
-            uCubeSize:      { value: meta.cubeSize },
-            uMTex:          { value: mTex },
-            uBaseColor:     { value: new THREE.Color(baseColor) },
-            uEdgeColor:     { value: readThemeColor('--primary', '#00f0ff') },
-            uEdgeThickness: { value: 0.0001 },
-            uEdgeSharpness: { value: 30.0 },
-            uSunDir:        { value: SUN_DIR.clone() },
-            uAmbient:       { value: AMBIENT_INTENSITY },
-          },
-        });
+        let validCount = 0;
+        for (let y = 0; y < blockH; y++) {
+          for (let x = 0; x < blockW; x++) {
+            const pi = (y * texW + x)           * 4;   // position block
+            const ri = (y * texW + x + blockW)  * 4;   // rotation block
+            const si = (y * texW + x + 2*blockW)* 4;   // scale block
 
-        // InstancedMesh: isInstancedMesh=true makes Three.js shadow pass use
-        // drawElementsInstanced, giving gl_InstanceID to customDepthMaterial.
-        // instanceMatrix is allocated but unused — our shader reads transforms
-        // from uDataTex via gl_InstanceID instead.
-        const mesh = new THREE.InstancedMesh(baseGeo, mat, instanceCount);
-        const identity = new THREE.Matrix4();
-        for (let i = 0; i < instanceCount; i++) mesh.setMatrixAt(i, identity);
+            if (pixels[pi + 3] < 655) continue;  // alpha < ~1% → invalid slot
+
+            // Decode position → CET world space
+            const pr = pixels[pi+0] / 65535.0, pg = pixels[pi+1] / 65535.0, pb = pixels[pi+2] / 65535.0;
+            const cetX = meta.transMin[0] + (meta.transMax[0] - meta.transMin[0]) * pr + meta.offset[0];
+            const cetY = meta.transMin[1] + (meta.transMax[1] - meta.transMin[1]) * pg + meta.offset[1];
+            const cetZ = meta.transMin[2] + (meta.transMax[2] - meta.transMin[2]) * pb;
+
+            // Decode quaternion: [0,65535] → [-1,1], remap CET Z-up → Three.js Y-up
+            const qr = pixels[ri+0]/65535*2-1, qg = pixels[ri+1]/65535*2-1;
+            const qb = pixels[ri+2]/65535*2-1, qa = pixels[ri+3]/65535*2-1;
+            const ql = Math.hypot(qr, qg, qb, qa) || 1;
+            // CET (qx,qy,qz,qw) → Three.js (qx, qz, -qy, qw)
+            dummy.quaternion.set(qr/ql, qb/ql, -qg/ql, qa/ql);
+
+            // Decode scale → CET half-extents → Three.js full extents (CET X→X, Z→Y, Y→Z)
+            const hx = pixels[si+0]/65535.0 * meta.cubeSize;
+            const hy = pixels[si+1]/65535.0 * meta.cubeSize;
+            const hz = pixels[si+2]/65535.0 * meta.cubeSize;
+
+            dummy.position.set(cetX, cetZ, -cetY);       // CET → Three.js
+            dummy.scale.set(hx * 2, hz * 2, hy * 2);    // CET X→X, Z→Y, Y→Z
+            dummy.updateMatrix();
+            mesh.setMatrixAt(validCount++, dummy.matrix);
+          }
+        }
+
+        mesh.count = validCount;
         mesh.instanceMatrix.needsUpdate = true;
-
-        mesh.frustumCulled = false;
         mesh.castShadow    = true;
-
-        mesh.customDepthMaterial = new THREE.RawShaderMaterial({
-          glslVersion:    THREE.GLSL3,
-          vertexShader:   BUILDING_DEPTH_VERT,
-          fragmentShader: BUILDING_DEPTH_FRAG,
-          uniforms: {
-            uDataTex:  { value: dataTex },
-            uBlockW:   { value: blockW },
-            uTransMin: { value: new THREE.Vector3(...meta.transMin) },
-            uTransMax: { value: new THREE.Vector3(...meta.transMax) },
-            uOffset:   { value: new THREE.Vector2(...meta.offset) },
-            uCubeSize: { value: meta.cubeSize },
-          },
-        });
+        mesh.receiveShadow = true;
 
         group.add(mesh);
         buildingMeshes.push(mesh);
         buildingMaterials.push(mat);
-        console.log(`[NCZ] Buildings [${meta.name}]: ${instanceCount.toLocaleString()} slots (${blockW}×${blockH})`);
+        console.log(`[NCZ] Buildings [${meta.name}]: ${validCount.toLocaleString()} instances`);
       }
 
       layers.buildings = group;
@@ -720,6 +502,80 @@ const ThreeScene = (() => {
     } catch (err) {
       console.error('[NCZ] Buildings load failed:', err);
     }
+  }
+
+  // Build the MeshLambertMaterial for one district.
+  // onBeforeCompile patches the standard Lambert shader to add:
+  //   - world-space planar UV sampling of the _m.dds surface texture
+  //   - edge highlight matching 3d_map_cubes.mt EdgeColor/Thickness/Sharpness
+  function buildBuildingMaterial(meta, mTex) {
+    const mat = new THREE.MeshLambertMaterial({
+      color: readThemeColor('--scene-terrain', '#566c88'),
+    });
+    mat.defines = { USE_UV: '' };  // ensure 'uv' attribute is declared in shader
+
+    mat.onBeforeCompile = (shader) => {
+      mat.userData.shader = shader;  // save for later uniform updates
+
+      shader.uniforms.uTransMin      = { value: new THREE.Vector2(meta.transMin[0], meta.transMin[1]) };
+      shader.uniforms.uTransMax      = { value: new THREE.Vector2(meta.transMax[0], meta.transMax[1]) };
+      shader.uniforms.uOffset        = { value: new THREE.Vector2(...meta.offset) };
+      shader.uniforms.uMTex          = { value: mTex };
+      shader.uniforms.uEdgeColor     = { value: readThemeColor('--primary', '#00f0ff') };
+      shader.uniforms.uEdgeThickness = { value: 0.0001 };
+      shader.uniforms.uEdgeSharpness = { value: 30.0 };
+
+      // ── Vertex shader — inject varyings + world-space UV ──────────────
+      shader.vertexShader = `
+        uniform vec2 uTransMin;
+        uniform vec2 uTransMax;
+        uniform vec2 uOffset;
+        varying vec2 vMUv;
+        varying vec2 vLocalUv;
+      ` + shader.vertexShader;
+
+      // Replace project_vertex to also capture world position for planar UV.
+      // instanceMatrix * transformed gives world pos (model matrix is identity).
+      shader.vertexShader = shader.vertexShader.replace(
+        '#include <project_vertex>',
+        `vec4 mvPosition = vec4( transformed, 1.0 );
+        #ifdef USE_INSTANCING
+          mvPosition = instanceMatrix * mvPosition;
+        #endif
+        vMUv = vec2(
+          ( mvPosition.x - uOffset.x - uTransMin.x ) / ( uTransMax.x - uTransMin.x ),
+          ( -mvPosition.z - uOffset.y - uTransMin.y ) / ( uTransMax.y - uTransMin.y )
+        );
+        vLocalUv = uv;
+        mvPosition = modelViewMatrix * mvPosition;
+        gl_Position = projectionMatrix * mvPosition;`
+      );
+
+      // ── Fragment shader — _m texture modulation + edge highlight ───────
+      shader.fragmentShader = `
+        uniform sampler2D uMTex;
+        uniform vec3  uEdgeColor;
+        uniform float uEdgeThickness;
+        uniform float uEdgeSharpness;
+        varying vec2 vMUv;
+        varying vec2 vLocalUv;
+      ` + shader.fragmentShader
+        .replace(
+          '#include <color_fragment>',
+          `#include <color_fragment>
+          float mVal = texture( uMTex, clamp( vMUv, 0.0, 1.0 ) ).r;
+          diffuseColor.rgb *= 0.3 + mVal * 0.7;`
+        )
+        .replace(
+          '#include <output_fragment>',
+          `#include <output_fragment>
+          float _ed = min( min( vLocalUv.x, 1.0 - vLocalUv.x ), min( vLocalUv.y, 1.0 - vLocalUv.y ) );
+          float _ef = 1.0 - pow( clamp( _ed / uEdgeThickness, 0.0, 1.0 ), uEdgeSharpness );
+          gl_FragColor.rgb = mix( gl_FragColor.rgb, uEdgeColor, _ef );`
+        );
+    };
+
+    return mat;
   }
 
   // District line materials — stored so resolution can be updated on resize
@@ -850,13 +706,14 @@ const ThreeScene = (() => {
     if (roadsMat)   roadsMat.color.copy(readThemeColor('--overlay-road-color',    '#504b41'));
     if (metroMat)   metroMat.color.copy(readThemeColor('--overlay-metro-color',   '#dcaa28'));
 
-    // Update base color uniform across all 8 district building materials
+    // Update building materials — MeshLambertMaterial.color + onBeforeCompile edge uniform
     if (buildingMaterials.length) {
       const base = readThemeColor('--scene-terrain', '#566c88');
       const edge = readThemeColor('--primary', '#00f0ff');
       for (const mat of buildingMaterials) {
-        mat.uniforms.uBaseColor.value.copy(base);
-        mat.uniforms.uEdgeColor.value.copy(edge);
+        mat.color.copy(base);
+        const sh = mat.userData.shader;
+        if (sh) sh.uniforms.uEdgeColor.value.copy(edge);
       }
     }
   }
@@ -980,15 +837,7 @@ const ThreeScene = (() => {
     _dirLight.intensity = (1 - AMBIENT_INTENSITY) * intensity;
     _ambLight.intensity =      AMBIENT_INTENSITY  * Math.max(0.4, intensity);
 
-    // Keep building shader sun direction in sync
-    if (buildingMaterials.length) {
-      const sunDir = _dirLight.position.clone().normalize();
-      const ambient = _ambLight.intensity;
-      for (const mat of buildingMaterials) {
-        mat.uniforms.uSunDir.value.copy(sunDir);
-        mat.uniforms.uAmbient.value = ambient;
-      }
-    }
+    // Building materials use MeshLambertMaterial — scene lights update automatically.
 
     // Move and recolour the visible sun sphere.
     // Centred on Night City (WORLD_CX, 0, -WORLD_CY) so it hangs over the map.
