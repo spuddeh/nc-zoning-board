@@ -53,13 +53,18 @@ These are NOT in the same units. Measured at 3 ground-truth locations:
 The gap varies because the terrain mesh represents the **geological base** (rock, soil), while CET Z and building cetZ represent the **gameplay surface** (which includes elevated concrete platforms, bridges, pier structures). The 23m gap at City Center is the height of the Corpo Plaza elevated platform.
 
 ### Building Rotation
-Buildings have per-instance quaternion rotations (Block 2 of instance texture). The yaw angle extracted via:
-```python
-yaw = atan2(2*(qw*qz + qx*qy), 1 - 2*(qy**2 + qz**2))
-```
-Applied in Three.js as `dummy.rotation.y = yaw` (positive yaw, not negated).
+Buildings have per-instance quaternion rotations (Block 2 of instance texture). All four components (qx, qy, qz, qw) are kept — pitch and roll are used by the game shader to form non-upright primitives (wedges, ramps, bridges, gap-fillers), not just upright buildings.
 
-Verified: Biotechnica Flats diagonal building rows match the in-game map orientation exactly.
+Applied in Three.js with CET→Three.js axis remapping:
+
+```javascript
+dummy.quaternion.set(gQx, gQz, -gQy, gQw);
+// CET X → Three.js X (unchanged)
+// CET Z → Three.js Y (CET up becomes Three.js up)
+// CET Y → Three.js -Z (CET north becomes Three.js -forward)
+```
+
+Verified: yaw-only case (gQx≈0, gQy≈0) reduces to `set(0, sin(θ/2), 0, cos(θ/2))` — a pure Three.js Y rotation matching the previously verified Biotechnica Flats orientation.
 
 ## The HLSL Shader (`minimap_instance_shader.hlsl`)
 
@@ -105,13 +110,14 @@ From `cyberpunk-decompiled-scripts/cyberpunk/UI/fullscreen/map/worldMap.swift`:
 ## Current Data Pipeline
 
 ```
-*_data.png (WolvenKit export)
-    ↓ build_buildings_3d.py (decode + yaw + brightness from _m texture)
+*_data.png + *_m.png (WolvenKit export)
+    ↓ build_buildings_3d.py (decode position/rotation/scale from _data, brightness from _m)
     ↓
-data/buildings_3d.json [cetX, cetY, cetZ, width, depth, height, brightness, districtIdx, yaw]
-    ↓ fix_building_heights.py (raycast terrain GLB → replace cetZ with terrain surface Y)
+data/buildings_3d.json [cetX, cetY, cetZ, width, depth, height, brightness, districtIdx, qx, qy, qz, qw]
     ↓
-data/buildings_3d.json [cetX, cetY, terrainY, width, depth, height, brightness, districtIdx, yaw]
-    ↓
-three-scene.js loadBuildings() → InstancedMesh with position, rotation, scale per instance
+three-scene.js loadBuildings() → InstancedMesh with full quaternion rotation per instance
 ```
+
+`fix_building_heights.py` (terrain raycast) was removed from the pipeline. The game shader
+places cubes directly from decoded texture coordinates without any terrain intersection.
+The cetZ field is the cube center in CET world space — used directly as Three.js Y.

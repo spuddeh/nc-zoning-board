@@ -11,19 +11,23 @@ Output format:
   {
     "districts": ["city_center", "watson", ...],
     "instances": [
-      [cetX, cetY, cetZ, width, depth, height, brightness, districtIndex],
+      [cetX, cetY, cetZ, width, depth, height, brightness, districtIndex, qx, qy, qz, qw],
       ...
     ]
   }
 
 All spatial values are in CET (game world) units.
-  cetX, cetY  — building centroid (X east, Y north)
-  cetZ        — base elevation
-  width       — footprint dimension along X (CET units)
-  depth       — footprint dimension along Y (CET units)
-  height      — vertical extrusion (CET units)
-  brightness  — 0.0–1.0 from _m texture (or normalized hz for badlands)
+  cetX, cetY    — building centroid (X east, Y north)
+  cetZ          — base elevation
+  width         — footprint dimension along X local axis (CET units)
+  depth         — footprint dimension along Y local axis (CET units)
+  height        — vertical extrusion (CET units)
+  brightness    — 0.0–1.0 sampled from _m texture at instance UV (temporary;
+                  will be replaced by per-district _m texture in Three.js)
   districtIndex — index into the "districts" array
+  qx, qy, qz, qw — full quaternion from _data.xbm rotation block.
+                   All four components are kept: pitch and roll are used by
+                   the game shader to form wedges, ramps, and gap-fill geometry.
 
 Usage:
   python scripts/build_buildings_3d.py
@@ -36,7 +40,6 @@ Output:
 """
 
 import json
-import math
 import os
 import sys
 import time
@@ -215,22 +218,23 @@ def decode_district(name, d):
             if hx == 0.0 and hy == 0.0:
                 continue
 
-            # Quaternion from Block 2 → yaw angle (rotation around game Z / Three.js Y)
+            # Full quaternion from Block 2 (XYZW order, remapped from [0,1] → [-1,1])
             rr, rg, rb, ra = (px[y, x + block_w, c] for c in range(4))
             qx_ = rr * 2.0 - 1.0
             qy_ = rg * 2.0 - 1.0
             qz_ = rb * 2.0 - 1.0
             qw_ = ra * 2.0 - 1.0
-            # Yaw = rotation around up axis (game Z). Extract via atan2.
-            yaw = math.atan2(2.0 * (qw_ * qz_ + qx_ * qy_),
-                             1.0 - 2.0 * (qy_ ** 2 + qz_ ** 2))
+            # Keep all four components — pitch and roll are used by the game shader
+            # to form non-upright primitives (wedges, ramps, bridges, gap-fillers).
 
             # Store pr, pg as raw UVs for _m sampling.
             # hx/hy/hz are all half-extents; store full extents (×2) for consistency.
             instances.append([
                 float(cx), float(cy), float(cz),
                 float(hx * 2), float(hy * 2), float(hz * 2),
-                float(pr), float(pg), round(float(yaw), 4),
+                float(pr), float(pg),
+                round(float(qx_), 4), round(float(qy_), 4),
+                round(float(qz_), 4), round(float(qw_), 4),
             ])
 
     print(f"    -> {len(instances):,} instances")
@@ -271,7 +275,7 @@ def main():
             hz_range = (hz_max - hz_min) if hz_max > hz_min else 1.0
 
         for inst in raw:
-            cx, cy, cz, w, dep, hz, pr, pg, yaw = inst
+            cx, cy, cz, w, dep, hz, pr, pg, qx, qy, qz, qw = inst
 
             if m_arr is not None:
                 raw_b = sample_brightness(m_arr, pr, pg)  # uint8 0-255
@@ -284,7 +288,8 @@ def main():
             all_instances.append([
                 round(cx, 2), round(cy, 2), round(cz, 2),
                 round(w, 2), round(dep, 2), round(hz, 2),
-                brightness, dist_idx, yaw,
+                brightness, dist_idx,
+                qx, qy, qz, qw,
             ])
 
     os.makedirs(DATA_DIR, exist_ok=True)

@@ -401,23 +401,27 @@ const ThreeScene = (() => {
         const inst = instances[i];
         const cetX    = inst[0];
         const cetY    = inst[1];
-        const surfY   = inst[2];  // terrain surface Y from raycast
+        const cetZ    = inst[2];  // building cube center Z (CET → Three.js Y, decoded directly from _data.xbm)
         const width   = inst[3];
         const depth   = inst[4];
         const height  = inst[5];
         const brightness = inst[6];
         brightnessArr[i] = brightness;
         // inst[7] = districtIdx
-        const yaw     = inst[8] || 0;  // radians, rotation around game Z (= Three.js Y)
+        // Full quaternion from _data.xbm — CET space (Z-up)
+        const gQx = inst[8];
+        const gQy = inst[9];
+        const gQz = inst[10];
+        const gQw = inst[11];
 
         const h = Math.max(height, 0.5);
 
-        // surfY = terrain surface Y from raycast. Position center at surfY + h/2
-        // so box base sits on terrain surface.
-        dummy.position.set(cetX, surfY + h / 2, -cetY);
-        // Yaw rotation: game Z-axis rotation = Three.js Y-axis rotation
-        // Game uses CET where Z is up; Three.js Y is up. Same rotation axis.
-        dummy.rotation.set(0, yaw, 0);  // CET Z-up yaw → Three.js Y-up rotation (same direction)
+        // Remap quaternion from CET (Z-up, right-handed) to Three.js (Y-up, right-handed):
+        //   CET X  → Three.js X  (unchanged)
+        //   CET Z  → Three.js Y  (CET up becomes Three.js up)
+        //   CET Y  → Three.js -Z (CET north becomes Three.js -forward)
+        dummy.position.set(cetX, cetZ, -cetY);
+        dummy.quaternion.set(gQx, gQz, -gQy, gQw);
         dummy.scale.set(width, h, depth);
         dummy.updateMatrix();
         mesh.setMatrixAt(i, dummy.matrix);
