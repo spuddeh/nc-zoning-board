@@ -64,12 +64,6 @@ const ThreeScene = (() => {
     });
   }
 
-  function makeFlatMaterial(colorVar, fallback) {
-    return new THREE.MeshBasicMaterial({
-      color: readThemeColor(colorVar, fallback),
-      side: THREE.DoubleSide,
-    });
-  }
 
   function applyMaterial(root, material) {
     root.traverse(child => {
@@ -258,7 +252,7 @@ const ThreeScene = (() => {
       ]);
 
       terrainMat = makeHillshadeMaterial('--scene-terrain', '#566c88');
-      waterMat   = makeFlatMaterial('--scene-water',         '#2a3f57');
+      waterMat   = makeHillshadeMaterial('--scene-water',     '#2a3f57');
       cliffsMat  = makeHillshadeMaterial('--scene-cliffs',   '#566c88');
       applyMaterial(terrainScene, terrainMat);
       applyMaterial(waterScene,   waterMat);
