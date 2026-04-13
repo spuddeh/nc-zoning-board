@@ -110,14 +110,37 @@ From `cyberpunk-decompiled-scripts/cyberpunk/UI/fullscreen/map/worldMap.swift`:
 ## Current Data Pipeline
 
 ```
-*_data.png + *_m.png (WolvenKit export)
-    ↓ build_buildings_3d.py (decode position/rotation/scale from _data, brightness from _m)
+*_data.xbm.json (WolvenKit export — 16-bit RGBA base64 in textureData.Bytes)
+    ↓ loadXbmDataTexture() in three-scene.js
+    ↓ Uint16 → Float32 normalised [0,1] → THREE.DataTexture (FloatType)
     ↓
-data/buildings_3d.json [cetX, cetY, cetZ, width, depth, height, brightness, districtIdx, qx, qy, qz, qw]
+GPU vertex shader reads per-instance data via gl_InstanceID + texelFetch()
+    → position decoded: transMin + (transMax - transMin) × posRaw.rgb + offset
+    → quaternion decoded: rotRaw * 2.0 - 1.0 (remap [0,1] → [-1,1])
+    → scale decoded: sclRaw.rgb × cubeSize (half-extents)
+    → full TRS applied in shader, no CPU matrix loop
+
+*_m.xbm.json (BC4/RGTC1 compressed, 10 mip levels in textureData.Bytes)
+    ↓ loadXbmMTexture() in three-scene.js
+    ↓ EXT_texture_compression_rgtc → THREE.CompressedTexture (all mips, GPU decompression)
+    ↓ (fallback: JS BC4 decompressor → float DataTexture, mip 0 only)
     ↓
-three-scene.js loadBuildings() → InstancedMesh with full quaternion rotation per instance
+Fragment shader samples surface detail via world-space planar UV
 ```
 
-`fix_building_heights.py` (terrain raycast) was removed from the pipeline. The game shader
-places cubes directly from decoded texture coordinates without any terrain intersection.
-The cetZ field is the cube center in CET world space — used directly as Three.js Y.
+### Why this replaces the old pipeline
+
+The old pipeline (build_buildings_3d.py → buildings_3d.json → InstancedMesh) decoded
+16-bit textures through 8-bit PNG exports, introducing ~9.4 CET units of position error
+for the spaceport district. At 16-bit the error is ~0.036 CET units. This was visible as
+circular ring structures appearing jumbled instead of perfectly formed.
+
+The xbm.json Bytes field contains the raw pixel data at full game precision:
+- `_data.xbm`: 8 bytes/pixel (16-bit RGBA), 1 mip level — raw instance data
+- `_m.xbm`: BC4 compressed, 10 mip levels — surface detail texture
+
+No intermediate files needed. The game asset is loaded directly to GPU.
+
+**Obsolete scripts**: `build_buildings_3d.py`, `fix_building_heights.py`
+**Obsolete data**: `data/buildings_3d.json`, `assets/img/3dmap/*.png`
+**New assets**: `assets/xbm/*_data.xbm.json`, `assets/xbm/*_m.xbm.json`
