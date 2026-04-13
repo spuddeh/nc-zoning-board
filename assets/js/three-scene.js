@@ -45,8 +45,23 @@ const ThreeScene = (() => {
   let cliffsMat  = null;
   let roadsMat   = null;
   let metroMat   = null;
-  let buildingMesh       = null;  // InstancedMesh
-  let buildingBrightness = null;  // Float32Array — per-instance brightness values
+  let buildingMeshes     = [];    // one InstancedMesh per district
+  let buildingMaterials  = [];    // parallel ShaderMaterial array for theme updates
+
+  // District metadata for _m texture UV projection.
+  // Matches DISTRICTS + DISTRICT_OFFSETS in build_buildings_3d.py exactly.
+  // transMin/transMax are district-local CET XY bounds (before offset).
+  // offset is the district world offset applied to X and Y.
+  const DISTRICT_META = [
+    { name: 'westbrook',     tex: 'assets/img/3dmap/westbrook_m.png',    transMin: [-1078.94739, -1148.69434], transMax: [1155.12,      1562.87903], offset: [ -97.209,    590.849] },
+    { name: 'city_center',   tex: 'assets/img/3dmap/city_center_m.png',  transMin: [ -770.609192, -530.549133], transMax: [1316.82483,    649.75531], offset: [-2116.637,   106.508] },
+    { name: 'heywood',       tex: 'assets/img/3dmap/heywood_m.png',      transMin: [-1080.35107,  -418.153046], transMax: [1136.94556,   1372.15979], offset: [-1576.732, -1002.811] },
+    { name: 'pacifica',      tex: 'assets/img/3dmap/pacifica_m.png',     transMin: [-4008.396,   -4575.14941], transMax: [8258.31641,   7254.10059], offset: [-2422.441, -2368.156] },
+    { name: 'santo_domingo', tex: 'assets/img/3dmap/santo_domingo_m.png',transMin: [-1328.95288, -1880.02502], transMax: [1555.26318,   1369.01294], offset: [  -15.944, -1610.080] },
+    { name: 'watson',        tex: 'assets/img/3dmap/watson_m.png',       transMin: [-1254.46997, -1258.68469], transMax: [1988.5448,    2032.52405], offset: [-1979.372,  1873.951] },
+    { name: 'ep1_dogtown',   tex: 'assets/img/3dmap/dogtown_m.png',      transMin: [-2650.0,     -3126.6084],  transMax: [-1025.51855, -1803.58118], offset: [    0.0,       0.0  ] },
+    { name: 'ep1_spaceport', tex: 'assets/img/3dmap/spaceport_m.png',    transMin: [-1168.5874,   -765.104614],transMax: [1219.45483,   1018.70129], offset: [-4200.000,   200.000] },
+  ];
 
   // ── Helpers ────────────────────────────────────────────────────────────
 
@@ -377,73 +392,111 @@ const ThreeScene = (() => {
   }
 
   // ── Buildings (Tier 3) ─────────────────────────────────────────────────
-  // ~254k instanced cubes. Each instance: [cetX, cetY, cetZ, width, depth, height, brightness, districtIdx]
+  // ~254k instanced cubes split into 8 InstancedMesh objects — one per district.
+  // Each district uses a ShaderMaterial that samples its _m.xbm texture via
+  // world-space planar UV, matching the game's 3d_map_cubes.mt shader approach.
+  // Instance format: [cetX, cetY, cetZ, width, depth, height, brightness, districtIdx, qx, qy, qz, qw]
+
+  // GLSL 300 ES shaders (Three.js r170 uses WebGL2 — RawShaderMaterial needs explicit syntax)
+  const BUILDING_VERT = `
+    uniform mat4 modelMatrix;
+    uniform mat4 viewMatrix;
+    uniform mat4 projectionMatrix;
+    in mat4 instanceMatrix;
+    in vec3 position;
+    uniform vec2 uTransMin;
+    uniform vec2 uTransMax;
+    uniform vec2 uOffset;
+    out vec2 vMUv;
+    void main() {
+      // World position in CET / Three.js space (modelMatrix is identity — mesh is at scene root)
+      vec4 worldPos = instanceMatrix * vec4(position, 1.0);
+      // Recover CET XY: Three.js X = CET X, Three.js Z = -CET Y
+      float cetX = worldPos.x;
+      float cetY = -worldPos.z;
+      // District-local UV matching pr/pg from build_buildings_3d.py
+      vMUv = vec2(
+        (cetX - uOffset.x - uTransMin.x) / (uTransMax.x - uTransMin.x),
+        (cetY - uOffset.y - uTransMin.y) / (uTransMax.y - uTransMin.y)
+      );
+      gl_Position = projectionMatrix * viewMatrix * worldPos;
+    }
+  `;
+
+  const BUILDING_FRAG = `
+    precision mediump float;
+    uniform sampler2D uMTex;
+    uniform vec3 uBaseColor;
+    in vec2 vMUv;
+    out vec4 fragColor;
+    void main() {
+      float m = texture(uMTex, clamp(vMUv, 0.0, 1.0)).r;
+      // m is in [0.5, 1.0] range in the _m textures: remap so minimum maps to ~0.3 brightness
+      float brightness = 0.3 + m * 0.7;
+      fragColor = vec4(uBaseColor * brightness, 1.0);
+    }
+  `;
 
   async function loadBuildings() {
     try {
       const data = await fetch('data/buildings_3d.json').then(r => r.json());
       const instances = data.instances;
-      const count = instances.length;
-
+      const loader    = new THREE.TextureLoader();
+      const geometry  = new THREE.BoxGeometry(1, 1, 1);
+      const dummy     = new THREE.Object3D();
+      const group     = new THREE.Group();
 
       const baseColor = readThemeColor('--scene-terrain', '#566c88');
-      const geometry  = new THREE.BoxGeometry(1, 1, 1);
-      // MeshBasicMaterial: not affected by light normals — avoids Lambert shading artifacts.
-      const material      = new THREE.MeshBasicMaterial({ color: baseColor });
-      const mesh          = new THREE.InstancedMesh(geometry, material, count);
-      const brightnessArr = new Float32Array(count);
-      mesh.renderOrder = 1;
 
-      const dummy = new THREE.Object3D();
-      const color = new THREE.Color();
-
-      for (let i = 0; i < count; i++) {
-        const inst = instances[i];
-        const cetX    = inst[0];
-        const cetY    = inst[1];
-        const cetZ    = inst[2];  // building cube center Z (CET → Three.js Y, decoded directly from _data.xbm)
-        const width   = inst[3];
-        const depth   = inst[4];
-        const height  = inst[5];
-        const brightness = inst[6];
-        brightnessArr[i] = brightness;
-        // inst[7] = districtIdx
-        // Full quaternion from _data.xbm — CET space (Z-up)
-        const gQx = inst[8];
-        const gQy = inst[9];
-        const gQz = inst[10];
-        const gQw = inst[11];
-
-        const h = Math.max(height, 0.5);
-
-        // Remap quaternion from CET (Z-up, right-handed) to Three.js (Y-up, right-handed):
-        //   CET X  → Three.js X  (unchanged)
-        //   CET Z  → Three.js Y  (CET up becomes Three.js up)
-        //   CET Y  → Three.js -Z (CET north becomes Three.js -forward)
-        dummy.position.set(cetX, cetZ, -cetY);
-        dummy.quaternion.set(gQx, gQz, -gQy, gQw);
-        dummy.scale.set(width, h, depth);
-        dummy.updateMatrix();
-        mesh.setMatrixAt(i, dummy.matrix);
-
-        const b = 0.5 + brightness * 0.6;
-        color.setRGB(
-          Math.min(baseColor.r * b, 1),
-          Math.min(baseColor.g * b, 1),
-          Math.min(baseColor.b * b, 1),
-        );
-        mesh.setColorAt(i, color);
+      // Group instance indices by district
+      const byDistrict = DISTRICT_META.map(() => []);
+      for (let i = 0; i < instances.length; i++) {
+        byDistrict[instances[i][7]].push(i);
       }
 
-      mesh.instanceMatrix.needsUpdate = true;
-      mesh.instanceColor.needsUpdate  = true;
+      for (let d = 0; d < DISTRICT_META.length; d++) {
+        const meta  = DISTRICT_META[d];
+        const idxs  = byDistrict[d];
+        if (!idxs.length) continue;
 
-      buildingMesh       = mesh;
-      buildingBrightness = brightnessArr;
-      layers.buildings   = mesh;
-      mesh.castShadow    = true; // cast shadows onto terrain; receiveShadow off (MeshBasicMaterial ignores lighting)
-      scene.add(mesh);
-      console.log(`[NCZ] Buildings: ${count.toLocaleString()} instances loaded`);
+        const tex = await new Promise(resolve => loader.load(meta.tex, resolve));
+
+        const mat = new THREE.RawShaderMaterial({
+          glslVersion:    THREE.GLSL3,
+          vertexShader:   BUILDING_VERT,
+          fragmentShader: BUILDING_FRAG,
+          uniforms: {
+            uMTex:      { value: tex },
+            uBaseColor: { value: new THREE.Color(baseColor) },
+            uTransMin:  { value: new THREE.Vector2(...meta.transMin) },
+            uTransMax:  { value: new THREE.Vector2(...meta.transMax) },
+            uOffset:    { value: new THREE.Vector2(...meta.offset) },
+          },
+        });
+
+        const mesh = new THREE.InstancedMesh(geometry, mat, idxs.length);
+        mesh.renderOrder = 1;
+
+        for (let j = 0; j < idxs.length; j++) {
+          const inst = instances[idxs[j]];
+          const h = Math.max(inst[5], 0.5);
+          dummy.position.set(inst[0], inst[2], -inst[1]);
+          dummy.quaternion.set(inst[8], inst[10], -inst[9], inst[11]);
+          dummy.scale.set(inst[3], h, inst[4]);
+          dummy.updateMatrix();
+          mesh.setMatrixAt(j, dummy.matrix);
+        }
+
+        mesh.instanceMatrix.needsUpdate = true;
+        group.add(mesh);
+        buildingMeshes.push(mesh);
+        buildingMaterials.push(mat);
+        console.log(`[NCZ] Buildings [${meta.name}]: ${idxs.length.toLocaleString()} instances`);
+      }
+
+      layers.buildings = group;
+      scene.add(group);
+      console.log(`[NCZ] Buildings: ${instances.length.toLocaleString()} total instances across ${buildingMeshes.length} districts`);
     } catch (err) {
       console.error('[NCZ] Buildings load failed:', err);
     }
@@ -577,18 +630,12 @@ const ThreeScene = (() => {
     if (roadsMat)   roadsMat.color.copy(readThemeColor('--overlay-road-color',    '#504b41'));
     if (metroMat)   metroMat.color.copy(readThemeColor('--overlay-metro-color',   '#dcaa28'));
 
-    // Re-tint all 254k building instances against the new base color
-    if (buildingMesh && buildingBrightness) {
-      const base  = readThemeColor('--scene-terrain', '#566c88');
-      const col   = new THREE.Color();
-      const count = buildingBrightness.length;
-      for (let i = 0; i < count; i++) {
-        const b = 0.5 + buildingBrightness[i] * 0.6;
-        col.setRGB(Math.min(base.r * b, 1), Math.min(base.g * b, 1), Math.min(base.b * b, 1));
-        buildingMesh.setColorAt(i, col);
+    // Update base color uniform across all 8 district building materials
+    if (buildingMaterials.length) {
+      const base = readThemeColor('--scene-terrain', '#566c88');
+      for (const mat of buildingMaterials) {
+        mat.uniforms.uBaseColor.value.copy(base);
       }
-      buildingMesh.instanceColor.needsUpdate = true;
-      buildingMesh.material.color.copy(base);
     }
   }
 
