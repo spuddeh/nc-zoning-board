@@ -191,47 +191,69 @@ mesh.rotation.y = Math.PI;
 
 ## Buildings
 
-~254k buildings rendered as instanced cubes via `THREE.InstancedMesh`.
+~254k buildings rendered as GPU-instanced cubes. Each district is one `THREE.InstancedMesh` (8 total, ~5–42k instances each).
 
 ### Data pipeline
 
 ```
-*_data.png (WolvenKit export, per-district instance textures)
-    ↓ scripts/build_buildings_3d.py
-    ↓   Decodes position, scale, quaternion→yaw, brightness from _m texture
-data/buildings_3d.json (~13 MB)
-    ↓ scripts/fix_building_heights.py
-    ↓   Raycasts terrain GLB to get surface Y at each building XZ
-data/buildings_3d.json (cetZ replaced with terrain surface Y)
+assets/xbm/*_data.xbm.json   (WolvenKit JSON export — 16-bit RGBA base64 pixel data)
+    ↓ loadXbmDataTexture()     (three-scene.js)
+    ↓   uint16 → float32 [0,1] → THREE.DataTexture (FloatType, NearestFilter)
+    ↓
+GPU vertex shader reads position/rotation/scale via gl_InstanceID + texelFetch()
+
+assets/xbm/*_m.xbm.json      (WolvenKit JSON export — BC4-compressed greyscale)
+    ↓ loadXbmMTexture()        (three-scene.js)
+    ↓   JS BC4 decompressor → float DataTexture (mip 0, generateMipmaps: true)
+    ↓
+GPU fragment shader samples surface detail via world-space planar UV
 ```
 
-### Format
+No intermediate JSON. No CPU matrix computation. Game assets load directly to GPU.
 
-```javascript
-{
-  "instances": [
-    [cetX, cetY, surfaceY, width, depth, height, brightness, districtIndex, yaw],
-    ...
-  ],
-  "districts": ["westbrook", "city_center", ...]
-}
+### Texture format
+
+`_data.xbm.json` contains raw 16-bit RGBA pixel data (base64) in `textureData.Bytes`. Each pixel row encodes one building instance across three equal horizontal blocks:
+
+| Block | X range | Channels | Encodes |
+|-------|---------|----------|---------|
+| Position | 0..blockW | RGB=XYZ (0→1 → transMin→transMax + offset), A=validity | CET world position |
+| Rotation | blockW..2×blockW | RGBA=quaternion (0→1 → -1→1) | Full 3D rotation |
+| Scale | 2×blockW..3×blockW | RGB=XYZ half-extents × cubeSize | Box dimensions |
+
+8-bit PNG exports from WolvenKit lose precision (~9 CET units position error for spaceport district). The `.xbm.json` Bytes field retains full 16-bit precision (~0.036 CET units).
+
+### Vertex shader (GPU instancing)
+
+The vertex shader reads per-instance data directly from the DataTexture:
+
+```glsl
+int tx = gl_InstanceID % int(uBlockW);
+int ty = gl_InstanceID / int(uBlockW);
+vec4 posRaw = texelFetch(uDataTex, ivec2(tx, ty), 0);           // position + validity
+vec4 rotRaw = texelFetch(uDataTex, ivec2(tx + bw, ty), 0);      // quaternion
+vec4 sclRaw = texelFetch(uDataTex, ivec2(tx + 2*bw, ty), 0);    // scale
 ```
 
-- `cetX, cetY` — building center in CET world coordinates
-- `surfaceY` — terrain mesh surface Y at the building's XZ position (from raycast)
-- `width, depth` — full footprint extents (2 × half-extent from texture)
-- `height` — full building height (2 × half-extent from texture)
-- `brightness` — 0–1 from `_m` texture, normalised per-district
-- `districtIndex` — index into the `districts` array
-- `yaw` — rotation around the up axis in radians (from quaternion in texture Block 2)
+Full TRS applied in shader — full quaternion (all 4 components), CET→Three.js axis remap. See `coordinate-system-3d.md` for remap formula.
 
-### Rendering
+### Fragment shader
 
-Rendered as a single `THREE.InstancedMesh` (~5 draw calls total). Each instance has position, rotation (yaw around Y), and scale applied via `Object3D.updateMatrix()`.
+Lambert diffuse + `_m.xbm` surface texture via world-space planar UV + edge highlight:
 
-Building color uses `--scene-terrain` CSS var. Per-instance brightness modulation via `setColorAt()` (requires Three.js `USE_INSTANCING_COLOR`).
+```glsl
+float m = texture(uMTex, vMUv).r;           // _m.xbm surface detail [0,1]
+float diffuse = max(dot(vWorldNormal, uSunDir), 0.0);
+float light = uAmbient + (1.0 - uAmbient) * diffuse;
+vec3 color = uBaseColor * (0.3 + m * 0.7) * light;
+// edge highlight from 3d_map_cubes.mt EdgeColor/EdgeThickness/EdgeSharpnessPower
+```
 
-**Do not use `data/building_structures.json`** — experimental contour vectorisation that produced incorrect merged blobs.
+### District metadata (DISTRICT_META in three-scene.js)
+
+Each district entry specifies dataTex/mTex paths, cubeSize, transMin/transMax (3D XYZ), and world XY offset. Values sourced from `3dmap_triangle_soup.Material.json`.
+
+For lighting and shadow implementation details see [`3dmap-lighting-shadows.md`](3dmap-lighting-shadows.md).
 
 ---
 
