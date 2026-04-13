@@ -398,27 +398,36 @@ const ThreeScene = (() => {
   // Instance format: [cetX, cetY, cetZ, width, depth, height, brightness, districtIdx, qx, qy, qz, qw]
 
   // GLSL 300 ES shaders (Three.js r170 uses WebGL2 — RawShaderMaterial needs explicit syntax)
+  // Geometry: PlaneGeometry(1,1) rotated to XZ (horizontal), matching 3dmap_triangle_soup.glb.
+  // Edge highlight replicates the game shader's EdgeColor/EdgeThickness/EdgeSharpnessPower params.
   const BUILDING_VERT = `
-    uniform mat4 modelMatrix;
     uniform mat4 viewMatrix;
     uniform mat4 projectionMatrix;
     in mat4 instanceMatrix;
     in vec3 position;
+    in vec3 normal;
+    in vec2 uv;
     uniform vec2 uTransMin;
     uniform vec2 uTransMax;
     uniform vec2 uOffset;
     out vec2 vMUv;
+    out vec2 vLocalUv;
+    out vec3 vWorldNormal;
     void main() {
-      // World position in CET / Three.js space (modelMatrix is identity — mesh is at scene root)
       vec4 worldPos = instanceMatrix * vec4(position, 1.0);
-      // Recover CET XY: Three.js X = CET X, Three.js Z = -CET Y
       float cetX = worldPos.x;
       float cetY = -worldPos.z;
-      // District-local UV matching pr/pg from build_buildings_3d.py
       vMUv = vec2(
         (cetX - uOffset.x - uTransMin.x) / (uTransMax.x - uTransMin.x),
         (cetY - uOffset.y - uTransMin.y) / (uTransMax.y - uTransMin.y)
       );
+      vLocalUv = uv;
+      mat3 rotMat = mat3(
+        normalize(vec3(instanceMatrix[0])),
+        normalize(vec3(instanceMatrix[1])),
+        normalize(vec3(instanceMatrix[2]))
+      );
+      vWorldNormal = normalize(rotMat * normal);
       gl_Position = projectionMatrix * viewMatrix * worldPos;
     }
   `;
@@ -427,13 +436,26 @@ const ThreeScene = (() => {
     precision mediump float;
     uniform sampler2D uMTex;
     uniform vec3 uBaseColor;
+    uniform vec3 uEdgeColor;
+    uniform float uEdgeThickness;
+    uniform float uEdgeSharpness;
+    uniform vec3 uSunDir;
+    uniform float uAmbient;
     in vec2 vMUv;
+    in vec2 vLocalUv;
+    in vec3 vWorldNormal;
     out vec4 fragColor;
     void main() {
       float m = texture(uMTex, clamp(vMUv, 0.0, 1.0)).r;
-      // m is in [0.5, 1.0] range in the _m textures: remap so minimum maps to ~0.3 brightness
-      float brightness = 0.3 + m * 0.7;
-      fragColor = vec4(uBaseColor * brightness, 1.0);
+      float texBrightness = 0.3 + m * 0.7;
+      float diffuse = max(dot(normalize(vWorldNormal), uSunDir), 0.0);
+      float light = uAmbient + (1.0 - uAmbient) * diffuse;
+      vec3 color = uBaseColor * texBrightness * light;
+      // Edge highlight — matches EdgeColor/EdgeThickness/EdgeSharpnessPower in 3d_map_cubes.mt
+      float edgeDist = min(min(vLocalUv.x, 1.0 - vLocalUv.x), min(vLocalUv.y, 1.0 - vLocalUv.y));
+      float edgeFactor = 1.0 - pow(clamp(edgeDist / uEdgeThickness, 0.0, 1.0), uEdgeSharpness);
+      color = mix(color, uEdgeColor, edgeFactor);
+      fragColor = vec4(color, 1.0);
     }
   `;
 
@@ -471,6 +493,11 @@ const ThreeScene = (() => {
             uTransMin:  { value: new THREE.Vector2(...meta.transMin) },
             uTransMax:  { value: new THREE.Vector2(...meta.transMax) },
             uOffset:    { value: new THREE.Vector2(...meta.offset) },
+            uSunDir:         { value: SUN_DIR.clone() },
+            uAmbient:        { value: AMBIENT_INTENSITY },
+            uEdgeColor:      { value: readThemeColor('--primary', '#00f0ff') },
+            uEdgeThickness:  { value: 0.0001 },
+            uEdgeSharpness:  { value: 30.0 },
           },
         });
 
@@ -488,6 +515,7 @@ const ThreeScene = (() => {
         }
 
         mesh.instanceMatrix.needsUpdate = true;
+        mesh.castShadow = true;
         group.add(mesh);
         buildingMeshes.push(mesh);
         buildingMaterials.push(mat);
@@ -633,8 +661,10 @@ const ThreeScene = (() => {
     // Update base color uniform across all 8 district building materials
     if (buildingMaterials.length) {
       const base = readThemeColor('--scene-terrain', '#566c88');
+      const edge = readThemeColor('--primary', '#00f0ff');
       for (const mat of buildingMaterials) {
         mat.uniforms.uBaseColor.value.copy(base);
+        mat.uniforms.uEdgeColor.value.copy(edge);
       }
     }
   }
@@ -755,6 +785,16 @@ const ThreeScene = (() => {
     const intensity = 0.2 + 0.8 * Math.min(1, Math.max(0, elevDeg / 30));
     _dirLight.intensity = (1 - AMBIENT_INTENSITY) * intensity;
     _ambLight.intensity =      AMBIENT_INTENSITY  * Math.max(0.4, intensity);
+
+    // Keep building shader sun direction in sync
+    if (buildingMaterials.length) {
+      const sunDir = _dirLight.position.clone().normalize();
+      const ambient = _ambLight.intensity;
+      for (const mat of buildingMaterials) {
+        mat.uniforms.uSunDir.value.copy(sunDir);
+        mat.uniforms.uAmbient.value = ambient;
+      }
+    }
 
     // Move and recolour the visible sun sphere.
     // Centred on Night City (WORLD_CX, 0, -WORLD_CY) so it hangs over the map.
