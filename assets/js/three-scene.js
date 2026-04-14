@@ -261,6 +261,9 @@ const ThreeScene = (() => {
   // Named scene groups — toggled by setLayerVisibility()
 
   const layers = {
+    terrain:   null,
+    water:     null,
+    cliffs:    null,
     roads:     null,
     metro:     null,
     districts: null,  // parent group — toggled as a unit
@@ -323,6 +326,9 @@ const ThreeScene = (() => {
       // CET pos (-2255, -3050) → GLB offset X=-2255, Z=+3050
       cliffsScene.position.set(-2255, 0, 3050);
 
+      layers.terrain = terrainScene;
+      layers.water   = waterScene;
+      layers.cliffs  = cliffsScene;
       scene.add(terrainScene, waterScene, cliffsScene);
 
       // Fit camera frustum to the terrain bounding box
