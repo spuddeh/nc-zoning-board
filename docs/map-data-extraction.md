@@ -2,9 +2,11 @@
 
 ## Overview
 
-The game's 3D minimap renders Night City using a GPU instancing shader. Building positions, rotations, and scales are packed into per-district data textures as raw pixel values. We decode these textures to extract 2D building footprints, roads, metro lines, and district boundaries for use as map overlays.
+The game's 3D minimap renders Night City using a GPU instancing shader. Building positions, rotations, and scales are packed into per-district data textures as raw pixel values. We decode these textures to extract 2D building footprints, roads, metro lines, and district boundaries.
 
 This pipeline was inspired by [a Reddit post](https://www.reddit.com/r/cyberpunk2077mods/comments/1rzqh2m/in_game_minimap_extraction/) that decoded the same textures into 3D OBJ meshes for 3D printing. Our version skips the 3D boolean union and projects everything to 2D instead.
+
+> **Note:** This document covers `scripts/cp2077_extract_footprints.py` — the **2D extraction pipeline** used for district borders, roads, metro, and landmark SVGs. The **Three.js 3D building rendering** uses a completely separate pipeline that reads DDS files directly and renders via `MeshLambertMaterial`. See [`coordinate-system-3d.md`](coordinate-system-3d.md) for the 3D pipeline.
 
 ## Prerequisites
 
@@ -219,7 +221,7 @@ World extent constants were derived by inverting the existing `cetToLeaflet` for
 | `scripts/output/metro.svg` | Metro track boundary edges; Z-sorted within file | ~0.9 MB |
 | `scripts/output/landmarks.svg` | Landmark fills and outlines as `<g id="label">` / `<g id="label_outline">`; Z-sorted within each group | ~5.5 MB |
 | `scripts/output/district_borders.svg` | District boundary outlines from trigger polygons | ~6 KB |
-| `data/buildings.json` | Building polygons by district; each polygon: `{"z": float, "pts": [[lat,lng],...]}` | ~13 MB |
+| `data/buildings.json` | Building polygons by district; each polygon: `{"z": float, "pts": [[lat,lng],...]}` — **gitignored, no longer used by the Three.js 3D view** | ~13 MB |
 | `data/roads.json` | Road face polygons; each entry: `{"z": float, "pts": [[lat,lng],...]}` | ~3.7 MB |
 | `data/metro.json` | Metro edge segments; each entry: `{"z": float, "pts": [[lat,lng],[lat,lng]]}` | ~0.7 MB |
 | `data/landmarks.json` | `{label: {"faces": [{"z":,"pts":},...], "edges": [{"z":,"pts":},...}]}}` | ~5.0 MB |
