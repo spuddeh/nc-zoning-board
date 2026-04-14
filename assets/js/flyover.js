@@ -22,7 +22,8 @@ const FLYOVER_CAM_NEAR      = 1;        // perspective camera near clip (CET uni
 const FLYOVER_CAM_FAR       = 120000;   // perspective camera far clip
 const FLYOVER_FADE_MS       = 2000;     // fade in / fade to black duration (ms)
 const FLYOVER_BEAT_DISSOLVE = 938;      // theme cross-dissolve duration per beat (ms) — 70% of ~1340ms beat period
-const FLYOVER_REVEAL_ROADS  = 1500;     // ms after WP0 to stagger roads in
+const FLYOVER_REVEAL_LAYERS = false;    // true = hide all layers at WP0 then stagger back in; false = keep current layer state
+const FLYOVER_REVEAL_ROADS  = 1500;     // ms after WP0 to stagger roads in (only used when FLYOVER_REVEAL_LAYERS = true)
 const FLYOVER_REVEAL_METRO  = 3000;     // ms after WP0 to stagger metro in
 const FLYOVER_REVEAL_BLDGS  = 4500;     // ms after WP0 to stagger buildings in
 const MORRO_BAY = { lat: 35.370781, lng: -120.851173 }; // Night City's real-world location
@@ -102,12 +103,22 @@ const Flyover = (() => {
   }
 
   const FLYOVER_EVENTS = {
-    // WP 0 — Ocean: snap to Night Corp, all layers off (loop start)
+    // WP 0 — Ocean: snap to Night Corp; showcase always controls its own layer state.
+    // FLYOVER_REVEAL_LAYERS=true  → hide everything, stagger layers back in over 6.9s
+    // FLYOVER_REVEAL_LAYERS=false → all layers on from frame 1 (immediate shadows)
+    // Either way, exit always restores the user's pre-showcase layer state.
     0: () => {
-      NCZ.ThreeScene.setLayerVisibility('roads',     false);
-      NCZ.ThreeScene.setLayerVisibility('metro',     false);
-      NCZ.ThreeScene.setLayerVisibility('buildings', false);
-      NCZ.ThreeScene.setLayerVisibility('districts', false);
+      if (FLYOVER_REVEAL_LAYERS) {
+        NCZ.ThreeScene.setLayerVisibility('roads',     false);
+        NCZ.ThreeScene.setLayerVisibility('metro',     false);
+        NCZ.ThreeScene.setLayerVisibility('buildings', false);
+        NCZ.ThreeScene.setLayerVisibility('districts', false);
+      } else {
+        NCZ.ThreeScene.setLayerVisibility('roads',     true);
+        NCZ.ThreeScene.setLayerVisibility('metro',     true);
+        NCZ.ThreeScene.setLayerVisibility('buildings', true);
+        NCZ.ThreeScene.setLayerVisibility('districts', false); // omitted — cleaner showcase
+      }
       NCZ.applyTheme?.('night-corp');
     },
     9: () => NCZ.ThreeScene.setLayerVisibility('districts', false),
@@ -300,6 +311,7 @@ const Flyover = (() => {
   let flySeg          = 0;
   let flySegStart     = 0;
   let _savedTheme     = null; // theme ID active when showcase started
+  let _savedState     = null; // overlay checkbox + sun slider state to restore on exit
   let _onAudioEnded   = null; // reference kept so we can remove it on early exit
 
   const _flyPos = new THREE.Vector3();
@@ -321,9 +333,14 @@ const Flyover = (() => {
       flyCamera = new THREE.PerspectiveCamera(FLYOVER_FOV, canvas.clientWidth / canvas.clientHeight, FLYOVER_CAM_NEAR, FLYOVER_CAM_FAR);
     }
 
-    // Save the active theme so it can be restored when showcase exits
+    // Save active theme + all overlay checkbox states + sun slider value
     _savedTheme = Array.from(document.documentElement.classList)
       .find(c => c.startsWith('theme-'))?.replace('theme-', '') ?? 'night-corp';
+    _savedState = {
+      sunSlider: document.getElementById('scene-sun-slider')?.value ?? null,
+      overlays:  Array.from(document.querySelectorAll('[data-overlay]'))
+                   .map(cb => ({ cb, checked: cb.checked })),
+    };
 
     // Start audio — beats and sun position are driven by audio.currentTime each frame
     _audio = document.getElementById('flyover-audio');
@@ -348,7 +365,7 @@ const Flyover = (() => {
     NCZ.ThreeScene.setShadowsEnabled?.(true);    // always on during showcase
     NCZ.ThreeScene.setSunSphereVisible?.(true);  // show the sun in the sky
     FLYOVER_EVENTS[0]();
-    scheduleLayerReveal();
+    if (FLYOVER_REVEAL_LAYERS) scheduleLayerReveal();
     // Create fade overlay, show title card, then fade the scene in from black
     createFade();
     showStartScreen();
@@ -376,21 +393,28 @@ const Flyover = (() => {
     }
     hideStartScreen();
     resetFade();
-    // Restore all layers
-    NCZ.ThreeScene.setLayerVisibility('roads',     true);
-    NCZ.ThreeScene.setLayerVisibility('metro',     true);
-    NCZ.ThreeScene.setLayerVisibility('buildings', true);
-    NCZ.ThreeScene.setLayerVisibility('districts', true);
     NCZ.ThreeScene.setControlsEnabled(true);
     NCZ.ThreeScene.startRenderLoop();
-    // Restore shadow state to match the checkbox (showcase always enables them)
-    const shadowsCheckbox = document.getElementById('overlay-shadows');
-    NCZ.ThreeScene.setShadowsEnabled?.(shadowsCheckbox?.checked ?? false);
     NCZ.ThreeScene.setSunSphereVisible?.(false);
+
     // Restore whichever theme the user had before showcase started
     if (_savedTheme) { applyThemeSmooth(_savedTheme); _savedTheme = null; }
-    // Restore sun position — flyover leaves the sun at near-sunset which darkens terrain
-    document.getElementById('scene-sun-slider')?.dispatchEvent(new Event('input'));
+
+    // Restore all overlay checkboxes + sun slider to exactly what they were.
+    // Dispatching the native events ensures the app.js handlers run —
+    // layer visibility, shadow state, and UI all stay in sync.
+    if (_savedState) {
+      _savedState.overlays.forEach(({ cb, checked }) => {
+        cb.checked = checked;
+        cb.dispatchEvent(new Event('change'));
+      });
+      const slider = document.getElementById('scene-sun-slider');
+      if (slider && _savedState.sunSlider !== null) {
+        slider.value = _savedState.sunSlider;
+        slider.dispatchEvent(new Event('input'));
+      }
+      _savedState = null;
+    }
   }
 
   function flyoverLoop() {

@@ -163,14 +163,14 @@ NCZ.CAMERA_FAR      =  50000;           // far plane in front; large to ensure t
 NCZ.CAMERA_HEIGHT   =  10000;           // Y position above world centre (CET units)
 
 // Camera controls (OrbitControls) — source: TweakDB WorldMap.FreeCameraSettingsDefault
-NCZ.CAMERA_MIN_TILT    = 0;              // min polar angle — 0 = perfectly top-down
-NCZ.CAMERA_MAX_TILT    = Math.PI * 0.39; // max polar angle — ~70° tilt from top-down
-NCZ.CAMERA_DAMPING     = 0.05;           // inertia/smoothing factor — higher = more lag
-NCZ.CAMERA_ZOOM_MIN    = 0.5;            // minimum camera.zoom (furthest out)
-NCZ.CAMERA_ZOOM_MAX    = 8.0;            // maximum camera.zoom (furthest in)
-NCZ.CAMERA_ZOOM_SPEED  = 1.5;            // scroll wheel zoom rate — increase if too slow
-NCZ.CAMERA_PAN_SPEED   = 1.0;            // left-drag pan rate
-NCZ.CAMERA_ROTATE_SPEED = 0.6;           // right-drag tilt rate — lower = more precise
+NCZ.CAMERA_MIN_TILT     = 0;              // min polar angle (Three.js default: 0)           — 0 = perfectly top-down
+NCZ.CAMERA_MAX_TILT     = Math.PI * 0.39; // max polar angle (Three.js default: Math.PI)     — ~70° tilt from top-down
+NCZ.CAMERA_DAMPING      = 0.05;           // dampingFactor   (Three.js default: 0.05)        — higher = more inertia/lag
+NCZ.CAMERA_ZOOM_MIN     = 2.0;            // minZoom         (Three.js default: 0)           — zoom-out limit; small = small map
+NCZ.CAMERA_ZOOM_MAX     = 50.0;           // maxZoom         (Three.js default: Infinity)    — zoom-in limit; large = close up
+NCZ.CAMERA_ZOOM_SPEED   = 2.0;            // zoomSpeed       (Three.js default: 1.0)         — scroll wheel rate; increase if too slow
+NCZ.CAMERA_PAN_SPEED    = 1.0;            // panSpeed        (Three.js default: 1.0)         — left-drag pan rate
+NCZ.CAMERA_ROTATE_SPEED = 0.6;            // rotateSpeed     (Three.js default: 1.0)         — right-drag tilt rate; lower = more precise
 
 // Shadow map — PCFSoftShadowMap, orthographic frustum centred on Night City
 // The shadow camera sits at the sun position (NCZ.SUN_DIST away) and looks down.
@@ -201,8 +201,8 @@ NCZ.DDS_ALPHA_THRESH  = 655;      // 0.01 × UINT16_MAX — position alpha below
 
 // Building shader — onBeforeCompile patches to MeshLambertMaterial
 // EdgeThickness and EdgeSharpness match the game's 3d_map_cubes.mt shader parameters.
-NCZ.BUILDING_EDGE_THICKNESS = 0.0005; // UV-space glow width per box face (game sw5 material value: 0.0005)
-NCZ.BUILDING_EDGE_SHARPNESS =  30.0;  // power falloff — higher = sharper edge (game value: 30)
+NCZ.BUILDING_EDGE_THICKNESS =  0.0005; // UV-space glow width per box face (game 3d_map_cubes.mt default: 0.0001)
+NCZ.BUILDING_EDGE_SHARPNESS =  30.0;  // power falloff — higher = sharper edge (game 3d_map_cubes.mt default: 30)
 NCZ.BUILDING_TEX_FLOOR      =   0.3;  // minimum _m.dds brightness — prevents faces going pitch-black
 NCZ.BUILDING_TEX_RANGE      =   0.7;  // brightness range above the floor (floor + range = max)
 

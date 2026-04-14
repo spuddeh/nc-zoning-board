@@ -64,7 +64,16 @@ const ThreeScene = (() => {
   function readThemeColor(varName, fallback) {
     const raw = getComputedStyle(document.documentElement)
       .getPropertyValue(varName).trim();
-    return new THREE.Color(raw || fallback);
+    // CSS custom properties return their literal stored value — CSS functions like
+    // color-mix() are NOT resolved by getPropertyValue. Fall back if unparseable.
+    try { return new THREE.Color(raw || fallback); }
+    catch { return new THREE.Color(fallback); }
+  }
+
+  // Lighten a THREE.Color by mixing with white — used for edge glow derived from buildings.
+  // Matches the CSS: color-mix(in srgb, var(--scene-buildings) 40%, white)
+  function lightenColor(color, whiteAmount = 0.4) {
+    return new THREE.Color().lerpColors(color, new THREE.Color(1, 1, 1), whiteAmount);
   }
 
   function makeHillshadeMaterial(colorVar, fallback) {
@@ -521,7 +530,7 @@ const ThreeScene = (() => {
       shader.uniforms.uTransMax      = { value: new THREE.Vector2(meta.transMax[0], meta.transMax[1]) };
       shader.uniforms.uOffset        = { value: new THREE.Vector2(...meta.offset) };
       shader.uniforms.uMTex          = { value: mTex };
-      shader.uniforms.uEdgeColor     = { value: readThemeColor('--scene-buildings-edge', '#b0c8d8') };
+      shader.uniforms.uEdgeColor     = { value: lightenColor(readThemeColor('--scene-buildings', '#7a8fa0'), 0.4) };
       shader.uniforms.uEdgeThickness = { value: NCZ.BUILDING_EDGE_THICKNESS };
       shader.uniforms.uEdgeSharpness = { value: NCZ.BUILDING_EDGE_SHARPNESS };
 
@@ -709,7 +718,7 @@ const ThreeScene = (() => {
     // Update building materials — MeshLambertMaterial.color + onBeforeCompile edge uniform
     if (buildingMaterials.length) {
       const base = readThemeColor('--scene-buildings', '#7a8fa0');
-      const edge = readThemeColor('--scene-buildings-edge', '#b0c8d8');
+      const edge = lightenColor(base, 0.4);
       for (const mat of buildingMaterials) {
         mat.color.copy(base);
         const sh = mat.userData.shader;
@@ -876,16 +885,21 @@ const ThreeScene = (() => {
     }
   }
 
+  function getLayerVisibility(name) {
+    return layers[name]?.visible ?? null;
+  }
+
   function getCameraState() {
     if (!controls || !camera) return null;
     return {
-      target:   controls.target.toArray(),
-      position: camera.position.toArray(),
-      zoom:     camera.zoom,
-      polar:    controls.getPolarAngle(),
-      azimuth:  controls.getAzimuthalAngle(),
-      sunAz:    _sunAz,
-      sunEl:    _sunEl,
+      target:    controls.target.toArray(),
+      position:  camera.position.toArray(),
+      zoom:      camera.zoom,
+      polar:     controls.getPolarAngle(),
+      azimuth:   controls.getAzimuthalAngle(),
+      sunAz:     _sunAz,
+      sunEl:     _sunEl,
+      sunSlider: document.getElementById('scene-sun-slider')?.value ?? null,
     };
   }
 
@@ -897,9 +911,14 @@ const ThreeScene = (() => {
     controls.update();
     camera.updateProjectionMatrix();
     if (s.sunAz !== undefined) setSunPosition(s.sunAz, s.sunEl);
+    // Restore sun slider so the UI reflects the saved position
+    if (s.sunSlider !== null && s.sunSlider !== undefined) {
+      const slider = document.getElementById('scene-sun-slider');
+      if (slider) { slider.value = s.sunSlider; slider.dispatchEvent(new Event('input')); }
+    }
   }
 
-  return { init, startRenderLoop, stopRenderLoop, resetCamera, setLayerVisibility, updateMaterials, renderFrame, setControlsEnabled, getCanvasElement, captureColors, transitionMaterials, transitionToColors, setSunPosition, setShadowsEnabled, setSunSphereVisible, getCameraState, setCameraState };
+  return { init, startRenderLoop, stopRenderLoop, resetCamera, setLayerVisibility, getLayerVisibility, updateMaterials, renderFrame, setControlsEnabled, getCanvasElement, captureColors, transitionMaterials, transitionToColors, setSunPosition, setShadowsEnabled, setSunSphereVisible, getCameraState, setCameraState };
 })();
 
 window.NCZ.ThreeScene = ThreeScene;
