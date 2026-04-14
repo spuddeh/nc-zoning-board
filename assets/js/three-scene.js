@@ -122,6 +122,7 @@ const ThreeScene = (() => {
     const height = header[3];
     const mip0   = new Uint8Array(buf, DDS_PIXEL_OFFSET, width * height);
     const tex    = new THREE.DataTexture(mip0, width, height, THREE.RedFormat, THREE.UnsignedByteType);
+    tex.flipY = true;  // WolvenKit corrects VFlip on export; flipY matches TextureLoader convention
     tex.generateMipmaps = true;
     tex.minFilter = THREE.LinearMipmapLinearFilter;
     tex.magFilter = THREE.LinearFilter;
