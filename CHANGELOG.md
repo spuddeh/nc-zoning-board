@@ -67,6 +67,33 @@ Opt-in cinematic module — add or remove the `<script>` tag to include or exclu
 - **One-shot**: plays through once, cleans up fully on natural end or early exit (Escape/button)
 - **Theme save/restore**: user's active theme saved before showcase starts, restored via cross-dissolve on exit without writing to localStorage
 
+##### Per-Layer Scene Theming
+
+- Each 3D scene layer now has its own dedicated CSS variable — buildings no longer share terrain colour
+- `--scene-buildings` added to all 5 themes; default values use darker terrain / lighter buildings (~50 lightness points apart) so Lambert shading doesn't collapse contrast
+- `--scene-buildings-edge` defined once in `:root` via `color-mix(buildings 40%, white)` — edge glow auto-derives from building colour, no per-theme duplication
+- Roads and metro use muted colours in the same hue family as terrain rather than bright accent colours
+- `setLayerVisibility()` extended to cover `terrain`, `water`, and `cliffs` (previously only roads/metro/buildings/districts)
+- `getLayerVisibility(name)` added to `NCZ.ThreeScene` public API
+
+##### Constants Refactor
+
+- All 3D scene magic numbers moved from `three-scene.js` to `constants.js` under `NCZ.*`:
+  - Camera: NEAR/FAR/HEIGHT, all OrbitControls values (MIN_TILT/MAX_TILT/DAMPING/ZOOM_MIN/ZOOM_MAX/ZOOM_SPEED/PAN_SPEED/ROTATE_SPEED) — all wired into live controls, tunable without touching scene code
+  - Shadow: MAP_SIZE/FRUSTUM/CAM_NEAR/CAM_FAR/BIAS/NORMAL_BIAS/MIN_ELEV with explanatory comments
+  - Lighting: AMBIENT_INTENSITY/SUN_DIST/SPHERE_DIST/SPHERE_RADIUS/COLOR_ELEV/INTENSITY_ELEV/INTENSITY_MIN/AMBIENT_MIN
+  - Building decode: DDS_PIXEL_OFFSET/UINT16_MAX/DDS_ALPHA_THRESH
+  - Building shader: EDGE_THICKNESS/EDGE_SHARPNESS/TEX_FLOOR/TEX_RANGE (with game `3d_map_cubes.mt` defaults in comments)
+- `WORLD_CX/CY/H` derived from existing `NCZ.WORLD_MIN/MAX_*` values rather than duplicated
+- All OrbitControls comments include Three.js default values for quick comparison
+
+##### Showcase Flyover Improvements
+
+- **State restore**: pre-showcase state now fully captured (all overlay checkboxes, sun slider value, theme) and restored exactly on exit — layer visibility, shadow checkbox, and sun position all snap back
+- **Beat cycle colors**: hardcoded `BEAT_COLORS` replaced with `readThemeColors(themeId)` which reads CSS variables directly; beat cycle auto-syncs with `theme.css` changes with no separate update needed; buildings included in transitions
+- **`FLYOVER_REVEAL_LAYERS` flag**: `false` (default) = all layers on from frame 1 for immediate shadow visibility; `true` = original stagger reveal. Either way, WP0 always sets its own layer state (not inherited from user)
+- All flyover magic numbers extracted to module-level constants at top of `flyover.js` (kept separate from `constants.js` — flyover is opt-in)
+
 ##### Bug Fixes
 
 - Canvas no longer pushes sidebar and overlay buttons out of view — renderer canvas is now `position: absolute; inset: 0` (removed from document flow) so its pixel-buffer dimensions can't affect layout
