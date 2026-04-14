@@ -191,47 +191,76 @@ mesh.rotation.y = Math.PI;
 
 ## Buildings
 
-~254k buildings rendered as instanced cubes via `THREE.InstancedMesh`.
+~254k buildings across 8 districts. Each district is one `THREE.InstancedMesh` with
+`MeshLambertMaterial`. Shadow casting and receiving work via standard Three.js.
 
 ### Data pipeline
 
 ```
-*_data.png (WolvenKit export, per-district instance textures)
-    ↓ scripts/build_buildings_3d.py
-    ↓   Decodes position, scale, quaternion→yaw, brightness from _m texture
-data/buildings_3d.json (~13 MB)
-    ↓ scripts/fix_building_heights.py
-    ↓   Raycasts terrain GLB to get surface Y at each building XZ
-data/buildings_3d.json (cetZ replaced with terrain surface Y)
+assets/dds/*_data.dds  (DXGI_FORMAT_R16G16B16A16_UNORM — 16-bit RGBA, DX10 header)
+    ↓ loadDataDds()  — fetch → Uint16Array (skip 148-byte DX10 header)
+    ↓ CPU decode per valid pixel: position / quaternion / scale → setMatrixAt()
+    ↓
+THREE.InstancedMesh with correct bounding sphere and frustum culling
+
+assets/dds/*_m.dds  (DXGI_FORMAT_R8_UNORM — 8-bit greyscale, DX10 header)
+    ↓ loadMDds()  — Uint8Array (mip 0) → DataTexture (RedFormat, generateMipmaps)
+    ↓
+MeshLambertMaterial.onBeforeCompile injects planar UV + _m modulation + edge highlight
 ```
 
-### Format
+### DDS texture format
+
+Each `_data.dds` pixel encodes one building instance across three horizontal blocks
+(blockW = width / 3):
+
+| Block | Column range | Encodes |
+|-------|-------------|---------|
+| Position | 0..blockW | RGB=XYZ (Uint16 0→65535 → transMin→transMax + offset), A=validity |
+| Rotation | blockW..2×blockW | RGBA=quaternion (0→65535 → -1→1) |
+| Scale | 2×blockW..3×blockW | RGB=XYZ half-extents × cubeSize |
+
+Position precision: ~0.036 CET units (16-bit). Earlier 8-bit PNG exports gave ~9.4 CET
+units error — visible as jumbled circular ring structures.
+
+### CPU decode (loadDataDds)
 
 ```javascript
-{
-  "instances": [
-    [cetX, cetY, surfaceY, width, depth, height, brightness, districtIndex, yaw],
-    ...
-  ],
-  "districts": ["westbrook", "city_center", ...]
+const { pixels, width, height } = await loadDataDds(meta.dataDds); // Uint16Array
+const blockW = Math.floor(width / 3);
+for (let y = 0; y < Math.min(height, blockW); y++) {
+  for (let x = 0; x < blockW; x++) {
+    if (pixels[(y*width+x)*4 + 3] < 655) continue; // alpha < ~1% → invalid
+    // decode position, quaternion, scale → dummy.position/quaternion/scale
+    // CET→Three.js remap: position.set(cetX, cetZ, -cetY)
+    // quaternion.set(qx, qz, -qy, qw)  (CET Z-up → Three.js Y-up)
+    // scale.set(hx*2, hz*2, hy*2)      (CET X→X, Z→Y, Y→Z)
+    mesh.setMatrixAt(validCount++, dummy.matrix);
+  }
 }
+mesh.count = validCount;
 ```
 
-- `cetX, cetY` — building center in CET world coordinates
-- `surfaceY` — terrain mesh surface Y at the building's XZ position (from raycast)
-- `width, depth` — full footprint extents (2 × half-extent from texture)
-- `height` — full building height (2 × half-extent from texture)
-- `brightness` — 0–1 from `_m` texture, normalised per-district
-- `districtIndex` — index into the `districts` array
-- `yaw` — rotation around the up axis in radians (from quaternion in texture Block 2)
+### MeshLambertMaterial + onBeforeCompile
 
-### Rendering
+`buildBuildingMaterial()` in `three-scene.js` creates one material per district:
 
-Rendered as a single `THREE.InstancedMesh` (~5 draw calls total). Each instance has position, rotation (yaw around Y), and scale applied via `Object3D.updateMatrix()`.
+- **Lambert lighting** — driven by scene lights automatically; no manual uniform syncing
+- **Planar UV** — computed from `instanceMatrix * vertex` world position in `project_vertex`
+- **`_m.dds` modulation** — `diffuseColor.rgb *= 0.3 + mVal * 0.7` before lighting
+- **Edge highlight** — from `3d_map_cubes.mt` EdgeColor/EdgeThickness/EdgeSharpnessPower
 
-Building color uses `--scene-terrain` CSS var. Per-instance brightness modulation via `setColorAt()` (requires Three.js `USE_INSTANCING_COLOR`).
+`mat.userData.shader` stores the `onBeforeCompile` shader reference for later uniform
+updates (edge colour on theme change).
 
-**Do not use `data/building_structures.json`** — experimental contour vectorisation that produced incorrect merged blobs.
+### District metadata (DISTRICT_META in three-scene.js)
+
+Each district entry specifies `dataDds`/`mDds` paths, `cubeSize`, `transMin`/`transMax`
+(3D XYZ), and world XY `offset`. Values sourced from `3dmap_triangle_soup.Material.json`.
+
+For full pipeline history (Python → xbm.json → DDS) and shadow implementation details
+see [`coordinate-system-3d.md`](coordinate-system-3d.md) and
+[`3dmap-lighting-shadows.md`](3dmap-lighting-shadows.md).
 
 ---
 
@@ -289,3 +318,46 @@ Camera state is synced on switch via coordinate transform: Leaflet center → in
 ## WebGL Fallback
 
 On page load, `WebGL2RenderingContext` is checked. If unavailable, the "3D" view option is hidden and the satellite view is the only option.
+
+---
+
+## Console Commands
+
+All commands are available in the browser DevTools console while the 3D view is active.
+
+### Layer visibility
+
+```javascript
+// Hide/show individual scene layers
+NCZ.ThreeScene.setLayerVisibility('water',     false)
+NCZ.ThreeScene.setLayerVisibility('terrain',   false)
+NCZ.ThreeScene.setLayerVisibility('cliffs',    false)
+NCZ.ThreeScene.setLayerVisibility('roads',     false)
+NCZ.ThreeScene.setLayerVisibility('metro',     false)
+NCZ.ThreeScene.setLayerVisibility('buildings', false)
+NCZ.ThreeScene.setLayerVisibility('districts', false)
+
+// Restore
+NCZ.ThreeScene.setLayerVisibility('water', true)
+```
+
+### Camera state
+
+```javascript
+// Capture current camera position + sun angle (copies JSON to clipboard)
+copy(JSON.stringify(NCZ.ThreeScene.getCameraState()))
+// → { target, position, zoom, polar, azimuth, sunAz, sunEl }
+
+// Restore a saved state (camera + sun)
+NCZ.ThreeScene.setCameraState(JSON.parse('PASTE_JSON_HERE'))
+```
+
+Useful for taking consistent before/after screenshots. If the showcase flyover is running, pause it before restoring — the flyover overrides sun state on each tick.
+
+### Sun position
+
+```javascript
+// setSunPosition(azimuthRad, altitudeRad)
+NCZ.ThreeScene.setSunPosition(Math.PI * 0.25, Math.PI * 0.35)  // default
+NCZ.ThreeScene.setShadowsEnabled(true)
+```

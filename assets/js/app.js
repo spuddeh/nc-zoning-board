@@ -713,6 +713,18 @@ async function initMap() {
     });
   });
 
+  // UI sync — keep overlay checkboxes and sun slider in sync with actual scene state.
+  // Runs at 200ms so console commands (setLayerVisibility, setCameraState etc.)
+  // are reflected immediately in the UI. Cost: negligible (boolean reads + DOM writes
+  // that short-circuit when unchanged).
+  setInterval(() => {
+    if (!NCZ.ThreeScene?.getLayerVisibility) return;
+    document.querySelectorAll("[data-overlay]").forEach(cb => {
+      const vis = NCZ.ThreeScene.getLayerVisibility(cb.dataset.overlay);
+      if (vis !== null && cb.checked !== vis) cb.checked = vis;
+    });
+  }, 200);
+
   switchView("schema");
 
   // 2. State & UI Elements

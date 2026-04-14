@@ -53,13 +53,18 @@ These are NOT in the same units. Measured at 3 ground-truth locations:
 The gap varies because the terrain mesh represents the **geological base** (rock, soil), while CET Z and building cetZ represent the **gameplay surface** (which includes elevated concrete platforms, bridges, pier structures). The 23m gap at City Center is the height of the Corpo Plaza elevated platform.
 
 ### Building Rotation
-Buildings have per-instance quaternion rotations (Block 2 of instance texture). The yaw angle extracted via:
-```python
-yaw = atan2(2*(qw*qz + qx*qy), 1 - 2*(qy**2 + qz**2))
-```
-Applied in Three.js as `dummy.rotation.y = yaw` (positive yaw, not negated).
+Buildings have per-instance quaternion rotations (Block 2 of instance texture). All four components (qx, qy, qz, qw) are kept — pitch and roll are used by the game shader to form non-upright primitives (wedges, ramps, bridges, gap-fillers), not just upright buildings.
 
-Verified: Biotechnica Flats diagonal building rows match the in-game map orientation exactly.
+Applied in Three.js with CET→Three.js axis remapping:
+
+```javascript
+dummy.quaternion.set(gQx, gQz, -gQy, gQw);
+// CET X → Three.js X (unchanged)
+// CET Z → Three.js Y (CET up becomes Three.js up)
+// CET Y → Three.js -Z (CET north becomes Three.js -forward)
+```
+
+Verified: yaw-only case (gQx≈0, gQy≈0) reduces to `set(0, sin(θ/2), 0, cos(θ/2))` — a pure Three.js Y rotation matching the previously verified Biotechnica Flats orientation.
 
 ## The HLSL Shader (`minimap_instance_shader.hlsl`)
 
@@ -102,16 +107,68 @@ From `cyberpunk-decompiled-scripts/cyberpunk/UI/fullscreen/map/worldMap.swift`:
 - Zoom range: 800 (in) to 15000 (out), default 3000
 - District view states: None, Districts, SubDistricts
 
-## Current Data Pipeline
+## Data Pipeline — Evolution
+
+### Generation 1 (obsolete): Python script → JSON → InstancedMesh
 
 ```
-*_data.png (WolvenKit export)
-    ↓ build_buildings_3d.py (decode + yaw + brightness from _m texture)
+*_data.png (WolvenKit 8-bit PNG export — precision loss from 16-bit source)
+    ↓ scripts/build_buildings_3d.py
+    ↓   Decodes position/rotation/scale; samples _m.png for per-instance brightness
     ↓
-data/buildings_3d.json [cetX, cetY, cetZ, width, depth, height, brightness, districtIdx, yaw]
-    ↓ fix_building_heights.py (raycast terrain GLB → replace cetZ with terrain surface Y)
+data/buildings_3d.json  [cetX, cetY, cetZ, width, depth, height, brightness, districtIdx, qx, qy, qz, qw]
+    ↓ loadBuildings() in three-scene.js
+    ↓   CPU loop: setMatrixAt() per instance
     ↓
-data/buildings_3d.json [cetX, cetY, terrainY, width, depth, height, brightness, districtIdx, yaw]
-    ↓
-three-scene.js loadBuildings() → InstancedMesh with position, rotation, scale per instance
+RawShaderMaterial + InstancedMesh → shadow workarounds required
 ```
+
+**Precision problem**: 8-bit PNG exports introduced ~9.4 CET units of position error.
+Circular ring structures appeared jumbled. Terrain raycasting (`fix_building_heights.py`)
+was added to correct Y positions but was solving a camera configuration issue, not a data
+problem, and was later removed.
+
+### Generation 2 (obsolete): xbm.json → GPU instancing via DataTexture
+
+```
+*_data.xbm.json (WolvenKit JSON sidecar — 16-bit RGBA base64 in textureData.Bytes)
+    ↓ loadXbmDataTexture() → Uint16 → Float32 → THREE.DataTexture
+    ↓
+RawShaderMaterial BUILDING_VERT reads via gl_InstanceID + texelFetch()
+    → position: transMin + (transMax - transMin) × posRaw.rgb + offset
+    → quaternion: rotRaw * 2.0 - 1.0 (remap [0,1] → [-1,1])
+    → scale: sclRaw.rgb × cubeSize
+
+*_m.xbm.json (BC4/RGTC1 compressed, 10 mip levels)
+    ↓ loadXbmMTexture() → JS BC4 decompressor → float DataTexture
+    ↓
+RawShaderMaterial BUILDING_FRAG: planar UV + Lambert + edge highlight
+```
+
+**Why replaced**: Full 16-bit precision achieved (error ~0.036 CET units). But
+`RawShaderMaterial` required custom `customDepthMaterial` + `packDepthToRGBA` matching
+Three.js's exact algorithm, identity matrix workarounds for shadow bounding spheres, and
+`frustumCulled = false`. No shadow receiving. Non-standard for contributors.
+
+### Generation 3 (current): DDS binary → CPU matrices → MeshLambertMaterial
+
+```
+assets/dds/*_data.dds  (DXGI_FORMAT_R16G16B16A16_UNORM — raw binary, DX10 header)
+    ↓ loadDataDds() → fetch → Uint16Array (skip 148-byte DX10 header)
+    ↓ CPU decode: position / quaternion / scale per valid pixel
+    ↓ setMatrixAt() → InstancedMesh with correct bounding sphere
+    ↓
+MeshLambertMaterial + onBeforeCompile
+    → Shadow casting + receiving via standard Three.js (no customDepthMaterial)
+    → Correct bounding sphere → frustum culling works automatically
+    → onBeforeCompile patches: world-space planar UV, _m texture, edge highlight
+
+assets/dds/*_m.dds  (DXGI_FORMAT_R8_UNORM — 8-bit greyscale, DX10 header)
+    ↓ loadMDds() → Uint8Array (mip 0) → DataTexture (RedFormat, generateMipmaps)
+    ↓
+Fragment shader samples surface detail via world-space planar UV
+```
+
+DDS files are ~25% smaller than xbm.json (no base64 overhead). Standard material means
+any Three.js contributor can understand and maintain the building rendering without
+needing to understand the custom GPU instancing approach.

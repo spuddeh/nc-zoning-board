@@ -34,19 +34,20 @@ Click the **Showcase** button in the 3D scene controls. The browser enters nativ
 
 Waypoint positions are in GLB space (`X = CET_X`, `Y = elevation`, `Z = -CET_Y`). Edit `FLYOVER_WAYPOINTS` in `flyover.js` to adjust.
 
-## Beat-Driven Theme Visualiser
+## Layer State
 
-33 bass-beat timestamps from an Audacity beat-finder export fire a theme cross-dissolve every ~1.34 s (the track's tempo), cycling through all five themes:
+The showcase always controls its own starting layer state, then restores the user's exact pre-showcase state on exit.
 
-**Night Corp → Militech → Arasaka → Aldecaldos → Synthwave → repeat**
+The `FLYOVER_REVEAL_LAYERS` constant at the top of `flyover.js` controls the starting mode:
 
-The dissolve uses `NCZ.ThreeScene.transitionToColors()` — Three.js material colors only, no CSS update, no building retint — so it runs at near-zero overhead and never causes a frame drop.
+| Value | Behaviour |
+|-------|-----------|
+| `false` (default) | Roads, metro, and buildings are **on from frame 1** — building shadows visible immediately during the ocean/coastline approach |
+| `true` | All layers hidden at WP0, staggered back in over 6.9 s (original cinematic reveal) |
 
-Beat timestamps are defined in `BEAT_TIMESTAMPS_MS` in `flyover.js`. To update them, re-export from Audacity (**Analyze → Beat Finder**) and paste the cluster-start values.
+Either way, WP0 always applies Night Corp theme. At WP9 (Badlands, city behind camera) districts are turned off. On exit, all overlay checkboxes and the sun slider are restored exactly.
 
-## Layer Reveal
-
-At the start of each loop, all overlays are off. They stagger in during the 6.9 s ocean approach:
+### Layer reveal timings (when `FLYOVER_REVEAL_LAYERS = true`)
 
 | Time | Layer |
 |------|-------|
@@ -55,28 +56,64 @@ At the start of each loop, all overlays are off. They stagger in during the 6.9 
 | +4.5 s | Buildings |
 | ~~+6.0 s~~ | ~~Districts~~ (omitted — cleaner showcase without boundary lines) |
 
+## Beat-Driven Theme Visualiser
+
+33 bass-beat timestamps from an Audacity beat-finder export fire a theme cross-dissolve every ~1.34 s (the track's tempo), cycling through all five themes:
+
+**Night Corp → Militech → Arasaka → Aldecaldos → Synthwave → repeat**
+
+Colors are read directly from CSS custom properties at first use via `readThemeColors(themeId)` — the function temporarily swaps the theme class on `<html>`, reads computed styles, then restores. This means the beat cycle **automatically stays in sync with `theme.css`** — no hardcoded color values, no separate update needed when themes change.
+
+Buildings are included in beat transitions (terrain, water, cliffs, roads, metro, and buildings all transition together).
+
+Beat timestamps are defined in `BEAT_TIMESTAMPS_MS` in `flyover.js`. To update them, re-export from Audacity (**Analyze → Beat Finder**) and paste the cluster-start values.
+
 ## Sun Animation
 
-`updateFlyoverSun(audio.currentTime)` is called every frame. It maps `audio.currentTime / 57.417` to the summer solstice (June 21) sunrise→sunset window at **Morro Bay, CA** (35.37°N, 120.85°W) — Night City's real-world location — via SunCalc.
+`updateFlyoverSun(audio.currentTime)` is called every frame. It maps `audio.currentTime / FLYOVER_DURATION_S` to the summer solstice (June 21) sunrise→sunset window at **Morro Bay, CA** (35.37°N, 120.85°W) — Night City's real-world location — via SunCalc.
 
 - Directional light colour: warm orange at the horizon, neutral white overhead
-- Sun sphere: visible orb in the sky, tracks the exact sun direction, rises from below terrain at sunrise and sets below it at sunset
+- Sun sphere: visible orb in the sky, tracks the exact sun direction
+- Best shadow moments: WP7–WP8 (6–7:30 pm, sun low in the west, long evening shadows over Pacifica and Dogtown)
 
 ## Shadows
 
-Shadows are always enabled during the showcase (regardless of the overlay checkbox), then restored to the user's checkbox state on exit. The directional light shadow map (4096×4096, PCFSoft) provides terrain self-shadowing and building shadows on terrain.
+Shadows are always enabled during the showcase (regardless of the overlay checkbox), then restored to the user's checkbox state on exit.
 
 ## Fade In / Out
 
-The overlay div (`#flyover-fade`) is **created dynamically** when the showcase starts and **removed from the DOM** on exit — it does not exist outside of an active showcase.
+The overlay div (`#flyover-fade`) is **created dynamically** when the showcase starts and **removed from the DOM** on exit.
 
-- Fade in: 2 s (black → scene)
-- Fade to black: 2 s at natural end, triggered by `audio.ended`
+- Fade in: `FLYOVER_FADE_MS` (2 s, black → scene)
+- Fade to black: `FLYOVER_FADE_MS` (2 s, triggered by `audio.ended`)
 - Escape / early exit: instant reset, no fade-to-black
 
-## Theme Save / Restore
+## State Save / Restore
 
-The user's active theme is saved before the showcase and restored via cross-dissolve on exit. Theme changes during the showcase use `NCZ.applyTheme(id, { persist: false })` so they never overwrite the user's stored preference.
+Before the showcase starts, the following state is captured:
+- Active theme (restored via cross-dissolve on exit)
+- All `[data-overlay]` checkbox states
+- Sun slider value
+
+On exit, each checkbox is restored to its saved state and a `change` event dispatched, so layer visibility, shadow state, and UI all stay in sync. The sun slider is also restored and an `input` event dispatched.
+
+## Flyover Constants
+
+All tuneable values are module-level constants at the top of `flyover.js` (kept there rather than `constants.js` since flyover is opt-in):
+
+| Constant | Default | Purpose |
+|----------|---------|---------|
+| `FLYOVER_DURATION_S` | 57.417 | Audio track length (seconds) |
+| `FLYOVER_FOV` | 55 | Perspective camera field of view |
+| `FLYOVER_CAM_NEAR` | 1 | Perspective camera near clip |
+| `FLYOVER_CAM_FAR` | 120000 | Perspective camera far clip |
+| `FLYOVER_FADE_MS` | 2000 | Fade in/out duration (ms) |
+| `FLYOVER_BEAT_DISSOLVE` | 938 | Theme dissolve duration per beat (ms) |
+| `FLYOVER_REVEAL_LAYERS` | false | Layer start mode (see Layer State above) |
+| `FLYOVER_REVEAL_ROADS` | 1500 | Roads stagger delay (ms, when reveal=true) |
+| `FLYOVER_REVEAL_METRO` | 3000 | Metro stagger delay (ms, when reveal=true) |
+| `FLYOVER_REVEAL_BLDGS` | 4500 | Buildings stagger delay (ms, when reveal=true) |
+| `MORRO_BAY` | 35.37°N, 120.85°W | Night City real-world location for SunCalc |
 
 ## Audacity Label Files
 
@@ -95,10 +132,11 @@ E:\Audio\Cyberpunk 2077\GMNC - District beats.txt
 | `setControlsEnabled(bool)` | Disable OrbitControls during flyover |
 | `renderFrame(camera)` | Render one frame with the perspective camera |
 | `getCanvasElement()` | Size the perspective camera on creation |
-| `captureColors()` | Snapshot material colors before a theme transition |
+| `captureColors()` | Snapshot material colors before a theme transition (includes buildings) |
 | `transitionMaterials(from, ms)` | Lerp materials to new CSS theme values |
-| `transitionToColors(from, to, ms)` | Lerp materials to explicit colors (beat cycle) |
-| `setLayerVisibility(name, bool)` | Toggle roads/metro/buildings/districts |
+| `transitionToColors(from, to, ms)` | Lerp materials to explicit colors — beat cycle (includes buildings) |
+| `setLayerVisibility(name, bool)` | Toggle terrain/water/cliffs/roads/metro/buildings/districts |
+| `getLayerVisibility(name)` | Read current layer visibility (used for state save/restore) |
 | `setSunPosition(az, alt)` | Move directional light + sun sphere |
 | `setShadowsEnabled(bool)` | Toggle shadow casting |
 | `setSunSphereVisible(bool)` | Show/hide the visible sun orb |
