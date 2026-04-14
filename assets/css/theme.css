@@ -70,6 +70,9 @@
 
     --primary-60: rgb(from var(--primary) r g b / 0.6);
 
+    /* Building edge glow — automatically lighter than whatever --scene-buildings is set to */
+    --scene-buildings-edge: color-mix(in srgb, var(--scene-buildings, #7a8fa0) 40%, white);
+
     --secondary-05: rgb(from var(--secondary) r g b / 0.05);
     --secondary-10: rgb(from var(--secondary) r g b / 0.1);
     --secondary-20: rgb(from var(--secondary) r g b / 0.2);
@@ -120,14 +123,15 @@ html.theme-night-corp {
     --category-other: var(--gray);
     --category-other-glow: var(--gray-40);
 
-    /* 3D scene mesh colors — terrain/cliffs from game BaseColorScale RGB(86,108,136) */
-    --scene-terrain: #566c88;
-    --scene-water:   #2a3f57;
-    --scene-cliffs:  #566c88;
+    /* 3D scene mesh colors */
+    --scene-terrain:    #2e4a62;
+    --scene-water:      #1e3048;
+    --scene-cliffs:     #2e4a62;
+    --scene-buildings:  #8aacbf;
 
     /* Overlay colors (roads/metro for SCHEMA, districts for both) */
-    --overlay-road-color:   #504b41;
-    --overlay-metro-color:  #dcaa28;
+    --overlay-road-color:   #485c70;
+    --overlay-metro-color:  #608898;
 
 }
 
@@ -159,14 +163,15 @@ html.theme-arasaka {
     --category-other: var(--gray);
     --category-other-glow: var(--gray-40);
 
-    /* 3D scene mesh colors — warm gray shift for Arasaka dark/red */
-    --scene-terrain: #6b5f5c;
-    --scene-water:   #2e2525;
-    --scene-cliffs:  #6b5f5c;
+    /* 3D scene mesh colors */
+    --scene-terrain:    #3a2e2e;
+    --scene-water:      #241818;
+    --scene-cliffs:     #3a2e2e;
+    --scene-buildings:  #a08888;
 
     /* Overlay colors */
-    --overlay-road-color:   #463c3a;
-    --overlay-metro-color:  #c82828;
+    --overlay-road-color:   #4a3838;
+    --overlay-metro-color:  #604848;
 
 }
 
@@ -198,14 +203,15 @@ html.theme-militech {
     --category-other: var(--gray);
     --category-other-glow: var(--gray-40);
 
-    /* 3D scene mesh colors — olive shift for Militech military/yellow */
-    --scene-terrain: #5e6448;
-    --scene-water:   #1e3040;
-    --scene-cliffs:  #5e6448;
+    /* 3D scene mesh colors */
+    --scene-terrain:    #384030;
+    --scene-water:      #202c20;
+    --scene-cliffs:     #384030;
+    --scene-buildings:  #8a9070;
 
     /* Overlay colors */
-    --overlay-road-color:   #5a5237;
-    --overlay-metro-color:  #fac800;
+    --overlay-road-color:   #485248;
+    --overlay-metro-color:  #606850;
 
 }
 
@@ -237,14 +243,15 @@ html.theme-aldecaldos {
     --category-other: var(--gray);
     --category-other-glow: var(--gray-40);
 
-    /* 3D scene mesh colors — cool slate shift for Aldecaldos desert/orange */
-    --scene-terrain: #52606e;
-    --scene-water:   #253340;
-    --scene-cliffs:  #52606e;
+    /* 3D scene mesh colors */
+    --scene-terrain:    #3a3428;
+    --scene-water:      #242018;
+    --scene-cliffs:     #3a3428;
+    --scene-buildings:  #9a9080;
 
     /* Overlay colors */
-    --overlay-road-color:   #4b443c;
-    --overlay-metro-color:  #dc602c;
+    --overlay-road-color:   #4a4238;
+    --overlay-metro-color:  #5a5040;
 
 }
 
@@ -276,14 +283,15 @@ html.theme-synthwave {
     --category-other: var(--gray);
     --category-other-glow: var(--gray-40);
 
-    /* 3D scene — deep purple terrain, violet ocean */
-    --scene-terrain: #4a2e6e;
-    --scene-water:   #1a0840;
-    --scene-cliffs:  #4a2e6e;
+    /* 3D scene mesh colors */
+    --scene-terrain:    #200830;
+    --scene-water:      #100420;
+    --scene-cliffs:     #200830;
+    --scene-buildings:  #9060b0;
 
-    /* Overlay colors — magenta metro, dark purple roads */
-    --overlay-road-color:   #3d2d52;
-    --overlay-metro-color:  #e0196a;
+    /* Overlay colors */
+    --overlay-road-color:   #382050;
+    --overlay-metro-color:  #502870;
 }
 
 /* Global reset */

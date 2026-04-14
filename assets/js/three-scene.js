@@ -20,14 +20,7 @@ import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
 
 window.NCZ = window.NCZ || {};
 
-const AMBIENT_INTENSITY = 0.35;
 const SUN_DIR = new THREE.Vector3(-1, 1.5, -1).normalize();
-
-
-// World centre in CET space (from Realistic Map mod quad UV mapping)
-const WORLD_CX =  ((-6298 + 5815) / 2);   //  -241.5
-const WORLD_CY = ((-7684 + 4427) / 2);    // -1628.5
-const WORLD_H  = 4427 - (-7684);           //  12111 (CET units)
 
 const ThreeScene = (() => {
   let renderer, camera, scene, controls;
@@ -100,7 +93,6 @@ const ThreeScene = (() => {
   // Standard header = 128 bytes, DX10 extension = 20 bytes → pixel data at offset 148.
   // _data.dds: DXGI_FORMAT_R16G16B16A16_UNORM — raw 16-bit RGBA, 1 mip, no compression.
   // _m.dds:    DXGI_FORMAT_R8_UNORM            — 8-bit greyscale, 10 mips, no compression.
-  const DDS_PIXEL_OFFSET = 148;
 
   // Load _data.dds → Uint16Array of raw 16-bit RGBA pixel values.
   // Width and height are read from the DDS header (offsets 16 and 12).
@@ -109,7 +101,7 @@ const ThreeScene = (() => {
     const header = new Uint32Array(buf, 0, 32);
     const width  = header[4];   // DDS header offset 16 = uint32 index 4
     const height = header[3];   // DDS header offset 12 = uint32 index 3
-    const pixels = new Uint16Array(buf, DDS_PIXEL_OFFSET);
+    const pixels = new Uint16Array(buf, NCZ.DDS_PIXEL_OFFSET);
     return { pixels, width, height };
   }
 
@@ -120,7 +112,7 @@ const ThreeScene = (() => {
     const header = new Uint32Array(buf, 0, 32);
     const width  = header[4];
     const height = header[3];
-    const mip0   = new Uint8Array(buf, DDS_PIXEL_OFFSET, width * height);
+    const mip0   = new Uint8Array(buf, NCZ.DDS_PIXEL_OFFSET, width * height);
     const tex    = new THREE.DataTexture(mip0, width, height, THREE.RedFormat, THREE.UnsignedByteType);
     tex.flipY = true;  // WolvenKit corrects VFlip on export; flipY matches TextureLoader convention
     tex.generateMipmaps = true;
@@ -169,50 +161,50 @@ const ThreeScene = (() => {
 
     // Orthographic camera — frustum updated after terrain loads
     const aspect = container.clientWidth / container.clientHeight;
-    const frustumH = WORLD_H / 2;
+    const frustumH = NCZ.WORLD_H / 2;
     camera = new THREE.OrthographicCamera(
       -frustumH * aspect, frustumH * aspect,
        frustumH, -frustumH,
-      -50000, 50000
+      NCZ.CAMERA_NEAR, NCZ.CAMERA_FAR
     );
     // Positioned above world centre, looking straight down.
     // Z = -WORLD_CY because GLB_Z = -CET_Y.
-    camera.position.set(WORLD_CX, 10000, -WORLD_CY);
-    camera.lookAt(WORLD_CX, 0, -WORLD_CY);
+    camera.position.set(NCZ.WORLD_CX, NCZ.CAMERA_HEIGHT, -NCZ.WORLD_CY);
+    camera.lookAt(NCZ.WORLD_CX, 0, -NCZ.WORLD_CY);
     camera.up.set(0, 1, 0);  // Standard Three.js up vector
     camera.updateProjectionMatrix();
 
     // Lighting — direction set to current real sun position via SunCalc if available,
     // otherwise falls back to the default NW hillshade direction.
-    _dirLight = new THREE.DirectionalLight(0xffffff, 1.0 - AMBIENT_INTENSITY);
-    _dirLight.position.copy(SUN_DIR).multiplyScalar(8000);
+    _dirLight = new THREE.DirectionalLight(0xffffff, 1.0 - NCZ.AMBIENT_INTENSITY);
+    _dirLight.position.copy(SUN_DIR).multiplyScalar(NCZ.SUN_DIST);
 
     // Shadow map: 4096² covers the ~14 000-unit world at ~3.4 units/texel.
-    // Frustum centred on Night City (WORLD_CX, 0, -WORLD_CY).
+    // Frustum centred on Night City (NCZ.WORLD_CX, 0, -NCZ.WORLD_CY).
     _dirLight.castShadow                    = false; // off by default; checkbox enables it
-    _dirLight.shadow.mapSize.set(4096, 4096);
-    _dirLight.shadow.camera.left            = -7000;
-    _dirLight.shadow.camera.right           =  7000;
-    _dirLight.shadow.camera.top             =  7000;
-    _dirLight.shadow.camera.bottom          = -7000;
-    _dirLight.shadow.camera.near            =    10;
-    _dirLight.shadow.camera.far             = 25000;
-    _dirLight.shadow.bias                   = -0.001;
-    _dirLight.shadow.normalBias             =  0.02;
+    _dirLight.shadow.mapSize.set(NCZ.SHADOW_MAP_SIZE, NCZ.SHADOW_MAP_SIZE);
+    _dirLight.shadow.camera.left            = -NCZ.SHADOW_FRUSTUM;
+    _dirLight.shadow.camera.right           =  NCZ.SHADOW_FRUSTUM;
+    _dirLight.shadow.camera.top             =  NCZ.SHADOW_FRUSTUM;
+    _dirLight.shadow.camera.bottom          = -NCZ.SHADOW_FRUSTUM;
+    _dirLight.shadow.camera.near            = NCZ.SHADOW_CAM_NEAR;
+    _dirLight.shadow.camera.far             = NCZ.SHADOW_CAM_FAR;
+    _dirLight.shadow.bias                   = NCZ.SHADOW_BIAS;
+    _dirLight.shadow.normalBias             = NCZ.SHADOW_NORMAL_BIAS;
 
     // Centre the shadow frustum on Night City, not the world origin
-    _dirLight.target.position.set(WORLD_CX, 0, -WORLD_CY);
+    _dirLight.target.position.set(NCZ.WORLD_CX, 0, -NCZ.WORLD_CY);
 
     scene.add(_dirLight);
     scene.add(_dirLight.target);
-    _ambLight = new THREE.AmbientLight(0xffffff, AMBIENT_INTENSITY);
+    _ambLight = new THREE.AmbientLight(0xffffff, NCZ.AMBIENT_INTENSITY);
     scene.add(_ambLight);
     // Sun position is applied by app.js via the slider once terrain has loaded.
 
     // Visible sun sphere — hidden by default, shown during showcase only.
-    // Radius 600 units at 20 000 distance ≈ 1.7° apparent diameter (≈3× real sun).
+    // Radius NCZ.SUN_SPHERE_RADIUS units at NCZ.SUN_SPHERE_DIST distance ≈ 1.7° apparent diameter (≈3× real sun).
     _sunSphere = new THREE.Mesh(
-      new THREE.SphereGeometry(600, 16, 16),
+      new THREE.SphereGeometry(NCZ.SUN_SPHERE_RADIUS, 16, 16),
       new THREE.MeshBasicMaterial({ color: 0xffcc44 })
     );
     _sunSphere.visible = false;
@@ -225,11 +217,17 @@ const ThreeScene = (() => {
       MIDDLE: THREE.MOUSE.DOLLY,
       RIGHT:  THREE.MOUSE.ROTATE,
     };
-    controls.minPolarAngle = 0;
-    controls.maxPolarAngle = Math.PI * 0.39; // ~70° max tilt
-    controls.enableDamping = true;
+    controls.minPolarAngle  = NCZ.CAMERA_MIN_TILT;
+    controls.maxPolarAngle  = NCZ.CAMERA_MAX_TILT;
+    controls.dampingFactor  = NCZ.CAMERA_DAMPING;
+    controls.minZoom        = NCZ.CAMERA_ZOOM_MIN;
+    controls.maxZoom        = NCZ.CAMERA_ZOOM_MAX;
+    controls.zoomSpeed      = NCZ.CAMERA_ZOOM_SPEED;
+    controls.panSpeed       = NCZ.CAMERA_PAN_SPEED;
+    controls.rotateSpeed    = NCZ.CAMERA_ROTATE_SPEED;
+    controls.enableDamping  = true;
     controls.screenSpacePanning = true;
-    controls.target.set(WORLD_CX, 0, -WORLD_CY);
+    controls.target.set(NCZ.WORLD_CX, 0, -NCZ.WORLD_CY);
     controls.update();
     controls.addEventListener('change', updateDistrictZoom);
 
@@ -274,11 +272,6 @@ const ThreeScene = (() => {
   let _districtOuter = null; // districts with subs — visible when zoomed OUT
   let _districtSub   = null; // canonical subdistricts — visible when zoomed IN
 
-  // OrbitControls orthographic zoom changes camera.zoom (not frustum size).
-  // camera.zoom > threshold = zoomed in → swap outer→sub.
-  // Tuned to feel equivalent to Leaflet DISTRICT_ZOOM_THRESHOLD=3.
-  const SUBDISTRICT_ZOOM_THRESHOLD = 2.5;
-
   function setLayerVisibility(name, visible) {
     if (name === 'districts') {
       if (layers.districts) layers.districts.visible = visible;
@@ -290,7 +283,7 @@ const ThreeScene = (() => {
 
   function updateDistrictZoom() {
     if (!_districtOuter || !_districtSub) return;
-    const zoomedIn = camera.zoom > SUBDISTRICT_ZOOM_THRESHOLD;
+    const zoomedIn = camera.zoom > NCZ.SUBDISTRICT_ZOOM_3D;
     _districtOuter.visible = !zoomedIn;
     _districtSub.visible   =  zoomedIn;
   }
@@ -465,25 +458,25 @@ const ThreeScene = (() => {
             const ri = (y * texW + x + blockW)  * 4;   // rotation block
             const si = (y * texW + x + 2*blockW)* 4;   // scale block
 
-            if (pixels[pi + 3] < 655) continue;  // alpha < ~1% → invalid slot
+            if (pixels[pi + 3] < NCZ.DDS_ALPHA_THRESH) continue;  // alpha < ~1% → invalid slot
 
             // Decode position → CET world space
-            const pr = pixels[pi+0] / 65535.0, pg = pixels[pi+1] / 65535.0, pb = pixels[pi+2] / 65535.0;
+            const pr = pixels[pi+0] / NCZ.UINT16_MAX, pg = pixels[pi+1] / NCZ.UINT16_MAX, pb = pixels[pi+2] / NCZ.UINT16_MAX;
             const cetX = meta.transMin[0] + (meta.transMax[0] - meta.transMin[0]) * pr + meta.offset[0];
             const cetY = meta.transMin[1] + (meta.transMax[1] - meta.transMin[1]) * pg + meta.offset[1];
             const cetZ = meta.transMin[2] + (meta.transMax[2] - meta.transMin[2]) * pb;
 
             // Decode quaternion: [0,65535] → [-1,1], remap CET Z-up → Three.js Y-up
-            const qr = pixels[ri+0]/65535*2-1, qg = pixels[ri+1]/65535*2-1;
-            const qb = pixels[ri+2]/65535*2-1, qa = pixels[ri+3]/65535*2-1;
+            const qr = pixels[ri+0]/NCZ.UINT16_MAX*2-1, qg = pixels[ri+1]/NCZ.UINT16_MAX*2-1;
+            const qb = pixels[ri+2]/NCZ.UINT16_MAX*2-1, qa = pixels[ri+3]/NCZ.UINT16_MAX*2-1;
             const ql = Math.hypot(qr, qg, qb, qa) || 1;
             // CET (qx,qy,qz,qw) → Three.js (qx, qz, -qy, qw)
             dummy.quaternion.set(qr/ql, qb/ql, -qg/ql, qa/ql);
 
             // Decode scale → CET half-extents → Three.js full extents (CET X→X, Z→Y, Y→Z)
-            const hx = pixels[si+0]/65535.0 * meta.cubeSize;
-            const hy = pixels[si+1]/65535.0 * meta.cubeSize;
-            const hz = pixels[si+2]/65535.0 * meta.cubeSize;
+            const hx = pixels[si+0]/NCZ.UINT16_MAX * meta.cubeSize;
+            const hy = pixels[si+1]/NCZ.UINT16_MAX * meta.cubeSize;
+            const hz = pixels[si+2]/NCZ.UINT16_MAX * meta.cubeSize;
 
             dummy.position.set(cetX, cetZ, -cetY);       // CET → Three.js
             dummy.scale.set(hx * 2, hz * 2, hy * 2);    // CET X→X, Z→Y, Y→Z
@@ -517,7 +510,7 @@ const ThreeScene = (() => {
   //   - edge highlight matching 3d_map_cubes.mt EdgeColor/Thickness/Sharpness
   function buildBuildingMaterial(meta, mTex) {
     const mat = new THREE.MeshLambertMaterial({
-      color: readThemeColor('--scene-terrain', '#566c88'),
+      color: readThemeColor('--scene-buildings', '#7a8fa0'),
     });
     mat.defines = { USE_UV: '' };  // ensure 'uv' attribute is declared in shader
 
@@ -528,9 +521,9 @@ const ThreeScene = (() => {
       shader.uniforms.uTransMax      = { value: new THREE.Vector2(meta.transMax[0], meta.transMax[1]) };
       shader.uniforms.uOffset        = { value: new THREE.Vector2(...meta.offset) };
       shader.uniforms.uMTex          = { value: mTex };
-      shader.uniforms.uEdgeColor     = { value: readThemeColor('--primary', '#00f0ff') };
-      shader.uniforms.uEdgeThickness = { value: 0.0001 };
-      shader.uniforms.uEdgeSharpness = { value: 30.0 };
+      shader.uniforms.uEdgeColor     = { value: readThemeColor('--scene-buildings-edge', '#b0c8d8') };
+      shader.uniforms.uEdgeThickness = { value: NCZ.BUILDING_EDGE_THICKNESS };
+      shader.uniforms.uEdgeSharpness = { value: NCZ.BUILDING_EDGE_SHARPNESS };
 
       // ── Vertex shader — inject varyings + world-space UV ──────────────
       shader.vertexShader = `
@@ -571,7 +564,7 @@ const ThreeScene = (() => {
           '#include <color_fragment>',
           `#include <color_fragment>
           float mVal = texture( uMTex, clamp( vMUv, 0.0, 1.0 ) ).r;
-          diffuseColor.rgb *= 0.3 + mVal * 0.7;`
+          diffuseColor.rgb *= ${NCZ.BUILDING_TEX_FLOOR} + mVal * ${NCZ.BUILDING_TEX_RANGE};`
         )
         .replace(
           '#include <output_fragment>',
@@ -606,7 +599,7 @@ const ThreeScene = (() => {
       resolution: new THREE.Vector2(w, h),
       depthTest: false,
       transparent: true,
-      opacity: 0.85,
+      opacity: NCZ.DISTRICT_LINE_OPACITY,
     });
     districtLineMaterials.push(material);
 
@@ -628,7 +621,7 @@ const ThreeScene = (() => {
     camera.updateProjectionMatrix();
 
     controls.target.set(center.x, 0, center.z);
-    camera.position.set(center.x, 10000, center.z);
+    camera.position.set(center.x, NCZ.CAMERA_HEIGHT, center.z);
     camera.lookAt(center.x, 0, center.z);
     controls.update();
   }
@@ -683,7 +676,7 @@ const ThreeScene = (() => {
   function resetCamera() {
     if (!controls) return;
     const aspect = renderer.domElement.clientWidth / renderer.domElement.clientHeight;
-    const frustumH = WORLD_H / 2;
+    const frustumH = NCZ.WORLD_H / 2;
     camera.left   = -frustumH * aspect;
     camera.right  =  frustumH * aspect;
     camera.top    =  frustumH;
@@ -691,9 +684,9 @@ const ThreeScene = (() => {
     camera.updateProjectionMatrix();
 
     // Reset to top-down view: target at sea level, camera directly above
-    controls.target.set(WORLD_CX, 0, -WORLD_CY);
-    camera.position.set(WORLD_CX, 10000, -WORLD_CY);
-    camera.lookAt(WORLD_CX, 0, -WORLD_CY);
+    controls.target.set(NCZ.WORLD_CX, 0, -NCZ.WORLD_CY);
+    camera.position.set(NCZ.WORLD_CX, NCZ.CAMERA_HEIGHT, -NCZ.WORLD_CY);
+    camera.lookAt(NCZ.WORLD_CX, 0, -NCZ.WORLD_CY);
     camera.up.set(0, 1, 0);
 
     // Reset OrbitControls state (polar angle = π/2 for top-down)
@@ -715,8 +708,8 @@ const ThreeScene = (() => {
 
     // Update building materials — MeshLambertMaterial.color + onBeforeCompile edge uniform
     if (buildingMaterials.length) {
-      const base = readThemeColor('--scene-terrain', '#566c88');
-      const edge = readThemeColor('--primary', '#00f0ff');
+      const base = readThemeColor('--scene-buildings', '#7a8fa0');
+      const edge = readThemeColor('--scene-buildings-edge', '#b0c8d8');
       for (const mat of buildingMaterials) {
         mat.color.copy(base);
         const sh = mat.userData.shader;
@@ -822,41 +815,41 @@ const ThreeScene = (() => {
     // Scale position so the shadow camera sits well above the scene.
     // At sunrise/sunset el is small — we floor the Y component so the
     // shadow camera never dips below the terrain.
-    const SHADOW_DIST = 8000;
+    const SHADOW_DIST = NCZ.SUN_DIST;
     _dirLight.position.set(
       -Math.cos(el) * Math.sin(az)  * SHADOW_DIST,
        Math.max(0.1, Math.sin(el))  * SHADOW_DIST,
        Math.cos(el) * Math.cos(az)  * SHADOW_DIST,
     );
 
-    // Disable shadow casting when the sun is below ~5° — avoids infinitely long
+    // Disable shadow casting when the sun is below NCZ.SHADOW_MIN_ELEV° — avoids infinitely long
     // degenerate shadow projections at the very start/end of the flyover.
-    // Only cast shadows if the user has enabled them AND the sun is above 5°
-    _dirLight.castShadow = _shadowsOn && (el * 180 / Math.PI) > 5;
+    // Only cast shadows if the user has enabled them AND the sun is above NCZ.SHADOW_MIN_ELEV°
+    _dirLight.castShadow = _shadowsOn && (el * 180 / Math.PI) > NCZ.SHADOW_MIN_ELEV;
 
-    // Colour: warm orange at horizon → neutral white above ~20°
+    // Colour: warm orange at horizon → neutral white above ~NCZ.SUN_COLOR_ELEV°
     const elevDeg = el * 180 / Math.PI;
-    const t = Math.min(1, Math.max(0, elevDeg / 20));
+    const t = Math.min(1, Math.max(0, elevDeg / NCZ.SUN_COLOR_ELEV));
     _dirLight.color.setRGB(1, 0.45 + t * 0.55, 0.1 + t * 0.9);
 
-    // Intensity: dims near the horizon, full above ~30°
-    const intensity = 0.2 + 0.8 * Math.min(1, Math.max(0, elevDeg / 30));
-    _dirLight.intensity = (1 - AMBIENT_INTENSITY) * intensity;
-    _ambLight.intensity =      AMBIENT_INTENSITY  * Math.max(0.4, intensity);
+    // Intensity: dims near the horizon, full above ~NCZ.SUN_INTENSITY_ELEV°
+    const intensity = NCZ.SUN_INTENSITY_MIN + (1 - NCZ.SUN_INTENSITY_MIN) * Math.min(1, Math.max(0, elevDeg / NCZ.SUN_INTENSITY_ELEV));
+    _dirLight.intensity = (1 - NCZ.AMBIENT_INTENSITY) * intensity;
+    _ambLight.intensity =      NCZ.AMBIENT_INTENSITY  * Math.max(NCZ.SUN_AMBIENT_MIN, intensity);
 
     // Building materials use MeshLambertMaterial — scene lights update automatically.
 
     // Move and recolour the visible sun sphere.
     // Centred on Night City (WORLD_CX, 0, -WORLD_CY) so it hangs over the map.
     if (_sunSphere) {
-      const SUN_SPHERE_DIST = 20000;
+      const SUN_SPHERE_DIST = NCZ.SUN_SPHERE_DIST;
       const nx = -Math.cos(el) * Math.sin(az);
       const ny =  Math.sin(el); // unclamped — terrain naturally occludes it at sunrise/sunset
       const nz =  Math.cos(el) * Math.cos(az);
       _sunSphere.position.set(
-        WORLD_CX + nx * SUN_SPHERE_DIST,
+        NCZ.WORLD_CX + nx * SUN_SPHERE_DIST,
         ny * SUN_SPHERE_DIST,
-        -WORLD_CY + nz * SUN_SPHERE_DIST,
+        -NCZ.WORLD_CY + nz * SUN_SPHERE_DIST,
       );
       // Warm orange at horizon → bright yellow at noon, slightly more saturated than the light
       _sunSphere.material.color.setRGB(
@@ -875,8 +868,8 @@ const ThreeScene = (() => {
     _shadowsOn = enabled;
     // Re-evaluate castShadow: respect both the user toggle and the elevation floor
     if (_dirLight) {
-      const elevDeg = Math.asin(Math.min(1, _dirLight.position.y / 8000)) * 180 / Math.PI;
-      _dirLight.castShadow = _shadowsOn && elevDeg > 5;
+      const elevDeg = Math.asin(Math.min(1, _dirLight.position.y / NCZ.SUN_DIST)) * 180 / Math.PI;
+      _dirLight.castShadow = _shadowsOn && elevDeg > NCZ.SHADOW_MIN_ELEV;
     }
   }
 

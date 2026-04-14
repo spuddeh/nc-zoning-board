@@ -89,6 +89,11 @@ NCZ.WORLD_MAX_X =  5815;
 NCZ.WORLD_MIN_Y = -7684;
 NCZ.WORLD_MAX_Y =  4427;
 
+// Derived world centre + height (used by Three.js scene setup)
+NCZ.WORLD_CX = (NCZ.WORLD_MIN_X + NCZ.WORLD_MAX_X) / 2;  // -241.5
+NCZ.WORLD_CY = (NCZ.WORLD_MIN_Y + NCZ.WORLD_MAX_Y) / 2;  // -1628.5
+NCZ.WORLD_H  =  NCZ.WORLD_MAX_Y - NCZ.WORLD_MIN_Y;        //  12111 CET units
+
 // CET <-> Leaflet transform derived coefficients (from WORLD_MIN/MAX)
 // Used by cetToLeaflet() and the scale indicator for distance conversion.
 NCZ.CET_TO_LEAFLET_X_SCALE = 256 / (NCZ.WORLD_MAX_X - NCZ.WORLD_MIN_X);  // 0.02113734
@@ -149,3 +154,57 @@ NCZ.DISTRICT_ZOOM_THRESHOLD = 3;  // below = districts only, above = subdistrict
 NCZ.DISTRICT_LINE_WIDTH     = 4;  // px — main district borders
 NCZ.SUBDISTRICT_LINE_WIDTH  = 3;  // px — subdistrict borders
 NCZ.DISTRICT_LINE_OPACITY   = 0.85;
+
+// ── Three.js 3D scene ──────────────────────────────────────────────────────────
+
+// Camera — orthographic projection, positioned above world centre looking straight down
+NCZ.CAMERA_NEAR     = -50000;           // near plane behind the camera (orthographic — not a clip distance)
+NCZ.CAMERA_FAR      =  50000;           // far plane in front; large to ensure terrain/buildings never clip
+NCZ.CAMERA_HEIGHT   =  10000;           // Y position above world centre (CET units)
+
+// Camera controls (OrbitControls) — source: TweakDB WorldMap.FreeCameraSettingsDefault
+NCZ.CAMERA_MIN_TILT    = 0;              // min polar angle — 0 = perfectly top-down
+NCZ.CAMERA_MAX_TILT    = Math.PI * 0.39; // max polar angle — ~70° tilt from top-down
+NCZ.CAMERA_DAMPING     = 0.05;           // inertia/smoothing factor — higher = more lag
+NCZ.CAMERA_ZOOM_MIN    = 0.5;            // minimum camera.zoom (furthest out)
+NCZ.CAMERA_ZOOM_MAX    = 8.0;            // maximum camera.zoom (furthest in)
+NCZ.CAMERA_ZOOM_SPEED  = 1.5;            // scroll wheel zoom rate — increase if too slow
+NCZ.CAMERA_PAN_SPEED   = 1.0;            // left-drag pan rate
+NCZ.CAMERA_ROTATE_SPEED = 0.6;           // right-drag tilt rate — lower = more precise
+
+// Shadow map — PCFSoftShadowMap, orthographic frustum centred on Night City
+// The shadow camera sits at the sun position (NCZ.SUN_DIST away) and looks down.
+NCZ.SHADOW_MAP_SIZE    = 4096;  // px² — 4096² gives ~3.4 CET units/texel over the 14 000-unit city
+NCZ.SHADOW_FRUSTUM     = 7000;  // ±7000 units on each axis — covers the full map plus margin
+NCZ.SHADOW_CAM_NEAR    =   10;  // near clip — 10 units from the light; avoids near-plane artefacts
+NCZ.SHADOW_CAM_FAR     = 25000; // far clip — must reach the terrain from the sun's position (~8000 units away) with headroom
+NCZ.SHADOW_BIAS        = -0.001; // depth bias — small negative value reduces shadow acne (self-shadowing artefacts)
+NCZ.SHADOW_NORMAL_BIAS =  0.02;  // offset along surface normal — prevents acne on sloped faces
+NCZ.SHADOW_MIN_ELEV    =    5;   // degrees — shadow casting disabled below this sun elevation
+                                  // (avoids infinitely long degenerate projections near sunrise/sunset)
+
+// Lighting — directional sun + ambient
+NCZ.AMBIENT_INTENSITY  = 0.35;   // ambient light share; sun gets (1 - ambient) when at full elevation
+NCZ.SUN_DIST           = 8000;   // distance from world centre to directional light position (CET units)
+NCZ.SUN_SPHERE_DIST    = 20000;  // visible sun disc distance from world centre
+NCZ.SUN_SPHERE_RADIUS  =   600;  // CET units — ≈1.7° apparent diameter at SUN_SPHERE_DIST (≈3× real sun)
+NCZ.SUN_COLOR_ELEV     =    20;  // degrees — light is warm orange below this, neutral white above
+NCZ.SUN_INTENSITY_ELEV =    30;  // degrees — full intensity reached above this elevation
+NCZ.SUN_INTENSITY_MIN  =   0.2;  // minimum intensity multiplier at the horizon
+NCZ.SUN_AMBIENT_MIN    =   0.4;  // minimum ambient intensity scale factor (prevents total darkness at night)
+
+// Building instance decode — DDS _data.dds (DXGI_FORMAT_R16G16B16A16_UNORM, DX10 header)
+// Each pixel encodes one building instance across three horizontal blocks: position | rotation | scale.
+NCZ.DDS_PIXEL_OFFSET  = 148;      // byte offset to pixel data: 128-byte standard DDS header + 20-byte DX10 extension
+NCZ.UINT16_MAX        = 65535.0;  // normalisation denominator — pixel channels are 0–65535
+NCZ.DDS_ALPHA_THRESH  = 655;      // 0.01 × UINT16_MAX — position alpha below this marks an empty/invalid slot
+
+// Building shader — onBeforeCompile patches to MeshLambertMaterial
+// EdgeThickness and EdgeSharpness match the game's 3d_map_cubes.mt shader parameters.
+NCZ.BUILDING_EDGE_THICKNESS = 0.0005; // UV-space glow width per box face (game sw5 material value: 0.0005)
+NCZ.BUILDING_EDGE_SHARPNESS =  30.0;  // power falloff — higher = sharper edge (game value: 30)
+NCZ.BUILDING_TEX_FLOOR      =   0.3;  // minimum _m.dds brightness — prevents faces going pitch-black
+NCZ.BUILDING_TEX_RANGE      =   0.7;  // brightness range above the floor (floor + range = max)
+
+// Three.js orthographic camera.zoom threshold for district→subdistrict label switch
+NCZ.SUBDISTRICT_ZOOM_3D = 2.5;
