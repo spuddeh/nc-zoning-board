@@ -43,6 +43,35 @@ All files are exported from the game archive using WolvenKit. The table below co
 | `3dmap_highlight_off.effect.json` | Visual effect | Yes | Skip | District de-highlight animation — see effect files section |
 | `3dmap_highlight_on.effect.json` | Visual effect | Yes | Skip | District highlight animation — see effect files section |
 
+## Building Instance Textures
+
+The building instance textures live in a separate folder from the GLBs:
+
+```text
+base\fx\textures\3dmap\static\
+```
+
+Each district has two textures:
+
+| File pattern | Format | Content |
+| --- | --- | --- |
+| `*_data.xbm` / `*_data.dds` | DXGI_FORMAT_R16G16B16A16_UNORM (16-bit RGBA) | Per-instance position, rotation, scale. Three 1:1 horizontal blocks: Position \| Rotation \| Scale. Each pixel row = one building. |
+| `*_m.xbm` / `*_m.dds` | DXGI_FORMAT_R8_UNORM (8-bit greyscale) | Surface detail baked top-down view of the district. Applied to building cube surfaces via world-space planar UV. |
+
+The `*_data` textures use the `3d_map_cubes.mt` GPU instancing shader. The decode parameters (CubeSize, TransMin, TransMax) are in `3dmap_triangle_soup.Material.json` — one entry per district.
+
+**`*_data.dds` block layout** (blockW = width / 3):
+
+| Block | Columns | Channels |
+| --- | --- | --- |
+| Position | 0..blockW | RGB = XYZ world position (transMin→transMax), A = validity |
+| Rotation | blockW..2×blockW | RGBA = quaternion XYZw, remapped [0,1] → [-1,1] |
+| Scale | 2×blockW..3×blockW | RGB = XYZ half-extents × cubeSize |
+
+**sw5 / nw4 — legacy:** `sw1_data.xbm` (used by `sw5` material) has no TransMin/TransMax in `3dmap_triangle_soup.Material.json` and is not referenced in `3dmap_view.ent.json`. `nw4_data.xbm` is similarly unreferenced. Both are considered legacy and are not decoded by the current pipeline.
+
+**Export format:** WolvenKit exports `*_data.xbm` as DDS with a DX10 extended header (128 byte standard header + 20 byte DX10 extension = 148 bytes before pixel data). Use `Uint16Array(buffer, 148)` to access raw pixel values.
+
 ## Effect Files (`.effect.json`)
 
 `3dmap_highlight_on.effect.json` and `3dmap_highlight_off.effect.json` define the animated district highlight that plays in the in-game minimap UI when the player enters or leaves a district zone. They drive opacity and color transitions on the triangle soup mesh appearances.

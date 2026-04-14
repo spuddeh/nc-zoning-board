@@ -13,9 +13,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ##### Buildings (instanced cubes)
 
-- 254k building instances rendered as `InstancedMesh` boxes, positioned using terrain-raycasted surface Y so bases sit flush on the terrain
-- Per-instance brightness from `_m` texture UV-sampling stored in `data/buildings_3d.json`; buildings cast shadows onto terrain
-- Y-axis inversion fixed: `camera.up.set(0, 1, 0)` (standard Three.js convention, replacing the broken `(0, 0, -1)` workaround)
+- ~254k building instances per district rendered as `THREE.InstancedMesh` via `MeshLambertMaterial` + `onBeforeCompile`
+- Position/rotation/scale decoded on CPU from DDS binary (`DXGI_FORMAT_R16G16B16A16_UNORM`, 16-bit precision) → `setMatrixAt()`
+- Full quaternion rotation (all 4 components); `_m.dds` surface detail texture via world-space planar UV
+- Buildings cast **and receive** shadows via standard Three.js — no custom depth material
+- Y-axis inversion fixed: `camera.up.set(0, 1, 0)` (standard Three.js convention)
+- Edge highlight matching game shader `3d_map_cubes.mt` EdgeColor/EdgeThickness/EdgeSharpnessPower via `onBeforeCompile` fragment patch
+
+**Pipeline evolution:**
+- Gen 1 (removed): `build_buildings_3d.py` → `buildings_3d.json` → 8-bit precision (±9.4 CET unit error)
+- Gen 2 (removed): `assets/xbm/*.xbm.json` → GPU `RawShaderMaterial` + `gl_InstanceID` → required custom depth material + workarounds
+- Gen 3 (current): `assets/dds/*.dds` → CPU decode → `MeshLambertMaterial` — standard, maintainable, full shadow support
 
 ##### Dynamic Sun and Hillshade
 

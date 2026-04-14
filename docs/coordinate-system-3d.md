@@ -107,40 +107,68 @@ From `cyberpunk-decompiled-scripts/cyberpunk/UI/fullscreen/map/worldMap.swift`:
 - Zoom range: 800 (in) to 15000 (out), default 3000
 - District view states: None, Districts, SubDistricts
 
-## Current Data Pipeline
+## Data Pipeline — Evolution
+
+### Generation 1 (obsolete): Python script → JSON → InstancedMesh
 
 ```
-*_data.xbm.json (WolvenKit export — 16-bit RGBA base64 in textureData.Bytes)
-    ↓ loadXbmDataTexture() in three-scene.js
-    ↓ Uint16 → Float32 normalised [0,1] → THREE.DataTexture (FloatType)
+*_data.png (WolvenKit 8-bit PNG export — precision loss from 16-bit source)
+    ↓ scripts/build_buildings_3d.py
+    ↓   Decodes position/rotation/scale; samples _m.png for per-instance brightness
     ↓
-GPU vertex shader reads per-instance data via gl_InstanceID + texelFetch()
-    → position decoded: transMin + (transMax - transMin) × posRaw.rgb + offset
-    → quaternion decoded: rotRaw * 2.0 - 1.0 (remap [0,1] → [-1,1])
-    → scale decoded: sclRaw.rgb × cubeSize (half-extents)
-    → full TRS applied in shader, no CPU matrix loop
+data/buildings_3d.json  [cetX, cetY, cetZ, width, depth, height, brightness, districtIdx, qx, qy, qz, qw]
+    ↓ loadBuildings() in three-scene.js
+    ↓   CPU loop: setMatrixAt() per instance
+    ↓
+RawShaderMaterial + InstancedMesh → shadow workarounds required
+```
 
-*_m.xbm.json (BC4/RGTC1 compressed, 10 mip levels in textureData.Bytes)
-    ↓ loadXbmMTexture() in three-scene.js
-    ↓ EXT_texture_compression_rgtc → THREE.CompressedTexture (all mips, GPU decompression)
-    ↓ (fallback: JS BC4 decompressor → float DataTexture, mip 0 only)
+**Precision problem**: 8-bit PNG exports introduced ~9.4 CET units of position error.
+Circular ring structures appeared jumbled. Terrain raycasting (`fix_building_heights.py`)
+was added to correct Y positions but was solving a camera configuration issue, not a data
+problem, and was later removed.
+
+### Generation 2 (obsolete): xbm.json → GPU instancing via DataTexture
+
+```
+*_data.xbm.json (WolvenKit JSON sidecar — 16-bit RGBA base64 in textureData.Bytes)
+    ↓ loadXbmDataTexture() → Uint16 → Float32 → THREE.DataTexture
+    ↓
+RawShaderMaterial BUILDING_VERT reads via gl_InstanceID + texelFetch()
+    → position: transMin + (transMax - transMin) × posRaw.rgb + offset
+    → quaternion: rotRaw * 2.0 - 1.0 (remap [0,1] → [-1,1])
+    → scale: sclRaw.rgb × cubeSize
+
+*_m.xbm.json (BC4/RGTC1 compressed, 10 mip levels)
+    ↓ loadXbmMTexture() → JS BC4 decompressor → float DataTexture
+    ↓
+RawShaderMaterial BUILDING_FRAG: planar UV + Lambert + edge highlight
+```
+
+**Why replaced**: Full 16-bit precision achieved (error ~0.036 CET units). But
+`RawShaderMaterial` required custom `customDepthMaterial` + `packDepthToRGBA` matching
+Three.js's exact algorithm, identity matrix workarounds for shadow bounding spheres, and
+`frustumCulled = false`. No shadow receiving. Non-standard for contributors.
+
+### Generation 3 (current): DDS binary → CPU matrices → MeshLambertMaterial
+
+```
+assets/dds/*_data.dds  (DXGI_FORMAT_R16G16B16A16_UNORM — raw binary, DX10 header)
+    ↓ loadDataDds() → fetch → Uint16Array (skip 148-byte DX10 header)
+    ↓ CPU decode: position / quaternion / scale per valid pixel
+    ↓ setMatrixAt() → InstancedMesh with correct bounding sphere
+    ↓
+MeshLambertMaterial + onBeforeCompile
+    → Shadow casting + receiving via standard Three.js (no customDepthMaterial)
+    → Correct bounding sphere → frustum culling works automatically
+    → onBeforeCompile patches: world-space planar UV, _m texture, edge highlight
+
+assets/dds/*_m.dds  (DXGI_FORMAT_R8_UNORM — 8-bit greyscale, DX10 header)
+    ↓ loadMDds() → Uint8Array (mip 0) → DataTexture (RedFormat, generateMipmaps)
     ↓
 Fragment shader samples surface detail via world-space planar UV
 ```
 
-### Why this replaces the old pipeline
-
-The old pipeline (build_buildings_3d.py → buildings_3d.json → InstancedMesh) decoded
-16-bit textures through 8-bit PNG exports, introducing ~9.4 CET units of position error
-for the spaceport district. At 16-bit the error is ~0.036 CET units. This was visible as
-circular ring structures appearing jumbled instead of perfectly formed.
-
-The xbm.json Bytes field contains the raw pixel data at full game precision:
-- `_data.xbm`: 8 bytes/pixel (16-bit RGBA), 1 mip level — raw instance data
-- `_m.xbm`: BC4 compressed, 10 mip levels — surface detail texture
-
-No intermediate files needed. The game asset is loaded directly to GPU.
-
-**Obsolete scripts**: `build_buildings_3d.py`, `fix_building_heights.py`
-**Obsolete data**: `data/buildings_3d.json`, `assets/img/3dmap/*.png`
-**New assets**: `assets/xbm/*_data.xbm.json`, `assets/xbm/*_m.xbm.json`
+DDS files are ~25% smaller than xbm.json (no base64 overhead). Standard material means
+any Three.js contributor can understand and maintain the building rendering without
+needing to understand the custom GPU instancing approach.

@@ -191,69 +191,76 @@ mesh.rotation.y = Math.PI;
 
 ## Buildings
 
-~254k buildings rendered as GPU-instanced cubes. Each district is one `THREE.InstancedMesh` (8 total, ~5–42k instances each).
+~254k buildings across 8 districts. Each district is one `THREE.InstancedMesh` with
+`MeshLambertMaterial`. Shadow casting and receiving work via standard Three.js.
 
 ### Data pipeline
 
 ```
-assets/xbm/*_data.xbm.json   (WolvenKit JSON export — 16-bit RGBA base64 pixel data)
-    ↓ loadXbmDataTexture()     (three-scene.js)
-    ↓   uint16 → float32 [0,1] → THREE.DataTexture (FloatType, NearestFilter)
+assets/dds/*_data.dds  (DXGI_FORMAT_R16G16B16A16_UNORM — 16-bit RGBA, DX10 header)
+    ↓ loadDataDds()  — fetch → Uint16Array (skip 148-byte DX10 header)
+    ↓ CPU decode per valid pixel: position / quaternion / scale → setMatrixAt()
     ↓
-GPU vertex shader reads position/rotation/scale via gl_InstanceID + texelFetch()
+THREE.InstancedMesh with correct bounding sphere and frustum culling
 
-assets/xbm/*_m.xbm.json      (WolvenKit JSON export — BC4-compressed greyscale)
-    ↓ loadXbmMTexture()        (three-scene.js)
-    ↓   JS BC4 decompressor → float DataTexture (mip 0, generateMipmaps: true)
+assets/dds/*_m.dds  (DXGI_FORMAT_R8_UNORM — 8-bit greyscale, DX10 header)
+    ↓ loadMDds()  — Uint8Array (mip 0) → DataTexture (RedFormat, generateMipmaps)
     ↓
-GPU fragment shader samples surface detail via world-space planar UV
+MeshLambertMaterial.onBeforeCompile injects planar UV + _m modulation + edge highlight
 ```
 
-No intermediate JSON. No CPU matrix computation. Game assets load directly to GPU.
+### DDS texture format
 
-### Texture format
+Each `_data.dds` pixel encodes one building instance across three horizontal blocks
+(blockW = width / 3):
 
-`_data.xbm.json` contains raw 16-bit RGBA pixel data (base64) in `textureData.Bytes`. Each pixel row encodes one building instance across three equal horizontal blocks:
+| Block | Column range | Encodes |
+|-------|-------------|---------|
+| Position | 0..blockW | RGB=XYZ (Uint16 0→65535 → transMin→transMax + offset), A=validity |
+| Rotation | blockW..2×blockW | RGBA=quaternion (0→65535 → -1→1) |
+| Scale | 2×blockW..3×blockW | RGB=XYZ half-extents × cubeSize |
 
-| Block | X range | Channels | Encodes |
-|-------|---------|----------|---------|
-| Position | 0..blockW | RGB=XYZ (0→1 → transMin→transMax + offset), A=validity | CET world position |
-| Rotation | blockW..2×blockW | RGBA=quaternion (0→1 → -1→1) | Full 3D rotation |
-| Scale | 2×blockW..3×blockW | RGB=XYZ half-extents × cubeSize | Box dimensions |
+Position precision: ~0.036 CET units (16-bit). Earlier 8-bit PNG exports gave ~9.4 CET
+units error — visible as jumbled circular ring structures.
 
-8-bit PNG exports from WolvenKit lose precision (~9 CET units position error for spaceport district). The `.xbm.json` Bytes field retains full 16-bit precision (~0.036 CET units).
+### CPU decode (loadDataDds)
 
-### Vertex shader (GPU instancing)
-
-The vertex shader reads per-instance data directly from the DataTexture:
-
-```glsl
-int tx = gl_InstanceID % int(uBlockW);
-int ty = gl_InstanceID / int(uBlockW);
-vec4 posRaw = texelFetch(uDataTex, ivec2(tx, ty), 0);           // position + validity
-vec4 rotRaw = texelFetch(uDataTex, ivec2(tx + bw, ty), 0);      // quaternion
-vec4 sclRaw = texelFetch(uDataTex, ivec2(tx + 2*bw, ty), 0);    // scale
+```javascript
+const { pixels, width, height } = await loadDataDds(meta.dataDds); // Uint16Array
+const blockW = Math.floor(width / 3);
+for (let y = 0; y < Math.min(height, blockW); y++) {
+  for (let x = 0; x < blockW; x++) {
+    if (pixels[(y*width+x)*4 + 3] < 655) continue; // alpha < ~1% → invalid
+    // decode position, quaternion, scale → dummy.position/quaternion/scale
+    // CET→Three.js remap: position.set(cetX, cetZ, -cetY)
+    // quaternion.set(qx, qz, -qy, qw)  (CET Z-up → Three.js Y-up)
+    // scale.set(hx*2, hz*2, hy*2)      (CET X→X, Z→Y, Y→Z)
+    mesh.setMatrixAt(validCount++, dummy.matrix);
+  }
+}
+mesh.count = validCount;
 ```
 
-Full TRS applied in shader — full quaternion (all 4 components), CET→Three.js axis remap. See `coordinate-system-3d.md` for remap formula.
+### MeshLambertMaterial + onBeforeCompile
 
-### Fragment shader
+`buildBuildingMaterial()` in `three-scene.js` creates one material per district:
 
-Lambert diffuse + `_m.xbm` surface texture via world-space planar UV + edge highlight:
+- **Lambert lighting** — driven by scene lights automatically; no manual uniform syncing
+- **Planar UV** — computed from `instanceMatrix * vertex` world position in `project_vertex`
+- **`_m.dds` modulation** — `diffuseColor.rgb *= 0.3 + mVal * 0.7` before lighting
+- **Edge highlight** — from `3d_map_cubes.mt` EdgeColor/EdgeThickness/EdgeSharpnessPower
 
-```glsl
-float m = texture(uMTex, vMUv).r;           // _m.xbm surface detail [0,1]
-float diffuse = max(dot(vWorldNormal, uSunDir), 0.0);
-float light = uAmbient + (1.0 - uAmbient) * diffuse;
-vec3 color = uBaseColor * (0.3 + m * 0.7) * light;
-// edge highlight from 3d_map_cubes.mt EdgeColor/EdgeThickness/EdgeSharpnessPower
-```
+`mat.userData.shader` stores the `onBeforeCompile` shader reference for later uniform
+updates (edge colour on theme change).
 
 ### District metadata (DISTRICT_META in three-scene.js)
 
-Each district entry specifies dataTex/mTex paths, cubeSize, transMin/transMax (3D XYZ), and world XY offset. Values sourced from `3dmap_triangle_soup.Material.json`.
+Each district entry specifies `dataDds`/`mDds` paths, `cubeSize`, `transMin`/`transMax`
+(3D XYZ), and world XY `offset`. Values sourced from `3dmap_triangle_soup.Material.json`.
 
-For lighting and shadow implementation details see [`3dmap-lighting-shadows.md`](3dmap-lighting-shadows.md).
+For full pipeline history (Python → xbm.json → DDS) and shadow implementation details
+see [`coordinate-system-3d.md`](coordinate-system-3d.md) and
+[`3dmap-lighting-shadows.md`](3dmap-lighting-shadows.md).
 
 ---
 

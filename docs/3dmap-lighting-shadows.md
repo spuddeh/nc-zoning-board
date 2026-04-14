@@ -73,91 +73,45 @@ Shadows are toggled via a UI checkbox (`setShadowsEnabled()`). They are automati
 | Cliffs | ✓ | ✓ | Full shadow support |
 | Roads | — | — | MeshBasicMaterial — no shadow involvement |
 | Metro | — | — | MeshBasicMaterial — no shadow involvement |
-| Buildings | ✓ | — | Custom depth material required (see below) |
+| Buildings | ✓ | ✓ | MeshLambertMaterial — standard shadow support |
 
 ---
 
-## Building Shadow Casting — customDepthMaterial
+## Building Lighting and Shadows
 
-Buildings use a `RawShaderMaterial` (not a standard Three.js material) and decode their positions via `gl_InstanceID + DataTexture`. This requires a matching `customDepthMaterial` for shadow casting.
+Buildings use `MeshLambertMaterial` with `onBeforeCompile` patches. Standard Three.js
+handles shadow casting (`castShadow = true`) and receiving (`receiveShadow = true`)
+automatically via the default `MeshDepthMaterial` — no `customDepthMaterial` needed.
 
-### Why customDepthMaterial is needed
+Lambert shading responds to scene lights automatically. `setSunPosition()` updates
+`_dirLight` and `_ambLight`; buildings pick up the changes with no extra uniform syncing.
 
-Three.js's default `MeshDepthMaterial` reads instance transforms from `instanceMatrix`. Building shaders ignore `instanceMatrix` — they read from `uDataTex` via `gl_InstanceID`. Without `customDepthMaterial`, the shadow pass uses zero-matrices → all instances project to the same point → no visible shadows.
-
-### Why identity matrices are required
-
-`THREE.InstancedMesh` computes its bounding sphere from `instanceMatrix`. With zero-initialised matrices, the bounding sphere degenerates (NaN radius). Three.js's shadow pass silently skips meshes with invalid bounding spheres, even when `castShadow = true`.
-
-**Fix:** fill `instanceMatrix` with identity matrices at load time:
-
-```javascript
-const identity = new THREE.Matrix4();
-for (let i = 0; i < instanceCount; i++) mesh.setMatrixAt(i, identity);
-mesh.instanceMatrix.needsUpdate = true;
-```
-
-The shader ignores these matrices; they exist solely for Three.js's internal bounding sphere computation.
-
-### Why frustumCulled = false is required
-
-The bounding sphere computed from identity matrices is a unit cube at world origin (0, 0, 0) — far from Night City. Three.js would frustum-cull it out of the shadow pass. Setting `frustumCulled = false` bypasses this check.
-
-### RGBA depth packing — critical
-
-`PCFSoftShadowMap` reads shadow depth from **RGBA colour channels**, not the depth buffer. The default `MeshDepthMaterial` uses `RGBADepthPacking`. The `customDepthMaterial` fragment shader must output the **exact same** encoding so `unpackRGBAToDepth` in the terrain's shadow receiving shader decodes it correctly.
-
-Three.js r170 uses a `modf`-based algorithm (from `packing.glsl.js`):
-
-```glsl
-const float PackUpscale = 256.0 / 255.0;
-const float ShiftRight8 = 1.0 / 256.0;
-const float Inv255     = 1.0 / 255.0;
-const vec4  PackFactors = vec4(1.0, 256.0, 65536.0, 16777216.0);
-
-void main() {
-  float v = gl_FragCoord.z;
-  if (v <= 0.0) { f = vec4(0.0); return; }
-  if (v >= 1.0) { f = vec4(1.0); return; }
-  float vuf;
-  float af = modf(v * PackFactors.a, vuf);
-  float bf = modf(vuf * ShiftRight8, vuf);
-  float gf = modf(vuf * ShiftRight8, vuf);
-  f = vec4(vuf * Inv255, gf * PackUpscale, bf * PackUpscale, af);
-}
-```
-
-**Do not substitute the common `fract`-based algorithm** — it produces different byte order and every depth comparison will be wrong, causing mottled shadow acne across all terrain.
-
-### Confirming the shadow pass reaches a mesh
-
-Three.js r170 calls `object.onBeforeShadow()` in the shadow pass (NOT `onBeforeRender`). Use this to verify:
-
-```javascript
-mesh.onBeforeShadow = (renderer, obj, camera, shadowCamera) => {
-  console.log('shadow pass reached, shadow cam near:', shadowCamera.near); // 10
-};
-```
-
-If `onBeforeShadow` never fires, the mesh is being skipped (check bounding sphere and frustumCulled).
+The `onBeforeCompile` patches add:
+1. **World-space planar UV** — computed from `instanceMatrix * vertex` world position in
+   the `project_vertex` chunk, sent as `vMUv` to the fragment shader
+2. **`_m.dds` surface modulation** — `diffuseColor.rgb *= 0.3 + mVal * 0.7` in
+   `color_fragment`, applied before Lambert lighting
+3. **Edge highlight** — injected after `output_fragment` using `vLocalUv` (BoxGeometry
+   face UV) and the `uEdgeColor / uEdgeThickness / uEdgeSharpness` uniforms
 
 ---
 
-## Building Lambert Lighting
+### Historical: RawShaderMaterial + customDepthMaterial (Gen 2 — replaced)
 
-Buildings use a `RawShaderMaterial` with manual Lambert shading:
+The previous GPU instancing approach used `RawShaderMaterial` with `gl_InstanceID` +
+`texelFetch()` to decode instance data directly in the vertex shader. This required:
 
-```glsl
-// vertex shader
-vWorldNormal = normalize(applyQuat(q_three, normal)); // rotate normal by instance quat
+- **`customDepthMaterial`** with a custom vertex shader — default `MeshDepthMaterial`
+  reads `instanceMatrix` which was unused, so all shadows projected to origin
+- **Identity matrices** to give Three.js a valid bounding sphere (zero matrices → NaN
+  bounding sphere → shadow pass silently skips the mesh)
+- **`frustumCulled = false`** because identity-matrix bounding sphere is at world origin
+- **Exact `packDepthToRGBA` algorithm** matching Three.js's `modf`-based implementation
+  from `packing.glsl.js` — the common `fract`-based substitute produces mismatched byte
+  order causing mottled shadow acne across all terrain
 
-// fragment shader
-float diffuse = max(dot(normalize(vWorldNormal), uSunDir), 0.0);
-float light   = uAmbient + (1.0 - uAmbient) * diffuse;
-vec3  color   = uBaseColor * texBrightness * light;
-```
-
-`uSunDir` and `uAmbient` are kept in sync with the directional light via `setSunPosition()`, which updates building shader uniforms alongside `_dirLight.position` and `_ambLight.intensity`.
+All of these workarounds are eliminated by the DDS + CPU matrix + `MeshLambertMaterial`
+pipeline.
 
 ---
 
@@ -177,42 +131,13 @@ Useful for taking consistent comparison screenshots. If the showcase flyover is 
 
 ---
 
-## Future Work — Shadow Receiving and Road/Metro Lighting
+## Future Work — Road/Metro Lighting
 
-### Buildings: switch to MeshLambertMaterial + onBeforeCompile
+### ~~Buildings: switch to MeshLambertMaterial + onBeforeCompile~~ ✅ Done
 
-Buildings currently use `RawShaderMaterial` (can't receive shadows) rather than `MeshLambertMaterial` + `onBeforeCompile` (would receive shadows automatically).
-
-The `onBeforeCompile` fragility concern ("version bumps break patch strings") doesn't hold — we're already pinned to Three.js r170 for all other materials. A version bump requires full testing anyway.
-
-**Path to shadow receiving:**
-
-1. Replace per-district `RawShaderMaterial` with `MeshLambertMaterial`
-2. Use `onBeforeCompile` to inject custom vertex transform and UV generation:
-
-```javascript
-const mat = new THREE.MeshLambertMaterial({ map: mTex, color: baseColor });
-mat.onBeforeCompile = (shader) => {
-    // Add DataTexture uniforms
-    shader.uniforms.uDataTex  = { value: dataTex };
-    shader.uniforms.uBlockW   = { value: blockW };
-    shader.uniforms.uTransMin = { value: new THREE.Vector3(...meta.transMin) };
-    shader.uniforms.uTransMax = { value: new THREE.Vector3(...meta.transMax) };
-    shader.uniforms.uOffset   = { value: new THREE.Vector2(...meta.offset) };
-    shader.uniforms.uCubeSize = { value: meta.cubeSize };
-
-    // Replace Three.js's vertex transform with DataTexture-based instancing
-    shader.vertexShader = shader.vertexShader
-        .replace('#include <begin_vertex>', `/* DataTexture TRS decode via gl_InstanceID */`)
-        .replace('#include <project_vertex>', `gl_Position = projectionMatrix * viewMatrix * vec4(worldPos, 1.0);`);
-};
-mat.receiveShadow = true; // Three.js injects shadow sampling automatically
-```
-
-3. Set `mesh.receiveShadow = true`
-4. The `customDepthMaterial` for shadow casting stays unchanged
-
-**Benefits:** buildings receive shadows from terrain, cliffs, and each other. Lambert shading and edge highlight would need to move into the `onBeforeCompile` patches, but the shadow system comes free.
+Buildings now use `MeshLambertMaterial` + `onBeforeCompile` with CPU matrix decode from
+DDS files. Shadow casting and receiving both work. See `buildBuildingMaterial()` in
+`three-scene.js`.
 
 ### Roads and Metro: switch to MeshLambertMaterial
 
