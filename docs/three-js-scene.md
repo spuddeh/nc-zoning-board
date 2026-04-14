@@ -318,3 +318,46 @@ Camera state is synced on switch via coordinate transform: Leaflet center → in
 ## WebGL Fallback
 
 On page load, `WebGL2RenderingContext` is checked. If unavailable, the "3D" view option is hidden and the satellite view is the only option.
+
+---
+
+## Console Commands
+
+All commands are available in the browser DevTools console while the 3D view is active.
+
+### Layer visibility
+
+```javascript
+// Hide/show individual scene layers
+NCZ.ThreeScene.setLayerVisibility('water',     false)
+NCZ.ThreeScene.setLayerVisibility('terrain',   false)
+NCZ.ThreeScene.setLayerVisibility('cliffs',    false)
+NCZ.ThreeScene.setLayerVisibility('roads',     false)
+NCZ.ThreeScene.setLayerVisibility('metro',     false)
+NCZ.ThreeScene.setLayerVisibility('buildings', false)
+NCZ.ThreeScene.setLayerVisibility('districts', false)
+
+// Restore
+NCZ.ThreeScene.setLayerVisibility('water', true)
+```
+
+### Camera state
+
+```javascript
+// Capture current camera position + sun angle (copies JSON to clipboard)
+copy(JSON.stringify(NCZ.ThreeScene.getCameraState()))
+// → { target, position, zoom, polar, azimuth, sunAz, sunEl }
+
+// Restore a saved state (camera + sun)
+NCZ.ThreeScene.setCameraState(JSON.parse('PASTE_JSON_HERE'))
+```
+
+Useful for taking consistent before/after screenshots. If the showcase flyover is running, pause it before restoring — the flyover overrides sun state on each tick.
+
+### Sun position
+
+```javascript
+// setSunPosition(azimuthRad, altitudeRad)
+NCZ.ThreeScene.setSunPosition(Math.PI * 0.25, Math.PI * 0.35)  // default
+NCZ.ThreeScene.setShadowsEnabled(true)
+```
