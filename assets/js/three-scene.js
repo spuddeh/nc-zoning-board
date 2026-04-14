@@ -722,12 +722,13 @@ const ThreeScene = (() => {
   // values are captured for use as the "from" end of a transition lerp.
   function captureColors() {
     return {
-      bg:      scene?.background?.clone() ?? null,
-      terrain: terrainMat?.color.clone()  ?? null,
-      water:   waterMat?.color.clone()    ?? null,
-      cliffs:  cliffsMat?.color.clone()   ?? null,
-      roads:   roadsMat?.color.clone()    ?? null,
-      metro:   metroMat?.color.clone()    ?? null,
+      bg:        scene?.background?.clone()          ?? null,
+      terrain:   terrainMat?.color.clone()           ?? null,
+      water:     waterMat?.color.clone()             ?? null,
+      cliffs:    cliffsMat?.color.clone()            ?? null,
+      roads:     roadsMat?.color.clone()             ?? null,
+      metro:     metroMat?.color.clone()             ?? null,
+      buildings: buildingMaterials[0]?.color.clone() ?? null,
     };
   }
 
@@ -741,6 +742,7 @@ const ThreeScene = (() => {
     if (from.cliffs  && cliffsMat)    cliffsMat.color.copy(from.cliffs);
     if (from.roads   && roadsMat)     roadsMat.color.copy(from.roads);
     if (from.metro   && metroMat)     metroMat.color.copy(from.metro);
+    if (from.buildings) buildingMaterials.forEach(m => m.color.copy(from.buildings));
 
     const start = performance.now();
     function step() {
@@ -752,6 +754,7 @@ const ThreeScene = (() => {
       if (cliffsMat  && from.cliffs  && to.cliffs)  cliffsMat.color.lerpColors(from.cliffs, to.cliffs,  t);
       if (roadsMat   && from.roads   && to.roads)   roadsMat.color.lerpColors(from.roads,   to.roads,   t);
       if (metroMat   && from.metro   && to.metro)   metroMat.color.lerpColors(from.metro,   to.metro,   t);
+      if (from.buildings && to.buildings) buildingMaterials.forEach(m => m.color.lerpColors(from.buildings, to.buildings, t));
       if (rawT < 1) requestAnimationFrame(step);
     }
     requestAnimationFrame(step);
