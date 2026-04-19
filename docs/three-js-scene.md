@@ -25,7 +25,7 @@ assets/js/
   utils.js          — Pure utility functions including shared popup/filter logic
   services.js       — Nexus API + data loading (unchanged)
   three-scene.js    — Three.js scene: renderer, camera, GLB loading, materials, render loop
-  three-markers.js  — CSS2D pins, tooltips, popups, sidebar coordination
+  three-markers.js  — Phase 0 stub (empty NCZ.ThreeMarkers = {}); full implementation is Phase 4
   app.js            — Main app: Leaflet init, DOM events, view switching
 ```
 

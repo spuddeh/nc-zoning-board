@@ -52,7 +52,7 @@ Only one container visible at a time (`display: none` on the inactive one). Neit
 | File | Purpose |
 |------|---------|
 | `assets/js/three-scene.js` | Three.js scene setup, GLB loading, camera/controls, materials, render loop. Namespace: `NCZ.ThreeScene` |
-| `assets/js/three-markers.js` | CSS2DRenderer pin management, tooltip/popup system for 3D view, sidebar coordination. Namespace: `NCZ.ThreeMarkers` |
+| `assets/js/three-markers.js` | CSS2DRenderer pin management, tooltip/popup system for 3D view, sidebar coordination. Namespace: `NCZ.ThreeMarkers` — **currently a Phase 0 stub; full implementation is Phase 4** |
 
 **Load order becomes:**
 ```
@@ -275,7 +275,7 @@ Add "SCHEMA" option to the base layer dropdown. Options stay: `SAT` | `SCHEMA` (
 
 **Goal:** Render ~255k buildings as 3D cubes with height from _m texture brightness.
 
-**Status:** The camera up vector has been fixed to use the standard `(0,1,0)` instead of the problematic `(0,0,-1)`. This resolves all Y-axis inversion issues when tilted. See [`three-js-scene.md`](three-js-scene.md) for details.
+**Status: ✅ Complete.** Buildings, dynamic sun/shadows, live theme switching, constants refactor, and showcase flyover are all merged to `dev`. See CHANGELOG `[Unreleased]` section for the full list.
 
 **How this completes the in-game look (with Phase 1 terrain):**
 
