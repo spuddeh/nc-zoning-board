@@ -135,25 +135,21 @@ When the user switches theme, `NCZ.ThreeScene.updateMaterials()` is called to re
 
 ## Coordinate System
 
-The Three.js scene uses CET coordinates directly. The GLB meshes exported from the game are already in CET space — no projection is needed.
+For full details on the three coordinate systems (CET, GLB, building instance textures) and how they relate, see [`coordinate-system-3d.md`](coordinate-system-3d.md).
+
+### Camera Up Vector
+
+The camera uses the standard Three.js up vector `up=(0,1,0)`. This ensures correct rendering at all camera angles — when tilted, the Y-axis orientation is preserved and buildings correctly extend upward from terrain.
+
+### CET → Three.js mapping
 
 ```javascript
-// utils.js
 NCZ.cetToThree = function(cetX, cetY, cetZ) {
   return [cetX, cetZ || 0, -cetY];
 };
 ```
 
-**Why `-cetY` for Three.js Z:** CET Y increases going north (into the screen). Three.js Z increases coming out of the screen. Negating maps them correctly.
-
-Compare with the satellite view's `NCZ.cetToLeaflet()`, which projects into the 256×256 Leaflet tile space. The two coordinate systems are completely decoupled — the Realistic Map mod constants (`WORLD_MIN_X`, `WORLD_MAX_X` etc.) are only used for the satellite tile alignment and have no role in the Three.js scene.
-
-### Pin positioning
-
-```javascript
-// CET [X, Y, Z] → Three.js Vector3
-pin.position.set(cetX, cetZ || 0, -cetY);
-```
+CET and GLB share the same XZ coordinate space at 1:1 scale. The terrain GLB extends beyond CET world bounds (extra ocean/outer terrain) but coordinates within the city area match exactly.
 
 ---
 
@@ -184,35 +180,87 @@ mesh.rotation.y = Math.PI;
 
 | Layer | Material type | Color source |
 |-------|--------------|--------------|
-| Terrain | `MeshLambertMaterial` | `--overlay-terrain` CSS var |
-| Water | `MeshBasicMaterial` | `--overlay-water` CSS var |
-| Cliffs | `MeshLambertMaterial` | `--overlay-terrain` CSS var |
-| Roads | `MeshBasicMaterial` | `--overlay-road` CSS var |
-| Metro | `MeshBasicMaterial` | `--overlay-metro` CSS var |
-| Buildings | `MeshLambertMaterial` + vertex colors | Base: `--overlay-building-fill`, modulated by brightness |
+| Terrain | `MeshLambertMaterial` (flatShading, DoubleSide) | `--scene-terrain` CSS var |
+| Water | `MeshBasicMaterial` (DoubleSide) | `--scene-water` CSS var |
+| Cliffs | `MeshLambertMaterial` (flatShading, DoubleSide) | `--scene-cliffs` CSS var |
+| Roads | `MeshBasicMaterial` | `--overlay-road-color` CSS var |
+| Metro | `MeshBasicMaterial` | `--overlay-metro-color` CSS var |
+| Buildings | `MeshBasicMaterial` | `--scene-terrain` CSS var, per-instance brightness via `setColorAt()` |
 
 ---
 
 ## Buildings
 
-~255k buildings rendered as instanced cubes. Source data: `data/buildings.json` (32 MB, authoritative) → `data/buildings_3d.json` (~5 MB compact format, built by `scripts/build_buildings_3d.js`).
+~254k buildings across 8 districts. Each district is one `THREE.InstancedMesh` with
+`MeshLambertMaterial`. Shadow casting and receiving work via standard Three.js.
 
-```javascript
-// buildings_3d.json format
-{
-  "instances": [
-    [cetX, cetY, cetZ, width, depth, height, brightness, districtIndex],
-    ...
-  ],
-  "districts": ["city_center", "watson", ...]
-}
+### Data pipeline
+
+```
+assets/dds/*_data.dds  (DXGI_FORMAT_R16G16B16A16_UNORM — 16-bit RGBA, DX10 header)
+    ↓ loadDataDds()  — fetch → Uint16Array (skip 148-byte DX10 header)
+    ↓ CPU decode per valid pixel: position / quaternion / scale → setMatrixAt()
+    ↓
+THREE.InstancedMesh with correct bounding sphere and frustum culling
+
+assets/dds/*_m.dds  (DXGI_FORMAT_R8_UNORM — 8-bit greyscale, DX10 header)
+    ↓ loadMDds()  — Uint8Array (mip 0) → DataTexture (RedFormat, generateMipmaps)
+    ↓
+MeshLambertMaterial.onBeforeCompile injects planar UV + _m modulation + edge highlight
 ```
 
-Rendered as a single `THREE.InstancedMesh` with ~5 draw calls total regardless of building count.
+### DDS texture format
 
-Building color = `--overlay-building-fill` CSS var modulated per-instance by brightness (0.88–1.00 range, same remapping as the 2D canvas overlay). Taller buildings are brighter, matching the in-game map shading.
+Each `_data.dds` pixel encodes one building instance across three horizontal blocks
+(blockW = width / 3):
 
-**Do not use `data/building_structures.json`** — this was an experimental contour vectorisation that produced incorrect merged blobs. It is not a valid data source for 3D buildings.
+| Block | Column range | Encodes |
+|-------|-------------|---------|
+| Position | 0..blockW | RGB=XYZ (Uint16 0→65535 → transMin→transMax + offset), A=validity |
+| Rotation | blockW..2×blockW | RGBA=quaternion (0→65535 → -1→1) |
+| Scale | 2×blockW..3×blockW | RGB=XYZ half-extents × cubeSize |
+
+Position precision: ~0.036 CET units (16-bit). Earlier 8-bit PNG exports gave ~9.4 CET
+units error — visible as jumbled circular ring structures.
+
+### CPU decode (loadDataDds)
+
+```javascript
+const { pixels, width, height } = await loadDataDds(meta.dataDds); // Uint16Array
+const blockW = Math.floor(width / 3);
+for (let y = 0; y < Math.min(height, blockW); y++) {
+  for (let x = 0; x < blockW; x++) {
+    if (pixels[(y*width+x)*4 + 3] < 655) continue; // alpha < ~1% → invalid
+    // decode position, quaternion, scale → dummy.position/quaternion/scale
+    // CET→Three.js remap: position.set(cetX, cetZ, -cetY)
+    // quaternion.set(qx, qz, -qy, qw)  (CET Z-up → Three.js Y-up)
+    // scale.set(hx*2, hz*2, hy*2)      (CET X→X, Z→Y, Y→Z)
+    mesh.setMatrixAt(validCount++, dummy.matrix);
+  }
+}
+mesh.count = validCount;
+```
+
+### MeshLambertMaterial + onBeforeCompile
+
+`buildBuildingMaterial()` in `three-scene.js` creates one material per district:
+
+- **Lambert lighting** — driven by scene lights automatically; no manual uniform syncing
+- **Planar UV** — computed from `instanceMatrix * vertex` world position in `project_vertex`
+- **`_m.dds` modulation** — `diffuseColor.rgb *= 0.3 + mVal * 0.7` before lighting
+- **Edge highlight** — from `3d_map_cubes.mt` EdgeColor/EdgeThickness/EdgeSharpnessPower
+
+`mat.userData.shader` stores the `onBeforeCompile` shader reference for later uniform
+updates (edge colour on theme change).
+
+### District metadata (DISTRICT_META in three-scene.js)
+
+Each district entry specifies `dataDds`/`mDds` paths, `cubeSize`, `transMin`/`transMax`
+(3D XYZ), and world XY `offset`. Values sourced from `3dmap_triangle_soup.Material.json`.
+
+For full pipeline history (Python → xbm.json → DDS) and shadow implementation details
+see [`coordinate-system-3d.md`](coordinate-system-3d.md) and
+[`3dmap-lighting-shadows.md`](3dmap-lighting-shadows.md).
 
 ---
 
@@ -270,3 +318,46 @@ Camera state is synced on switch via coordinate transform: Leaflet center → in
 ## WebGL Fallback
 
 On page load, `WebGL2RenderingContext` is checked. If unavailable, the "3D" view option is hidden and the satellite view is the only option.
+
+---
+
+## Console Commands
+
+All commands are available in the browser DevTools console while the 3D view is active.
+
+### Layer visibility
+
+```javascript
+// Hide/show individual scene layers
+NCZ.ThreeScene.setLayerVisibility('water',     false)
+NCZ.ThreeScene.setLayerVisibility('terrain',   false)
+NCZ.ThreeScene.setLayerVisibility('cliffs',    false)
+NCZ.ThreeScene.setLayerVisibility('roads',     false)
+NCZ.ThreeScene.setLayerVisibility('metro',     false)
+NCZ.ThreeScene.setLayerVisibility('buildings', false)
+NCZ.ThreeScene.setLayerVisibility('districts', false)
+
+// Restore
+NCZ.ThreeScene.setLayerVisibility('water', true)
+```
+
+### Camera state
+
+```javascript
+// Capture current camera position + sun angle (copies JSON to clipboard)
+copy(JSON.stringify(NCZ.ThreeScene.getCameraState()))
+// → { target, position, zoom, polar, azimuth, sunAz, sunEl }
+
+// Restore a saved state (camera + sun)
+NCZ.ThreeScene.setCameraState(JSON.parse('PASTE_JSON_HERE'))
+```
+
+Useful for taking consistent before/after screenshots. If the showcase flyover is running, pause it before restoring — the flyover overrides sun state on each tick.
+
+### Sun position
+
+```javascript
+// setSunPosition(azimuthRad, altitudeRad)
+NCZ.ThreeScene.setSunPosition(Math.PI * 0.25, Math.PI * 0.35)  // default
+NCZ.ThreeScene.setShadowsEnabled(true)
+```

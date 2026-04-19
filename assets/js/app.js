@@ -142,7 +142,16 @@ document.addEventListener("DOMContentLoaded", () => {
         // Ignore storage write failures (private mode / restricted browsers).
       }
     }
+
+    // Update Three.js scene materials and clear the 2D overlay tile cache
+    // so both renderers pick up the new CSS custom properties immediately.
+    NCZ.ThreeScene?.updateMaterials();
+    NCZ._clearOverlayCache?.();
   }
+
+  // Expose for flyover.js — persist:false so showcase changes don't overwrite
+  // the user's saved preference in localStorage.
+  NCZ.applyTheme = (id) => applyThemeById(id, { persist: false });
 
   const initialThemeId = getInitialThemeId();
 
@@ -553,10 +562,7 @@ async function initMap() {
   // View switching (SAT ↔ SCHEMA)
   const mapEl   = document.getElementById("map");
   const map3dEl = document.getElementById("map-3d");
-  let activeView = null;
-
   function switchView(viewName) {
-    activeView = viewName;
     document.querySelectorAll(".map-view-btn").forEach(btn => {
       btn.classList.toggle("active", btn.dataset.view === viewName);
     });
@@ -587,6 +593,112 @@ async function initMap() {
     NCZ.ThreeScene.resetCamera();
   });
 
+  // ── Sun slider — time of day at Morro Bay, CA (Night City's real-world location)
+  // Slider values are always in Morro Bay PDT (UTC-7, the summer offset).
+  // All conversions use UTC internally so the browser's local timezone never
+  // affects the sun position calculation.
+  const SUN_LAT  = 35.370781, SUN_LNG = -120.851173;
+  const PDT_OFFSET = -7; // Morro Bay summer (PDT) = UTC-7
+  // June 21 at UTC midnight — year doesn't matter for sun geometry
+  const SOLSTICE = new Date(Date.UTC(new Date().getFullYear(), 5, 21));
+
+  const sunSlider      = document.getElementById("scene-sun-slider");
+  const sunTimeDisplay = document.getElementById("scene-sun-time");
+
+  function applySunTime(morroMinutes) {
+    // morroMinutes = Morro Bay PDT (e.g. 600 = 10:00 AM PDT)
+    if (typeof SunCalc === 'undefined' || !NCZ.ThreeScene?.setSunPosition) return;
+    const date = new Date(SOLSTICE);
+    // Convert PDT → UTC: PDT = UTC-7, so UTC = PDT + 7
+    date.setUTCHours((Math.floor(morroMinutes / 60) - PDT_OFFSET) % 24, morroMinutes % 60, 0, 0);
+    const pos = SunCalc.getPosition(date, SUN_LAT, SUN_LNG);
+    NCZ.ThreeScene.setSunPosition(pos.azimuth, pos.altitude);
+    const h = String(Math.floor(morroMinutes / 60)).padStart(2, '0');
+    const m = String(morroMinutes % 60).padStart(2, '0');
+    if (sunTimeDisplay) sunTimeDisplay.textContent = `${h}:${m}`;
+  }
+
+  if (sunSlider) {
+    sunSlider.addEventListener("input", () => applySunTime(parseInt(sunSlider.value)));
+
+    if (typeof SunCalc !== 'undefined') {
+      // Compute solstice sunrise/sunset in UTC minutes, then convert to Morro Bay PDT
+      const times      = SunCalc.getTimes(SOLSTICE, SUN_LAT, SUN_LNG);
+      const utcToMorro = (date) => ((date.getUTCHours() * 60 + date.getUTCMinutes()) + PDT_OFFSET * 60 + 1440) % 1440;
+      sunSlider.min    = utcToMorro(times.sunrise); // ~353 min = 05:53 PDT
+      sunSlider.max    = utcToMorro(times.sunset);  // ~1216 min = 20:16 PDT
+    } else {
+      sunSlider.min = 353;
+      sunSlider.max = 1216;
+    }
+
+    // Default: 10:00 AM PDT — sun ~45° elevation from ENE, good hillshading contrast
+    const DEFAULT_SUN_MINUTES = 600;
+    sunSlider.value = DEFAULT_SUN_MINUTES;
+    applySunTime(DEFAULT_SUN_MINUTES);
+  }
+
+  // ── Shadows toggle
+  document.getElementById("overlay-shadows")?.addEventListener("change", e => {
+    NCZ.ThreeScene?.setShadowsEnabled?.(e.target.checked);
+  });
+
+  const flyoverBtn = document.getElementById("scene-flyover-btn");
+  // Elements to hide during showcase. We save each one's inline display value
+  // so we can restore it exactly — this handles elements that JS may have
+  // already toggled (e.g. sidebar-open uses a .visible class, not display).
+  const _showcaseEls = [];
+
+  function enterShowcase() {
+    ['header', '#sidebar-open', '#discover-location-btn',
+     '#overlay-controls', '#map-view-toggle', '#scene-controls']
+      .forEach(sel => {
+        const el = document.querySelector(sel);
+        if (!el) return;
+        _showcaseEls.push({ el, display: el.style.display });
+        el.style.display = 'none';
+      });
+
+    document.getElementById('map-3d').classList.add('showcase-fullscreen');
+    NCZ.Flyover.startFlyover(); // creates and manages the fade overlay internally
+    flyoverBtn.classList.add("active");
+    flyoverBtn.textContent = "Exit showcase";
+    // Request native browser fullscreen — must be called from a user gesture (button click)
+    document.documentElement.requestFullscreen().catch(() => {});
+    setTimeout(() => window.dispatchEvent(new Event("resize")), 100);
+  }
+
+  function exitShowcase() {
+    try { NCZ.Flyover.stopFlyover(); } catch (e) { console.error('[NCZ] stopFlyover error:', e); }
+
+    _showcaseEls.forEach(({ el }) => el.style.removeProperty('display'));
+    _showcaseEls.length = 0;
+
+    document.getElementById('map-3d').classList.remove('showcase-fullscreen');
+    flyoverBtn.classList.remove("active");
+    flyoverBtn.textContent = "Showcase";
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    setTimeout(() => window.dispatchEvent(new Event("resize")), 100);
+  }
+
+  flyoverBtn.addEventListener("click", () => {
+    flyoverBtn.classList.contains("active") ? exitShowcase() : enterShowcase();
+  });
+
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape" && flyoverBtn.classList.contains("active")) exitShowcase();
+  });
+
+  // Auto-exit when flyover reaches the end naturally (fires after the fade-to-black)
+  document.addEventListener("flyover:ended", () => {
+    if (flyoverBtn.classList.contains("active")) exitShowcase();
+  });
+
+  // If the user exits native fullscreen manually (Escape / F11), also exit the showcase
+  document.addEventListener("fullscreenchange", () => {
+    if (!document.fullscreenElement && flyoverBtn.classList.contains("active")) exitShowcase();
+  });
+
   // Overlay toggles — delegate to the right renderer based on active view
   document.querySelectorAll("[data-overlay]").forEach(checkbox => {
     checkbox.addEventListener("change", () => {
@@ -600,6 +712,18 @@ async function initMap() {
       }
     });
   });
+
+  // UI sync — keep overlay checkboxes and sun slider in sync with actual scene state.
+  // Runs at 200ms so console commands (setLayerVisibility, setCameraState etc.)
+  // are reflected immediately in the UI. Cost: negligible (boolean reads + DOM writes
+  // that short-circuit when unchanged).
+  setInterval(() => {
+    if (!NCZ.ThreeScene?.getLayerVisibility) return;
+    document.querySelectorAll("[data-overlay]").forEach(cb => {
+      const vis = NCZ.ThreeScene.getLayerVisibility(cb.dataset.overlay);
+      if (vis !== null && cb.checked !== vis) cb.checked = vis;
+    });
+  }, 200);
 
   switchView("schema");
 

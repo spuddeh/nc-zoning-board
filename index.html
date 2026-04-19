@@ -238,6 +238,8 @@
             <label class="overlay-toggle"><input type="checkbox" data-overlay="districts" checked> Districts</label>
             <label class="overlay-toggle schema-only"><input type="checkbox" data-overlay="roads" checked> Roads</label>
             <label class="overlay-toggle schema-only"><input type="checkbox" data-overlay="metro" checked> Metro</label>
+            <label class="overlay-toggle schema-only"><input type="checkbox" data-overlay="buildings" checked> Buildings</label>
+            <label class="overlay-toggle schema-only" title="Real-time shadow mapping — always active during Showcase. May reduce performance on lower-end hardware."><input type="checkbox" id="overlay-shadows"> Shadows <span class="overlay-perf-warn">⚠</span></label>
         </div>
         <div id="map-view-toggle">
             <button class="map-view-btn active" data-view="schema" title="3D schematic view">SCHEMA</button>
@@ -246,6 +248,11 @@
         <div id="map" style="display: none;"></div>
         <div id="map-3d">
             <div class="scene-loading">Loading terrain...</div>
+            <div id="flyover-start-screen" class="hidden">
+                <span class="flyover-title">NC ZONING BOARD</span>
+                <span class="flyover-subtitle">NIGHT CITY · 2077</span>
+                <span class="flyover-esc-hint">Press Esc to exit</span>
+            </div>
             <div id="scene-controls">
                 <div class="scene-controls-hint">
                     <span><kbd>Left drag</kbd> Pan</span>
@@ -253,6 +260,13 @@
                     <span><kbd>Scroll</kbd> Zoom</span>
                 </div>
                 <button id="scene-reset-btn" title="Reset camera to top-down view">Reset view</button>
+                <button id="scene-flyover-btn" title="Cinematic flyover tour of Night City (Esc to exit)">Showcase</button>
+                <label id="scene-sun-control" class="schema-only" title="Time of day at Morro Bay, CA (Night City) — summer solstice sun arc">
+                    <span id="scene-sun-icon">☀</span>
+                    <input type="range" id="scene-sun-slider" min="300" max="1260" value="720" step="1">
+                    <span id="scene-sun-time">12:00</span>
+                </label>
+                <span id="scene-tilt-display" style="font-family:var(--font-heading);font-size:var(--text-xs);color:var(--gray);">Tilt: 0°</span>
             </div>
         </div>
     </main>
@@ -494,8 +508,15 @@
     <script src="assets/js/utils.js"></script>
     <script src="assets/js/services.js"></script>
     <script src="assets/js/overlay.js"></script>
+    <!-- SunCalc — real sun position by date/time/location (by Vladimir Agafonkin, Leaflet author) -->
+    <script src="https://cdn.jsdelivr.net/npm/suncalc@1.9.0/suncalc.js"></script>
+
+    <!-- Flyover showcase audio — plays during showcase, syncs beat-driven theme cycling -->
+    <audio id="flyover-audio" src="assets/audio/GMNC.mp3" preload="auto"></audio>
+
     <script type="module" src="assets/js/three-scene.js"></script>
     <script type="module" src="assets/js/three-markers.js"></script>
+    <script type="module" src="assets/js/flyover.js"></script>
     <script src="assets/js/app.js"></script>
 </body>
 

@@ -9,6 +9,98 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Three.js 3D Schematic Map (in progress — dev branch)
 
+#### Phase 3 — Buildings, Dynamic Sun, Shadows, and Showcase Flyover
+
+##### Buildings (instanced cubes)
+
+- ~254k building instances per district rendered as `THREE.InstancedMesh` via `MeshLambertMaterial` + `onBeforeCompile`
+- Position/rotation/scale decoded on CPU from DDS binary (`DXGI_FORMAT_R16G16B16A16_UNORM`, 16-bit precision) → `setMatrixAt()`
+- Full quaternion rotation (all 4 components); `_m.dds` surface detail texture via world-space planar UV
+- Buildings cast **and receive** shadows via standard Three.js — no custom depth material
+- Y-axis inversion fixed: `camera.up.set(0, 1, 0)` (standard Three.js convention)
+- Edge highlight matching game shader `3d_map_cubes.mt` EdgeColor/EdgeThickness/EdgeSharpnessPower via `onBeforeCompile` fragment patch
+
+**Pipeline evolution:**
+- Gen 1 (removed): `build_buildings_3d.py` → `buildings_3d.json` → 8-bit precision (±9.4 CET unit error)
+- Gen 2 (removed): `assets/xbm/*.xbm.json` → GPU `RawShaderMaterial` + `gl_InstanceID` → required custom depth material + workarounds
+- Gen 3 (current): `assets/dds/*.dds` → CPU decode → `MeshLambertMaterial` — standard, maintainable, full shadow support
+
+##### Dynamic Sun and Hillshade
+
+- **SunCalc integration** — real sun azimuth/altitude for any time at Morro Bay, CA (35.37°N, 120.85°W), Night City's real-world location, computed via [SunCalc](https://github.com/mourner/suncalc) (by Vladimir Agafonkin, Leaflet's author)
+- **Time-of-day slider** in scene controls, spanning summer solstice sunrise (05:53 PDT) to sunset (20:16 PDT); defaults to 10:00 AM for optimal hillshading contrast
+- Directional light colour shifts warm orange at the horizon → neutral white at noon; ambient intensity scales with sun elevation
+- Visible sun sphere (radius 600, 20 000 units from Night City centre) tracks the sun direction, coloured to match the warm-to-white elevation curve
+- All time math uses UTC with explicit PDT offset so the slider is timezone-independent regardless of the user's browser locale
+
+##### Real-time Shadow Mapping
+
+- `PCFSoftShadowMap` at 4096×4096; shadow camera frustum ±7000 units centred on Night City
+- Terrain and cliffs cast and receive shadows; water receives only; buildings cast onto terrain
+- Shadow toggle in overlay panel (off by default); ⚠ performance warning on label
+- Shadow casting disabled below 5° sun elevation to avoid degenerate projections at sunrise/sunset; state persists through the theme beat-cycle
+
+##### Live Theme Switching
+
+- Themes now switch instantly without a page reload — `applyThemeById` calls `updateMaterials()` and clears the 2D overlay tile cache on every change
+- Material references stored (terrain, water, cliffs, roads, metro, buildings + per-instance brightness array) so all scene colors update together
+- `NCZ.applyTheme(id)` exposed globally with `persist: false` so programmatic changes don't overwrite the user's saved preference
+
+##### Synthwave Theme
+
+- New theme: deep purple background (`#1a0533`), magenta primary (`#ff2d78`), gold accent (`#ff9d00`), purple terrain (`#4a2e6e`), violet water (`#1a0840`)
+- Logo: `assets/img/synthwave-logo.png`
+
+##### Showcase Flyover (`assets/js/flyover.js`)
+
+Opt-in cinematic module — add or remove the `<script>` tag to include or exclude the feature.
+
+- **Camera**: PerspectiveCamera (55° FOV) sweeping 11 waypoints across 57.417 s; camera path synced to Audacity label timestamps for _Good Morning Night City_ so the camera is over the named district exactly when the announcer says it
+- **Audio**: `assets/audio/GMNC.mp3` plays during showcase; `audio.currentTime` drives beat events, sun position, and end-of-showcase fade — no clock drift between visual and audio
+- **Beat-driven theme visualiser**: 33 exact beat timestamps from Audacity beat-finder; each fires a smooth cross-dissolve to the next theme palette (Night Corp → Militech → Arasaka → Aldecaldos → Synthwave → repeat), cycling at the track's ~1.34 s bass pulse
+- **Layer reveal**: Roads → Metro → Buildings stagger in across the 6.9 s ocean approach, timed to land before "Good Morning Night City" hits; district lines stay off throughout the showcase
+- **Sun arc**: summer solstice sunrise-to-sunset over 57 s driven by `audio.currentTime`; sun sphere visible in sky, rises from below the terrain horizon and sets into the ocean
+- **Shadows**: always enabled during showcase; restored to checkbox state on exit
+- **Fullscreen**: requests native browser fullscreen on start; exits on showcase end or manual F11/Escape
+- **Fade**: overlay div created dynamically on start (solid black), 2 s fade-in reveals scene; 2 s fade-to-black on end, triggered by `audio.ended` for frame-accurate sync; div removed from DOM on exit
+- **Opening title card**: "NC ZONING BOARD / NIGHT CITY · 2077" fades in with the scene
+- **One-shot**: plays through once, cleans up fully on natural end or early exit (Escape/button)
+- **Theme save/restore**: user's active theme saved before showcase starts, restored via cross-dissolve on exit without writing to localStorage
+
+##### Per-Layer Scene Theming
+
+- Each 3D scene layer now has its own dedicated CSS variable — buildings no longer share terrain colour
+- `--scene-buildings` added to all 5 themes; default values use darker terrain / lighter buildings (~50 lightness points apart) so Lambert shading doesn't collapse contrast
+- `--scene-buildings-edge` defined once in `:root` via `color-mix(buildings 40%, white)` — edge glow auto-derives from building colour, no per-theme duplication
+- Roads and metro use muted colours in the same hue family as terrain rather than bright accent colours
+- `setLayerVisibility()` extended to cover `terrain`, `water`, and `cliffs` (previously only roads/metro/buildings/districts)
+- `getLayerVisibility(name)` added to `NCZ.ThreeScene` public API
+
+##### Constants Refactor
+
+- All 3D scene magic numbers moved from `three-scene.js` to `constants.js` under `NCZ.*`:
+  - Camera: NEAR/FAR/HEIGHT, all OrbitControls values (MIN_TILT/MAX_TILT/DAMPING/ZOOM_MIN/ZOOM_MAX/ZOOM_SPEED/PAN_SPEED/ROTATE_SPEED) — all wired into live controls, tunable without touching scene code
+  - Shadow: MAP_SIZE/FRUSTUM/CAM_NEAR/CAM_FAR/BIAS/NORMAL_BIAS/MIN_ELEV with explanatory comments
+  - Lighting: AMBIENT_INTENSITY/SUN_DIST/SPHERE_DIST/SPHERE_RADIUS/COLOR_ELEV/INTENSITY_ELEV/INTENSITY_MIN/AMBIENT_MIN
+  - Building decode: DDS_PIXEL_OFFSET/UINT16_MAX/DDS_ALPHA_THRESH
+  - Building shader: EDGE_THICKNESS/EDGE_SHARPNESS/TEX_FLOOR/TEX_RANGE (with game `3d_map_cubes.mt` defaults in comments)
+- `WORLD_CX/CY/H` derived from existing `NCZ.WORLD_MIN/MAX_*` values rather than duplicated
+- All OrbitControls comments include Three.js default values for quick comparison
+
+##### Showcase Flyover Improvements
+
+- **State restore**: pre-showcase state now fully captured (all overlay checkboxes, sun slider value, theme) and restored exactly on exit — layer visibility, shadow checkbox, and sun position all snap back
+- **Beat cycle colors**: hardcoded `BEAT_COLORS` replaced with `readThemeColors(themeId)` which reads CSS variables directly; beat cycle auto-syncs with `theme.css` changes with no separate update needed; buildings included in transitions
+- **`FLYOVER_REVEAL_LAYERS` flag**: `false` (default) = all layers on from frame 1 for immediate shadow visibility; `true` = original stagger reveal. Either way, WP0 always sets its own layer state (not inherited from user)
+- All flyover magic numbers extracted to module-level constants at top of `flyover.js` (kept separate from `constants.js` — flyover is opt-in)
+
+##### Bug Fixes
+
+- Canvas no longer pushes sidebar and overlay buttons out of view — renderer canvas is now `position: absolute; inset: 0` (removed from document flow) so its pixel-buffer dimensions can't affect layout
+- Sun slider time calculation was wrong in non-Pacific timezones — all conversions now use `setUTCHours` with explicit PDT offset (-7), browser locale never involved
+- Sun position was dark on page load — slider input is dispatched from `hideLoading()` post-terrain so `setSunPosition` is called after the scene is ready
+- Showcase exit left terrain dark — `stopFlyover` now runs full cleanup on natural end (render loop restart, controls, layers, sun, theme, shadows)
+
 #### Phase 0 — View-Agnostic Data Layer
 
 - Extracted shared popup/filter logic from `app.js` into the `NCZ` namespace so both Leaflet and Three.js views consume the same code: `NCZ.isRecentlyUpdated`, `NCZ.cetToThree`, `NCZ.buildPopupHtml`, `NCZ.prepareModRenderData`, `NCZ.computeVisibleMods`
