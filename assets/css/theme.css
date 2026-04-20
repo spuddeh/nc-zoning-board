@@ -70,8 +70,7 @@
 
     --primary-60: rgb(from var(--primary) r g b / 0.6);
 
-    /* Building edge glow — automatically lighter than whatever --scene-buildings is set to */
-    --scene-buildings-edge: color-mix(in srgb, var(--scene-buildings, #7a8fa0) 40%, white);
+    /* Building edge glow — defined per-theme; read by Three.js shader via readThemeColor() */
 
     --secondary-05: rgb(from var(--secondary) r g b / 0.05);
     --secondary-10: rgb(from var(--secondary) r g b / 0.1);
@@ -124,14 +123,16 @@ html.theme-night-corp {
     --category-other-glow: var(--gray-40);
 
     /* 3D scene mesh colors */
-    --scene-terrain:    #2e4a62;
-    --scene-water:      #1e3048;
-    --scene-cliffs:     #2e4a62;
-    --scene-buildings:  #8aacbf;
+    --scene-terrain:         #2e4a62;
+    --scene-water:           #1e3048;
+    --scene-cliffs:          #2e4a62;
+    --scene-buildings:       #8aacbf;
+    --scene-buildings-edge:  #00f0ff;
 
     /* Overlay colors (roads/metro for SCHEMA, districts for both) */
-    --overlay-road-color:   #485c70;
-    --overlay-metro-color:  #608898;
+    --overlay-road-color:        #485c70;
+    --overlay-road-border-color: #608898;
+    --overlay-metro-color:       #608898;
 
 }
 
@@ -164,14 +165,16 @@ html.theme-arasaka {
     --category-other-glow: var(--gray-40);
 
     /* 3D scene mesh colors */
-    --scene-terrain:    #3a2e2e;
-    --scene-water:      #241818;
-    --scene-cliffs:     #3a2e2e;
-    --scene-buildings:  #a08888;
+    --scene-terrain:         #3a2e2e;
+    --scene-water:           #241818;
+    --scene-cliffs:          #3a2e2e;
+    --scene-buildings:       #a08888;
+    --scene-buildings-edge:  #ff5050;
 
     /* Overlay colors */
-    --overlay-road-color:   #4a3838;
-    --overlay-metro-color:  #604848;
+    --overlay-road-color:        #4a3838;
+    --overlay-road-border-color: #603030;
+    --overlay-metro-color:       #604848;
 
 }
 
@@ -204,14 +207,16 @@ html.theme-militech {
     --category-other-glow: var(--gray-40);
 
     /* 3D scene mesh colors */
-    --scene-terrain:    #384030;
-    --scene-water:      #202c20;
-    --scene-cliffs:     #384030;
-    --scene-buildings:  #8a9070;
+    --scene-terrain:         #384030;
+    --scene-water:           #202c20;
+    --scene-cliffs:          #384030;
+    --scene-buildings:       #8a9070;
+    --scene-buildings-edge:  #ffd040;
 
     /* Overlay colors */
-    --overlay-road-color:   #485248;
-    --overlay-metro-color:  #606850;
+    --overlay-road-color:        #485248;
+    --overlay-road-border-color: #606040;
+    --overlay-metro-color:       #606850;
 
 }
 
@@ -244,14 +249,16 @@ html.theme-aldecaldos {
     --category-other-glow: var(--gray-40);
 
     /* 3D scene mesh colors */
-    --scene-terrain:    #3a3428;
-    --scene-water:      #242018;
-    --scene-cliffs:     #3a3428;
-    --scene-buildings:  #9a9080;
+    --scene-terrain:         #3a3428;
+    --scene-water:           #242018;
+    --scene-cliffs:          #3a3428;
+    --scene-buildings:       #9a9080;
+    --scene-buildings-edge:  #ff8050;
 
     /* Overlay colors */
-    --overlay-road-color:   #4a4238;
-    --overlay-metro-color:  #5a5040;
+    --overlay-road-color:        #4a4238;
+    --overlay-road-border-color: #605840;
+    --overlay-metro-color:       #5a5040;
 
 }
 
@@ -284,14 +291,16 @@ html.theme-synthwave {
     --category-other-glow: var(--gray-40);
 
     /* 3D scene mesh colors */
-    --scene-terrain:    #200830;
-    --scene-water:      #100420;
-    --scene-cliffs:     #200830;
-    --scene-buildings:  #9060b0;
+    --scene-terrain:         #200830;
+    --scene-water:           #100420;
+    --scene-cliffs:          #200830;
+    --scene-buildings:       #9060b0;
+    --scene-buildings-edge:  #ff60c0;
 
     /* Overlay colors */
-    --overlay-road-color:   #382050;
-    --overlay-metro-color:  #502870;
+    --overlay-road-color:        #382050;
+    --overlay-road-border-color: #502868;
+    --overlay-metro-color:       #502870;
 }
 
 /* Global reset */
