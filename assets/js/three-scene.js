@@ -32,7 +32,7 @@ const ThreeScene = (() => {
   let loadStepsDone  = 0;
   let _dirLight      = null; // stored so setSunPosition can update it live
   let _ambLight      = null;
-  let _shadowsOn     = false; // tracks the checkbox state — off by default
+  let _shadowsOn     = true;  // shadows on by default; checkbox reflects this via poll
   let _sunSphere     = null; // visible sun disc — shown during showcase only
   let _sunAz = Math.PI * 0.25, _sunEl = Math.PI * 0.35; // last setSunPosition args
 
@@ -48,6 +48,7 @@ const ThreeScene = (() => {
   let metroShader     = null; // onBeforeCompile ref for LOD zoom uniform updates
   let buildingMeshes     = [];    // one InstancedMesh per district
   let buildingMaterials  = [];    // parallel ShaderMaterial array for theme updates
+  let landmarkMat        = null;  // shared MeshLambertMaterial for all landmark GLBs
 
   // District metadata — sourced directly from 3dmap_triangle_soup.Material.json.
   // dataDds: _data.dds (DXGI_FORMAT_R16G16B16A16_UNORM — raw 16-bit RGBA instance data)
@@ -201,7 +202,7 @@ const ThreeScene = (() => {
 
     // Shadow map: 4096² covers the ~14 000-unit world at ~3.4 units/texel.
     // Frustum centred on Night City (NCZ.WORLD_CX, 0, -NCZ.WORLD_CY).
-    _dirLight.castShadow                    = false; // off by default; checkbox enables it
+    _dirLight.castShadow                    = _shadowsOn;
     _dirLight.shadow.mapSize.set(NCZ.SHADOW_MAP_SIZE, NCZ.SHADOW_MAP_SIZE);
     _dirLight.shadow.camera.left            = -NCZ.SHADOW_FRUSTUM;
     _dirLight.shadow.camera.right           =  NCZ.SHADOW_FRUSTUM;
@@ -252,6 +253,7 @@ const ThreeScene = (() => {
     controls.addEventListener('change', () => {
       updateDistrictZoom();
       if (metroShader) metroShader.uniforms.uMetroZoom.value = camera.zoom;
+      updateShadowFrustum();
     });
 
     window.addEventListener('resize', onResize);
@@ -302,6 +304,7 @@ const ThreeScene = (() => {
       return;
     }
     if (name === 'shadows') { setShadowsEnabled(visible); return; }
+    if (name === 'buildings' && layers.landmarks) layers.landmarks.visible = visible;
     if (layers[name]) layers[name].visible = visible;
   }
 
@@ -338,9 +341,9 @@ const ThreeScene = (() => {
 
       // Shadow flags — terrain and cliffs cast and receive (hills shadow valleys);
       // water receives only (no hard shadow edges on flat ocean); buildings skipped.
-      terrainScene.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
-      waterScene.traverse(c =>   { if (c.isMesh) { c.receiveShadow = true; } });
-      cliffsScene.traverse(c =>  { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+      terrainScene.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; c.frustumCulled = false; } });
+      waterScene.traverse(c =>   { if (c.isMesh) { c.receiveShadow = true; c.frustumCulled = false; } });
+      cliffsScene.traverse(c =>  { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; c.frustumCulled = false; } });
 
 
 
@@ -358,6 +361,7 @@ const ThreeScene = (() => {
       fitCameraToBox(box);
 
       stepProgress(); // terrain done
+      updateShadowFrustum(); // set initial frustum for current zoom
       setLoadingText('Loading roads & buildings...');
 
       // Trigger the sun slider so app.js applies the correct initial sun position.
@@ -367,7 +371,7 @@ const ThreeScene = (() => {
 
       // Tier 2+3: start all concurrent tasks, hide loading only when all complete.
       // Add future loaders (loadLandmarks etc.) to this array.
-      Promise.all([loadRoadsMetro(), loadDistricts(), loadBuildings()])
+      Promise.all([loadRoadsMetro(), loadDistricts(), loadBuildings(), loadLandmarks()])
         .then(hideLoading);
 
     } catch (err) {
@@ -532,6 +536,72 @@ const ThreeScene = (() => {
   // CPU decodes _data.dds (16-bit RGBA) → InstancedMesh matrices.
   // MeshLambertMaterial + onBeforeCompile adds _m.dds planar UV and edge highlight.
   // Shadow casting/receiving handled automatically by Three.js.
+
+  // ── Landmarks ─────────────────────────────────────────────────────────
+  // GLBs are in local mesh space. World positions from cp2077_extract_footprints.py
+  // --list-landmarks. Full quaternion from 3dmap_view.ent localTransform.Orientation.
+  // CET (Z-up) → Three.js (Y-up) quaternion remap: (x=i, y=k, z=-j, w=r)
+  // X-axis flip (rotation.y=PI, same as roads) combined into quaternion: flipQ * entityQ
+
+  const LANDMARK_META = [
+    // { file, cetX, cetY, cetZ, qi, qj, qk, qr }
+    // XY from cp2077_extract_footprints.py --list-landmarks (CET world space)
+    // Z from ent localTransform.Position.z (Bits/131072) — CET height = Three.js Y
+    // qi/qj/qk/qr from ent Orientation [i,j,k,r]
+    { file: '3dmap_obelisk.glb',                   cetX: -1714.5, cetY: -2331.3, cetZ:  35.68, qi: -0.0436, qj: -0.0019, qk:  0.9981, qr:  0.0436 },
+    { file: 'monument_ave_pyramid.glb',             cetX: -1595.2, cetY: -2344.3, cetZ:  55.74, qi:  0.0000, qj:  0.0000, qk:  0.0000, qr:  1.0000 },
+    { file: '3dmap_statue_splash_a.glb',            cetX: -1673.8, cetY: -2466.1, cetZ:  43.20, qi:  0.0000, qj:  0.0000, qk: -0.9483, qr:  0.3173 },
+    { file: '3dmap_ext_monument_av_building_b.glb', cetX: -1717.3, cetY: -2412.0, cetZ:  -8.02, qi:  0.0000, qj:  0.0000, qk: -0.4462, qr:  0.8949 },
+    { file: 'northoak_sign_a.glb',                  cetX:   196.9, cetY:   873.7, cetZ: 152.76, qi: -0.0200, qj:  0.0668, qk:  0.2864, qr:  0.9556 },
+    { file: 'cz_cz_building_h_icosphere.glb',       cetX: -1974.8, cetY: -2701.0, cetZ: 102.70, qi:  0.4820, qj:  0.0921, qk: -0.8411, qr:  0.2276 },
+    { file: 'rcr_park_ferris_wheel.glb',            cetX: -2442.4, cetY: -2178.0, cetZ:  34.26, qi:  0.0000, qj:  0.0000, qk: -0.7254, qr:  0.6884 },
+    { file: 'rcr_park_ferris_wheel.glb',            cetX:   445.2, cetY: -1672.2, cetZ:  10.87, qi: -0.4513, qj: -0.2239, qk:  0.4591, qr:  0.7317 },
+  ];
+
+  async function loadLandmarks() {
+    registerLoadStep(1);
+    try {
+      landmarkMat = new THREE.MeshLambertMaterial({
+        color: readThemeColor('--scene-buildings', '#8aacbf'),
+        flatShading: true,
+      });
+      const mat = landmarkMat;
+
+      // Unique GLB files (ferris wheel is shared)
+      const uniqueFiles = [...new Set(LANDMARK_META.map(m => m.file))];
+      const glbMap = Object.fromEntries(
+        await Promise.all(uniqueFiles.map(async f => [f, await loadGLB(`assets/glb/${f}`)]))
+      );
+
+      const group = new THREE.Group();
+      for (const { file, cetX, cetY, cetZ, qi, qj, qk, qr } of LANDMARK_META) {
+        const source = glbMap[file];
+        const container = new THREE.Group();
+
+        // CET (Z-up) → Three.js (Y-up): x=qi, y=qk, z=-qj, w=qr
+        const entityQ = new THREE.Quaternion(qi, qk, -qj, qr).normalize();
+        container.quaternion.copy(entityQ);
+        container.position.set(cetX, cetZ, -cetY);
+
+        source.traverse(child => {
+          if (!child.isMesh) return;
+          const mesh = new THREE.Mesh(child.geometry, mat);
+          mesh.castShadow    = true;
+          mesh.receiveShadow = true;
+          container.add(mesh);
+        });
+        group.add(container);
+      }
+
+      layers.landmarks = group;
+      scene.add(group);
+      console.log(`[NCZ] Landmarks: ${LANDMARK_META.length} placed`);
+      stepProgress();
+    } catch (err) {
+      console.error('[NCZ] Landmarks load failed:', err);
+      stepProgress();
+    }
+  }
 
   async function loadBuildings() {
     registerLoadStep(DISTRICT_META.length); // one step per district
@@ -819,6 +889,9 @@ const ThreeScene = (() => {
     if (normalBordersMat) normalBordersMat.color.copy(readThemeColor('--overlay-road-border-color', '#1ec3c8'));
     if (metroMat)   metroMat.color.copy(readThemeColor('--overlay-metro-color',        '#dcaa28'));
 
+    // Update landmark material — shares --scene-buildings colour
+    if (landmarkMat) landmarkMat.color.copy(readThemeColor('--scene-buildings', '#7a8fa0'));
+
     // Update building materials — MeshLambertMaterial.color + onBeforeCompile edge uniform
     if (buildingMaterials.length) {
       const base = readThemeColor('--scene-buildings', '#7a8fa0');
@@ -831,47 +904,74 @@ const ThreeScene = (() => {
     }
   }
 
+  // ── Color bindings registry ────────────────────────────────────────────────
+  // Each entry: { key, cssVar, fallback, get, reset, lerp }
+  // Adding a new material = one new entry here. Everything else is automatic.
+  // Exposed as getSceneColorVars() so flyover.js can read CSS vars without
+  // knowing about Three.js material internals.
+  function getColorBindings() {
+    const mat = (m, extra) => ({
+      get:   () => m?.color.clone() ?? null,
+      reset: c  => m?.color.copy(c),
+      lerp:  (f, t, a) => m?.color.lerpColors(f, t, a),
+      ...extra,
+    });
+    return [
+      { key: 'bg', cssVar: '--primary', fallback: '#0a192f',
+        get:   () => scene?.background?.clone() ?? null,
+        reset: c  => { if (scene?.background && c) scene.background.copy(c); },
+        lerp:  (f, t, a) => { if (scene?.background && f && t) scene.background.lerpColors(f, t, a); },
+      },
+      { key: 'terrain',  cssVar: '--scene-terrain',  fallback: '#566c88', ...mat(terrainMat) },
+      { key: 'water',    cssVar: '--scene-water',    fallback: '#2a3f57', ...mat(waterMat) },
+      { key: 'cliffs',   cssVar: '--scene-cliffs',   fallback: '#566c88', ...mat(cliffsMat) },
+      { key: 'roads',    cssVar: '--overlay-road-color', fallback: '#504b41',
+        get:   () => roadsMat?.color.clone() ?? null,
+        reset: c  => { roadsMat?.color.copy(c); normalRoadsMat?.color.copy(c); },
+        lerp:  (f, t, a) => { roadsMat?.color.lerpColors(f, t, a); normalRoadsMat?.color.lerpColors(f, t, a); },
+      },
+      { key: 'borders', cssVar: '--overlay-road-border-color', fallback: '#1ec3c8',
+        get:   () => bordersMat?.color.clone() ?? null,
+        reset: c  => { bordersMat?.color.copy(c); normalBordersMat?.color.copy(c); },
+        lerp:  (f, t, a) => { bordersMat?.color.lerpColors(f, t, a); normalBordersMat?.color.lerpColors(f, t, a); },
+      },
+      { key: 'metro',    cssVar: '--overlay-metro-color', fallback: '#dcaa28', ...mat(metroMat) },
+      { key: 'buildings', cssVar: '--scene-buildings', fallback: '#8aacbf',
+        get:   () => buildingMaterials[0]?.color.clone() ?? null,
+        reset: c  => { buildingMaterials.forEach(m => m.color.copy(c)); landmarkMat?.color.copy(c); },
+        lerp:  (f, t, a) => { buildingMaterials.forEach(m => m.color.lerpColors(f, t, a)); landmarkMat?.color.lerpColors(f, t, a); },
+      },
+      { key: 'buildingsEdge', cssVar: '--scene-buildings-edge', fallback: '#ffffff',
+        get:   () => buildingMaterials[0]?.userData.shader?.uniforms.uEdgeColor.value.clone() ?? null,
+        reset: c  => buildingMaterials.forEach(m => { const sh = m.userData.shader; if (sh) sh.uniforms.uEdgeColor.value.copy(c); }),
+        lerp:  (f, t, a) => buildingMaterials.forEach(m => { const sh = m.userData.shader; if (sh) sh.uniforms.uEdgeColor.value.lerpColors(f, t, a); }),
+      },
+    ];
+  }
+
+  function getSceneColorVars() {
+    return getColorBindings().map(({ key, cssVar, fallback }) => ({ key, cssVar, fallback }));
+  }
+
   // Snapshot current material colors — call before applyTheme so the old
   // values are captured for use as the "from" end of a transition lerp.
   function captureColors() {
-    const sh = buildingMaterials[0]?.userData.shader;
-    return {
-      bg:            scene?.background?.clone()          ?? null,
-      terrain:       terrainMat?.color.clone()           ?? null,
-      water:         waterMat?.color.clone()             ?? null,
-      cliffs:        cliffsMat?.color.clone()            ?? null,
-      roads:         roadsMat?.color.clone()             ?? null,
-      metro:         metroMat?.color.clone()             ?? null,
-      buildings:     buildingMaterials[0]?.color.clone() ?? null,
-      buildingsEdge: sh?.uniforms.uEdgeColor.value.clone() ?? null,
-    };
+    const snap = {};
+    for (const b of getColorBindings()) snap[b.key] = b.get();
+    return snap;
   }
 
   // Lerp scene/material colors from a snapshot to explicit THREE.Color targets.
   // Used by the flyover beat cycle — no CSS read, no building update, no overhead.
   function transitionToColors(from, to, durationMs = 800) {
     if (!scene) return;
-    if (from.bg && scene.background) scene.background.copy(from.bg);
-    if (from.terrain && terrainMat)   terrainMat.color.copy(from.terrain);
-    if (from.water   && waterMat)     waterMat.color.copy(from.water);
-    if (from.cliffs  && cliffsMat)    cliffsMat.color.copy(from.cliffs);
-    if (from.roads   && roadsMat)     roadsMat.color.copy(from.roads);
-    if (from.metro   && metroMat)     metroMat.color.copy(from.metro);
-    if (from.buildings) buildingMaterials.forEach(m => m.color.copy(from.buildings));
-    if (from.buildingsEdge) buildingMaterials.forEach(m => { const sh = m.userData.shader; if (sh) sh.uniforms.uEdgeColor.value.copy(from.buildingsEdge); });
-
+    const bindings = getColorBindings();
+    for (const b of bindings) if (from[b.key]) b.reset(from[b.key]);
     const start = performance.now();
     function step() {
       const rawT = Math.min((performance.now() - start) / durationMs, 1);
       const t    = rawT * rawT * (3 - 2 * rawT);
-      if (scene.background && from.bg && to.bg) scene.background.lerpColors(from.bg, to.bg, t);
-      if (terrainMat && from.terrain && to.terrain) terrainMat.color.lerpColors(from.terrain, to.terrain, t);
-      if (waterMat   && from.water   && to.water)   waterMat.color.lerpColors(from.water,   to.water,   t);
-      if (cliffsMat  && from.cliffs  && to.cliffs)  cliffsMat.color.lerpColors(from.cliffs, to.cliffs,  t);
-      if (roadsMat   && from.roads   && to.roads)   roadsMat.color.lerpColors(from.roads,   to.roads,   t);
-      if (metroMat   && from.metro   && to.metro)   metroMat.color.lerpColors(from.metro,   to.metro,   t);
-      if (from.buildings && to.buildings) buildingMaterials.forEach(m => m.color.lerpColors(from.buildings, to.buildings, t));
-      if (from.buildingsEdge && to.buildingsEdge) buildingMaterials.forEach(m => { const sh = m.userData.shader; if (sh) sh.uniforms.uEdgeColor.value.lerpColors(from.buildingsEdge, to.buildingsEdge, t); });
+      for (const b of bindings) if (from[b.key] && to[b.key]) b.lerp(from[b.key], to[b.key], t);
       if (rawT < 1) requestAnimationFrame(step);
     }
     requestAnimationFrame(step);
@@ -883,37 +983,20 @@ const ThreeScene = (() => {
   // colors are lerped to keep the per-frame cost low.
   function transitionMaterials(from, durationMs = 1000) {
     if (!scene) return;
+    const bindings = getColorBindings();
 
-    // Restore materials to their pre-theme-change state
-    if (from.bg && scene.background) scene.background.copy(from.bg);
-    if (from.terrain && terrainMat)   terrainMat.color.copy(from.terrain);
-    if (from.water   && waterMat)     waterMat.color.copy(from.water);
-    if (from.cliffs  && cliffsMat)    cliffsMat.color.copy(from.cliffs);
-    if (from.roads   && roadsMat)     roadsMat.color.copy(from.roads);
-    if (from.metro   && metroMat)     metroMat.color.copy(from.metro);
+    // Restore to pre-theme state
+    for (const b of bindings) if (from[b.key]) b.reset(from[b.key]);
 
-    // Read target values from CSS (new theme class already on <html>)
-    const to = {
-      bg:      readThemeColor('--primary',             '#0a192f'),
-      terrain: readThemeColor('--scene-terrain',       '#566c88'),
-      water:   readThemeColor('--scene-water',         '#2a3f57'),
-      cliffs:  readThemeColor('--scene-cliffs',        '#566c88'),
-      roads:   readThemeColor('--overlay-road-color',  '#504b41'),
-      metro:   readThemeColor('--overlay-metro-color', '#dcaa28'),
-    };
+    // Read targets from CSS (new theme class already on <html>)
+    const to = {};
+    for (const b of bindings) to[b.key] = readThemeColor(b.cssVar, b.fallback);
 
     const start = performance.now();
     function step() {
       const rawT = Math.min((performance.now() - start) / durationMs, 1);
-      const t    = rawT * rawT * (3 - 2 * rawT); // smoothstep
-
-      if (scene.background && from.bg) scene.background.lerpColors(from.bg, to.bg, t);
-      if (terrainMat && from.terrain)  terrainMat.color.lerpColors(from.terrain, to.terrain, t);
-      if (waterMat   && from.water)    waterMat.color.lerpColors(from.water,   to.water,   t);
-      if (cliffsMat  && from.cliffs)   cliffsMat.color.lerpColors(from.cliffs, to.cliffs,  t);
-      if (roadsMat   && from.roads)    roadsMat.color.lerpColors(from.roads,   to.roads,   t);
-      if (metroMat   && from.metro)    metroMat.color.lerpColors(from.metro,   to.metro,   t);
-
+      const t    = rawT * rawT * (3 - 2 * rawT);
+      for (const b of bindings) if (from[b.key]) b.lerp(from[b.key], to[b.key], t);
       if (rawT < 1) requestAnimationFrame(step);
     }
     requestAnimationFrame(step);
@@ -984,6 +1067,40 @@ const ThreeScene = (() => {
     if (_sunSphere) _sunSphere.visible = visible;
   }
 
+  function updateShadowFrustum() {
+    if (!_dirLight || !controls) return;
+    // Scale frustum to cover the visible ground area plus margin.
+    // At high tilt angles the visible ground extends further back — account for this
+    // by scaling with 1/cos(tilt), which grows from 1 (top-down) to ~3 (70° tilt).
+    const visibleHalf = Math.max(camera.right, camera.top) / camera.zoom;
+    const tilt = controls.getPolarAngle?.() ?? 0;
+    // 1/cos(tilt) accounts for ground depth at angle; extra 2× margin for the asymmetric
+    // forward/back distribution around controls.target when tilted
+    const tiltFactor = Math.max(1, 1 / Math.max(0.2, Math.cos(tilt)));
+    const frustum = Math.max(NCZ.SHADOW_FRUSTUM_MIN, visibleHalf * 3.0 * tiltFactor);
+    _dirLight.shadow.camera.left   = -frustum;
+    _dirLight.shadow.camera.right  =  frustum;
+    _dirLight.shadow.camera.top    =  frustum;
+    _dirLight.shadow.camera.bottom = -frustum;
+    _dirLight.shadow.camera.updateProjectionMatrix();
+
+    // Scale bias with frustum — smaller frustum = higher resolution = less bias needed.
+    // Prevents peter panning (shadow detached from base) at high zoom.
+    const biasScale = Math.min(1, frustum / NCZ.SHADOW_FRUSTUM);
+    _dirLight.shadow.bias       = NCZ.SHADOW_BIAS       * biasScale;
+    _dirLight.shadow.normalBias = NCZ.SHADOW_NORMAL_BIAS * biasScale;
+
+    // Track camera target so shadow stays centred on the visible area when panning.
+    // Move both light position and target by the same delta to preserve sun direction.
+    const ct = controls.target;
+    const delta = new THREE.Vector3().subVectors(ct, _dirLight.target.position);
+    if (delta.lengthSq() > 0.01) {
+      _dirLight.position.add(delta);
+      _dirLight.target.position.copy(ct);
+      _dirLight.target.updateMatrixWorld();
+    }
+  }
+
   function setShadowsEnabled(enabled) {
     _shadowsOn = enabled;
     // Re-evaluate castShadow: respect both the user toggle and the elevation floor
@@ -1030,7 +1147,7 @@ const ThreeScene = (() => {
     }
   }
 
-  return { init, startRenderLoop, stopRenderLoop, resetCamera, setLayerVisibility, getLayerVisibility, updateMaterials, renderFrame, setControlsEnabled, getCanvasElement, captureColors, transitionMaterials, transitionToColors, setSunPosition, setShadowsEnabled, getShadowsEnabled, getSunElevation, setSunSphereVisible, getCameraState, setCameraState };
+  return { init, startRenderLoop, stopRenderLoop, resetCamera, setLayerVisibility, getLayerVisibility, updateMaterials, renderFrame, setControlsEnabled, getCanvasElement, captureColors, transitionMaterials, transitionToColors, setSunPosition, setShadowsEnabled, getShadowsEnabled, getSunElevation, setSunSphereVisible, getCameraState, setCameraState, getSceneColorVars };
 })();
 
 window.NCZ.ThreeScene = ThreeScene;

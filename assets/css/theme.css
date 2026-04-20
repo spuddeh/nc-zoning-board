@@ -263,22 +263,22 @@ html.theme-aldecaldos {
 }
 
 html.theme-synthwave {
-    --primary: #1a0533;
+    --primary: #0d0020;
     --secondary: #ff2d78;
-    --tertiary: #ff9d00;
+    --tertiary: #00d4ff;
 
     --gray: #8a6a9a;
 
     --white: #ffe4f5;
-    --dark-accent: #2d0a52;
+    --dark-accent: #1a0540;
 
     /* Themed surfaces */
-    --surface-panel: rgba(26, 5, 51, 0.95);
+    --surface-panel: rgba(13, 0, 32, 0.95);
     --surface-hover: rgba(255, 45, 120, 0.08);
-    --surface-panel-90: rgba(26, 5, 51, 0.9);
-    --surface-tooltip-95: rgba(13, 3, 26, 0.95);
-    --surface-tooltip-85: rgba(13, 3, 26, 0.85);
-    --surface-nav-80: rgba(26, 5, 51, 0.8);
+    --surface-panel-90: rgba(13, 0, 32, 0.9);
+    --surface-tooltip-95: rgba(8, 0, 20, 0.95);
+    --surface-tooltip-85: rgba(8, 0, 20, 0.85);
+    --surface-nav-80: rgba(13, 0, 32, 0.8);
     --white-78: rgba(255, 228, 245, 0.78);
     --white-86: rgba(255, 228, 245, 0.86);
 
@@ -291,16 +291,16 @@ html.theme-synthwave {
     --category-other-glow: var(--gray-40);
 
     /* 3D scene mesh colors */
-    --scene-terrain:         #200830;
-    --scene-water:           #100420;
-    --scene-cliffs:          #200830;
-    --scene-buildings:       #9060b0;
-    --scene-buildings-edge:  #ff60c0;
+    --scene-terrain:         #140828;
+    --scene-water:           #080418;
+    --scene-cliffs:          #140828;
+    --scene-buildings:       #6040a0;
+    --scene-buildings-edge:  #00d4ff;
 
-    /* Overlay colors */
-    --overlay-road-color:        #382050;
-    --overlay-road-border-color: #502868;
-    --overlay-metro-color:       #502870;
+    /* Overlay colors — road borders are cyan for neon grid feel */
+    --overlay-road-color:        #18102a;
+    --overlay-road-border-color: #006890;
+    --overlay-metro-color:       #40206a;
 }
 
 /* Global reset */

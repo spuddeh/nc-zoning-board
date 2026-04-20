@@ -9,6 +9,74 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Three.js 3D Schematic Map (in progress — dev branch)
 
+#### Landmarks (Task 4)
+
+- **7 GLBs, 8 instances** — The Needle (obelisk), Heavy Hearts Club (pyramid), De-votion statue, Brainporium AV building, North Oak arch gate, Brave Atlas icosphere, Pacifica ferris wheel (upright), Rancho Coronado ferris wheel (collapsed on its side)
+- Full quaternion rotation from `3dmap_view.ent` — all three axes; collapsed ferris wheel correctly lies on its side
+- **Coordinate system** — GLBs are in local model space; world XY from `cp2077_extract_footprints.py --list-landmarks`, world Z (height) from ent `Position.z`; no X-flip needed (unlike roads/terrain)
+- Shares `--scene-buildings` colour and toggles with the buildings layer
+- Casts and receives shadows
+
+#### Shadow system improvements
+
+- **Shadows on by default** — enabled at startup rather than requiring manual toggle
+- **Dynamic shadow frustum** — shadow camera frustum scales with camera zoom and tilt angle, concentrating all 4096² shadow map texels on the visible area; sharp shadows when zoomed in without visible boundary
+- **Shadow tracks camera pan** — shadow camera follows `controls.target` so shadows don't cut off when panning; sun direction preserved
+- **Dynamic bias scaling** — `shadow.bias` and `shadow.normalBias` scale down with the frustum to reduce peter panning at high zoom while preserving acne prevention at wide zoom-out
+- Terrain, cliffs, and landmarks all cast and receive shadows (normals restored to GLBs for correct shadow normal-bias computation)
+
+#### Flyover colour system refactor
+
+- `getColorBindings()` registry in `three-scene.js` — adding a new material requires one entry; `captureColors()`, `transitionToColors()`, `transitionMaterials()`, and flyover `readThemeColors()` all derive from it automatically
+- `getSceneColorVars()` exposed on `NCZ.ThreeScene` — flyover reads CSS var list dynamically, no manual updates needed when materials change
+- Road borders and landmarks now correctly participate in beat-cycle and theme-switch transitions
+
+#### Synthwave theme update
+
+- Tertiary colour changed from amber to cyan `#00d4ff` — completes the magenta + cyan synthwave palette
+- Road borders use cyan with additive blending for neon grid effect
+- Building edges now cyan; background darkened to near-black `#0d0020`
+
+#### GLB attribute stripping improvements
+
+- `strip_glb_attributes.js` now accepts a keep-list argument: `node strip_glb_attributes.js in.glb out.glb POSITION,NORMAL`
+- Bug fix: multi-attribute remap now iterates all kept attributes (previously only remapped POSITION)
+- Terrain, water, cliffs, and landmarks retain NORMAL for correct shadow normal-bias; roads/borders/metro keep POSITION only
+
+#### Phase 3 Bug Fixes & Rendering Overhaul
+
+##### Road rendering system
+
+- **Road borders layer** — `3dmap_roads_borders.glb` now loaded and rendered with additive blending, matching the game's `AdditiveAlphaBlend=1` material setting
+- **Stencil buffer rendering** — Pacifica underwater tunnel now visible through the bay while being correctly hidden through terrain/mountains. Roads and borders use a dual draw pass: normal (depth-tested) for surface roads + SeeThrough (depth-ignored, stencil-gated) for the tunnel. This is a deliberate improvement over the game's `RenderOnTop` approach which shows roads through everything.
+  - Buildings write stencil=1; water writes stencil=2; SeeThrough roads only render where stencil=2
+- **Metro LOD shader** — vertex `COLOR_0` channels encode three mutually exclusive visibility tiers: B=wide bold line (far zoom), G=thin line (medium zoom), R=dotted detail (close zoom). Metro now renders above road layer via `renderOrder`.
+
+##### Building edge highlight
+
+- Fixed shader injection — was targeting a chunk that doesn't exist in Three.js r170, silently doing nothing
+- Added `BUILDING_EDGE_INTENSITY` to tune the effect strength independently of thickness
+- `--scene-buildings-edge` defined per-theme in `theme.css` (previously auto-derived, now explicit and independent — confirmed by Preem Map mod data)
+- Edge thickness raised from game default (sub-pixel, causes flickering) to a stable value
+
+##### UI & controls
+
+- Shadow checkbox now syncs to actual scene state when changed programmatically or via console
+- Sun slider reverse-mapped from scene elevation using SunCalc — stays in sync regardless of what set the sun position
+- Any overlay checkbox with `data-overlay="layerName"` is automatically synced by the poll (no per-layer code needed for future layers)
+
+##### Loading
+
+- Loading bar visible for full asset load duration (previously hid after terrain, before buildings)
+- Per-step progress bar with themed panel backdrop; loading text updates per building district
+- `registerLoadStep()` / `stepProgress()` pattern — adding future loaders requires no hardcoded count updates
+
+##### Performance
+
+- All GLB assets stripped of unused vertex attributes before deploy. WolvenKit exports 6 attributes per mesh; most materials only need `POSITION` (`MeshBasicMaterial`) or `POSITION` alone for Lambert + flatShading (normals derived in shader via `dFdx/dFdy`). Metro LOD shader additionally keeps `COLOR_0`.
+  - terrain: 17.6 MB → 3.4 MB · cliffs: 9.5 MB → 1.8 MB · roads: 6.3 MB → 1.3 MB · borders: 32 MB → 5.8 MB · metro: 1.2 MB → 0.5 MB
+  - **Total: 66 MB → 13 MB (81% reduction)**
+
 #### Phase 3 — Buildings, Dynamic Sun, Shadows, and Showcase Flyover
 
 ##### Buildings (instanced cubes)

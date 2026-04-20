@@ -1,17 +1,23 @@
 /**
  * strip_glb_attributes.js
- * Removes all vertex attributes except POSITION from a GLB.
- * Used to shrink 3dmap_roads_borders.glb below Cloudflare Pages' 25MB limit.
- * Usage: node scripts/strip_glb_attributes.js <input.glb> <output.glb>
+ * Removes unused vertex attributes from a GLB.
+ * Usage: node scripts/strip_glb_attributes.js <input.glb> <output.glb> [ATTR1,ATTR2,...]
+ *
+ * Default keep list: POSITION
+ * Examples:
+ *   node scripts/strip_glb_attributes.js mesh.glb out.glb              # POSITION only
+ *   node scripts/strip_glb_attributes.js mesh.glb out.glb POSITION,NORMAL  # keep normals
+ *   node scripts/strip_glb_attributes.js mesh.glb out.glb POSITION,COLOR_0 # keep vertex colors
  */
 'use strict';
 const fs = require('fs');
 
-const [,, inputPath, outputPath] = process.argv;
+const [,, inputPath, outputPath, keepArg] = process.argv;
 if (!inputPath || !outputPath) {
-  console.error('Usage: node strip_glb_attributes.js <input.glb> <output.glb>');
+  console.error('Usage: node strip_glb_attributes.js <input.glb> <output.glb> [ATTR1,ATTR2,...]');
   process.exit(1);
 }
+const KEEP = new Set((keepArg || 'POSITION').split(',').map(s => s.trim()));
 
 const buf = fs.readFileSync(inputPath);
 if (buf.readUInt32LE(0) !== 0x46546C67) throw new Error('Not a GLB file');
@@ -21,18 +27,20 @@ const json = JSON.parse(buf.slice(20, 20 + jsonChunkLen).toString('utf8'));
 const binStart = 20 + jsonChunkLen + 8;
 const bin = buf.slice(binStart);
 
-// Collect which bufferViews are needed (POSITION only)
+// Collect which bufferViews are needed (only attributes in KEEP set)
 const neededViews = new Set();
 const neededAccessors = new Set();
 
 for (const mesh of json.meshes || []) {
   for (const prim of mesh.primitives || []) {
-    // Keep only POSITION
-    const posAccIdx = prim.attributes?.POSITION;
-    if (posAccIdx !== undefined) {
-      neededAccessors.add(posAccIdx);
-      const bv = json.accessors[posAccIdx].bufferView;
-      if (bv !== undefined) neededViews.add(bv);
+    const keptAttribs = {};
+    for (const [attr, accIdx] of Object.entries(prim.attributes || {})) {
+      if (KEEP.has(attr)) {
+        keptAttribs[attr] = accIdx;
+        neededAccessors.add(accIdx);
+        const bv = json.accessors[accIdx].bufferView;
+        if (bv !== undefined) neededViews.add(bv);
+      }
     }
     // Keep indices
     if (prim.indices !== undefined) {
@@ -40,8 +48,7 @@ for (const mesh of json.meshes || []) {
       const bv = json.accessors[prim.indices].bufferView;
       if (bv !== undefined) neededViews.add(bv);
     }
-    // Strip all other attributes
-    prim.attributes = { POSITION: posAccIdx };
+    prim.attributes = keptAttribs;
   }
 }
 
@@ -53,7 +60,8 @@ const parts = [];
 let offset = 0;
 const newViews = viewList.map(vi => {
   const bv = json.bufferViews[vi];
-  const data = bin.slice(bv.byteOffset, bv.byteOffset + bv.byteLength);
+  const start = bv.byteOffset || 0;
+  const data = bin.slice(start, start + bv.byteLength);
   const pad = (4 - data.length % 4) % 4;
   const padded = pad ? Buffer.concat([data, Buffer.alloc(pad)]) : data;
   parts.push(padded);
@@ -75,7 +83,9 @@ const newAccs = accList.map(ai => {
 // Remap mesh primitive accessor indices
 for (const mesh of json.meshes || []) {
   for (const prim of mesh.primitives || []) {
-    if (prim.attributes.POSITION !== undefined) prim.attributes.POSITION = accRemap.get(prim.attributes.POSITION);
+    for (const k of Object.keys(prim.attributes)) {
+      prim.attributes[k] = accRemap.get(prim.attributes[k]);
+    }
     if (prim.indices !== undefined) prim.indices = accRemap.get(prim.indices);
     delete prim.material; // strip material reference (we apply our own)
   }
