@@ -195,9 +195,28 @@ node scripts/strip_glb_attributes.js input.glb output.glb POSITION,COLOR_0
 | Metro LOD shader | `POSITION,COLOR_0` | `COLOR_0` encodes LOD tier (B/G/R) |
 | Building DDS pipeline | N/A — no GLB | Geometry is `BoxGeometry(1,1,1)` generated in JS |
 
-Applying this reduced total GLB size from **66 MB → 13 MB (81%)**, staying well under Cloudflare Pages' 25 MB per-file limit.
-
 **Bug fixed:** The remap loop previously only remapped `POSITION`. With a multi-attribute keep-list, other attributes (e.g. `NORMAL`, `COLOR_0`) were left with their original large accessor indices, causing GLTFLoader to fail with `bufferView undefined`. Fixed in the current script.
+
+#### Size savings per file
+
+| File | WolvenKit export | After strip | Keep |
+| --- | --- | --- | --- |
+| `3dmap_terrain.glb` | 17.6 MB | 6.2 MB | POSITION,NORMAL |
+| `3dmap_cliffs.glb` | 9.5 MB | 3.3 MB | POSITION,NORMAL |
+| `3dmap_roads_borders.glb` | 32.0 MB | 5.8 MB | POSITION |
+| `3dmap_roads.glb` | 6.3 MB | 1.3 MB | POSITION |
+| `3dmap_metro.glb` | 1.2 MB | 0.5 MB | POSITION,COLOR_0 |
+| `3dmap_statue_splash_a.glb` | 1.3 MB | 0.5 MB | POSITION,NORMAL |
+| `3dmap_ext_monument_av_building_b.glb` | 1.0 MB | 0.4 MB | POSITION,NORMAL |
+| `3dmap_obelisk.glb` | 0.5 MB | 0.2 MB | POSITION,NORMAL |
+| `northoak_sign_a.glb` | 0.3 MB | 0.1 MB | POSITION,NORMAL |
+| `cz_cz_building_h_icosphere.glb` | 0.2 MB | 0.1 MB | POSITION,NORMAL |
+| `rcr_park_ferris_wheel.glb` | 0.1 MB | 0.1 MB | POSITION,NORMAL |
+| `3dmap_water.glb` | ~0 MB | ~0 MB | POSITION,NORMAL |
+| `monument_ave_pyramid.glb` | ~0 MB | ~0 MB | POSITION,NORMAL |
+| **Total** | **~70 MB** | **~18.5 MB (74%)** | |
+
+All files stay well under Cloudflare Pages' 25 MB per-file limit. Terrain/cliffs/landmarks keep NORMAL (required for shadow normal-bias); roads/borders keep POSITION only (MeshBasicMaterial, no lighting).
 
 ### Roads axis inversion
 
