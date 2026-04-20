@@ -160,10 +160,11 @@ Stored in `assets/glb/`. Loaded in tiers so the scene is interactive as quickly 
 | File | Size | Tier | Notes |
 |------|------|------|-------|
 | `3dmap_terrain.glb` | 18 MB | 1 (required) | Terrain surface, 247k verts |
-| `3dmap_water.glb` | 16 KB | 1 (required) | Water plane with land cutouts |
+| `3dmap_water.glb` | 16 KB | 1 (required) | Water plane with land cutouts; writes stencil=2 |
 | `3dmap_cliffs.glb` | 9.5 MB | 1 (with terrain) | Dogtown cliff faces |
-| `3dmap_roads.glb` | 6.4 MB | 2 (idle) | Road surfaces — has inverted X axis, see below |
-| `3dmap_metro.glb` | 1.2 MB | 2 (idle) | Metro tracks |
+| `3dmap_roads.glb` | 6.4 MB | 2 (idle) | Road surfaces — loaded twice (see Roads section) |
+| `3dmap_roads_borders.glb` | 32 MB | 2 (idle) | Road border outlines — loaded twice |
+| `3dmap_metro.glb` | 1.2 MB | 2 (idle) | Metro tracks with vertex-color LOD |
 | Landmark GLBs (×8) | ~3 MB total | 3 (on demand) | Obelisk, ferris wheel, etc. |
 
 Tier 1 loads in parallel on scene init. Tier 2 loads after Tier 1 resolves, during idle. Tier 3 loads after Tier 2.
@@ -181,11 +182,54 @@ mesh.rotation.y = Math.PI;
 | Layer | Material type | Color source |
 |-------|--------------|--------------|
 | Terrain | `MeshLambertMaterial` (flatShading, DoubleSide) | `--scene-terrain` CSS var |
-| Water | `MeshBasicMaterial` (DoubleSide) | `--scene-water` CSS var |
+| Water | `MeshLambertMaterial` (flatShading, DoubleSide, stencil=2) | `--scene-water` CSS var |
 | Cliffs | `MeshLambertMaterial` (flatShading, DoubleSide) | `--scene-cliffs` CSS var |
-| Roads | `MeshBasicMaterial` | `--overlay-road-color` CSS var |
-| Metro | `MeshBasicMaterial` | `--overlay-metro-color` CSS var |
-| Buildings | `MeshBasicMaterial` | `--scene-terrain` CSS var, per-instance brightness via `setColorAt()` |
+| Roads (normal) | `MeshBasicMaterial` (depthTest:true) | `--overlay-road-color` CSS var |
+| Roads (SeeThrough) | `MeshBasicMaterial` (depthTest:false, stencil=2) | `--overlay-road-color` CSS var |
+| Borders (normal) | `MeshBasicMaterial` (additive) | `--overlay-road-border-color` CSS var |
+| Borders (SeeThrough) | `MeshBasicMaterial` (depthTest:false, additive, stencil=2) | `--overlay-road-border-color` CSS var |
+| Metro | `MeshBasicMaterial` (additive, LOD shader) | `--overlay-metro-color` CSS var |
+| Buildings | `MeshLambertMaterial` (stencil=1) | `--scene-buildings` CSS var, per-instance brightness |
+
+---
+
+## Roads, Borders & Metro Rendering
+
+Roads and borders are each rendered **twice** from the same geometry — matching the game's `entMeshComponent` dual-appearance setup (`default` + `SeeThrough1` in `3dmap_view.ent`).
+
+### Normal pass (depthTest:true)
+
+Surface roads sit correctly in the scene, occluded by terrain when viewed at tilt angles. Underground sections are correctly hidden.
+
+### SeeThrough pass (depthTest:false + water stencil)
+
+A second draw call using the same geometry with `depthTest:false`. This is NOT a full "show through everything" pass — it uses the **WebGL stencil buffer** to limit where it renders:
+
+- **Water** (`3dmap_water.glb`) writes `stencil=2` during the opaque pass
+- **Buildings** write `stencil=1` during the opaque pass
+- **SeeThrough roads**: `stencilFunc=EQUAL, stencilRef=2` → only renders where water is
+
+Result:
+
+- **Pacifica tunnel**: water writes stencil=2 above the underground road → SeeThrough renders → tunnel visible ✓
+- **Road through mountain**: terrain has no stencil=2 → SeeThrough blocked → hidden ✓ (improvement over the game, which shows roads through terrain)
+- **Road through buildings**: stencil=1 ≠ 2 → blocked ✓
+
+This is a deliberate improvement over the game's `RenderOnTop=1` approach, which shows all roads through all terrain.
+
+### Metro LOD
+
+Metro uses `onBeforeCompile` to read vertex `COLOR_0` for LOD tier:
+
+Channels are **mutually exclusive** — only one tier is visible at any zoom level:
+
+| Channel | Tier | Visible when | Game distance parameter |
+| ------- | ---- | ------------ | ----------------------- |
+| B=1 (27%) | Wide solid | `zoom < LOD_MED` (far) | VisibilityDistanceBold=30000 |
+| G=1 (26%) | Thin solid | `LOD_MED < zoom < LOD_NEAR` (medium) | VisibilityDistanceRegular=18000 |
+| R=1 (47%) | Dotted | `zoom > LOD_NEAR` (close) | VisibilityDistanceDashed=5000 |
+
+B must be discarded at both ends (two separate discard conditions in the shader). Metro uses `AdditiveAlphaBlend=1` in-game. The channel-to-tier mapping was determined by visual isolation testing — it is NOT documented in the exported material JSON (shader bytecode only).
 
 ---
 

@@ -26,7 +26,10 @@ const ThreeScene = (() => {
   let renderer, camera, scene, controls;
   let animationId = null;
   let initialized = false;
-  let loadingEl = null;
+  let loadingEl      = null;
+  let loadingFillEl  = null;
+  let loadStepsTotal = 0;
+  let loadStepsDone  = 0;
   let _dirLight      = null; // stored so setSunPosition can update it live
   let _ambLight      = null;
   let _shadowsOn     = false; // tracks the checkbox state — off by default
@@ -37,8 +40,12 @@ const ThreeScene = (() => {
   let terrainMat = null;
   let waterMat   = null;
   let cliffsMat  = null;
-  let roadsMat   = null;
-  let metroMat   = null;
+  let roadsMat        = null;  // SeeThrough pass (water stencil)
+  let bordersMat      = null;  // SeeThrough pass (water stencil)
+  let normalRoadsMat  = null;  // Normal depth-tested pass
+  let normalBordersMat= null;  // Normal depth-tested pass
+  let metroMat        = null;
+  let metroShader     = null; // onBeforeCompile ref for LOD zoom uniform updates
   let buildingMeshes     = [];    // one InstancedMesh per district
   let buildingMaterials  = [];    // parallel ShaderMaterial array for theme updates
 
@@ -70,17 +77,14 @@ const ThreeScene = (() => {
     catch { return new THREE.Color(fallback); }
   }
 
-  // Lighten a THREE.Color by mixing with white — used for edge glow derived from buildings.
-  // Matches the CSS: color-mix(in srgb, var(--scene-buildings) 40%, white)
-  function lightenColor(color, whiteAmount = 0.4) {
-    return new THREE.Color().lerpColors(color, new THREE.Color(1, 1, 1), whiteAmount);
-  }
+  // Derive edge highlight colour from the building base colour.
 
-  function makeHillshadeMaterial(colorVar, fallback) {
+  function makeHillshadeMaterial(colorVar, fallback, extra = {}) {
     return new THREE.MeshLambertMaterial({
       color: readThemeColor(colorVar, fallback),
       flatShading: true,
       side: THREE.DoubleSide,
+      ...extra,
     });
   }
 
@@ -132,9 +136,15 @@ const ThreeScene = (() => {
   }
 
   function setLoadingText(text) {
-    if (loadingEl) loadingEl.textContent = text;
+    const el = loadingEl?.querySelector('.scene-loading__text');
+    if (el) el.textContent = text;
   }
-
+  function registerLoadStep(n = 1) { loadStepsTotal += n; }
+  function stepProgress() {
+    loadStepsDone++;
+    if (loadingFillEl && loadStepsTotal > 0)
+      loadingFillEl.style.width = `${(loadStepsDone / loadStepsTotal) * 100}%`;
+  }
   function hideLoading() {
     if (loadingEl) loadingEl.style.display = 'none';
   }
@@ -146,12 +156,13 @@ const ThreeScene = (() => {
     initialized = true;
 
     const container = document.getElementById(containerId);
-    loadingEl = container.querySelector('.scene-loading');
+    loadingEl     = container.querySelector('.scene-loading');
+    loadingFillEl = container.querySelector('.scene-loading__fill');
 
     // Renderer — pass updateStyle:false so Three.js never writes px dimensions
     // onto the canvas element. The canvas is kept at width/height:100% in CSS
     // so it always fills #map-3d without ever pushing surrounding layout elements.
-    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer = new THREE.WebGLRenderer({ antialias: true, stencil: true });
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(container.clientWidth, container.clientHeight, false);
     renderer.shadowMap.enabled = true;
@@ -238,7 +249,10 @@ const ThreeScene = (() => {
     controls.screenSpacePanning = true;
     controls.target.set(NCZ.WORLD_CX, 0, -NCZ.WORLD_CY);
     controls.update();
-    controls.addEventListener('change', updateDistrictZoom);
+    controls.addEventListener('change', () => {
+      updateDistrictZoom();
+      if (metroShader) metroShader.uniforms.uMetroZoom.value = camera.zoom;
+    });
 
     window.addEventListener('resize', onResize);
 
@@ -287,6 +301,7 @@ const ThreeScene = (() => {
       if (visible) updateDistrictZoom();
       return;
     }
+    if (name === 'shadows') { setShadowsEnabled(visible); return; }
     if (layers[name]) layers[name].visible = visible;
   }
 
@@ -300,6 +315,7 @@ const ThreeScene = (() => {
   // ── GLB loading (tiered) ───────────────────────────────────────────────
 
   async function loadTerrain() {
+    registerLoadStep(); // terrain
     setLoadingText('Loading terrain...');
     try {
       // Tier 1: terrain + water + cliffs in parallel
@@ -310,7 +326,11 @@ const ThreeScene = (() => {
       ]);
 
       terrainMat = makeHillshadeMaterial('--scene-terrain', '#566c88');
-      waterMat   = makeHillshadeMaterial('--scene-water',     '#2a3f57');
+      // Water writes stencil=2 — SeeThrough roads only render where stencil==2 (Pacifica tunnel)
+      waterMat   = makeHillshadeMaterial('--scene-water', '#2a3f57', {
+        stencilWrite: true, stencilRef: 2,
+        stencilFunc: THREE.AlwaysStencilFunc, stencilZPass: THREE.ReplaceStencilOp,
+      });
       cliffsMat  = makeHillshadeMaterial('--scene-cliffs',   '#566c88');
       applyMaterial(terrainScene, terrainMat);
       applyMaterial(waterScene,   waterMat);
@@ -337,21 +357,18 @@ const ThreeScene = (() => {
       const box = new THREE.Box3().setFromObject(terrainScene);
       fitCameraToBox(box);
 
-      hideLoading();
+      stepProgress(); // terrain done
+      setLoadingText('Loading roads & buildings...');
 
       // Trigger the sun slider so app.js applies the correct initial sun position.
       // Done here (post-terrain) because ThreeScene.setSunPosition now exists and
       // the directional light is in the scene — the slider fires too early otherwise.
       document.getElementById('scene-sun-slider')?.dispatchEvent(new Event('input'));
 
-      // Tier 2: roads + metro (after terrain, during idle)
-      loadRoadsMetro();
-
-      // Tier 2: district lines from subdistricts.json
-      loadDistricts();
-
-      // Tier 3: buildings instanced mesh
-      loadBuildings();
+      // Tier 2+3: start all concurrent tasks, hide loading only when all complete.
+      // Add future loaders (loadLandmarks etc.) to this array.
+      Promise.all([loadRoadsMetro(), loadDistricts(), loadBuildings()])
+        .then(hideLoading);
 
     } catch (err) {
       console.error('[NCZ] Terrain GLB load failed:', err);
@@ -360,29 +377,100 @@ const ThreeScene = (() => {
   }
 
   async function loadRoadsMetro() {
+    registerLoadStep(); // roads + metro
     try {
-      const [roadsScene, metroScene] = await Promise.all([
+      const [roadsScene, metroScene, bordersScene] = await Promise.all([
         loadGLB('assets/glb/3dmap_roads.glb'),
         loadGLB('assets/glb/3dmap_metro.glb'),
+        loadGLB('assets/glb/3dmap_roads_borders.glb'),
       ]);
 
-      // Roads GLB has inverted X axis — rotate 180° around Y to correct
-      roadsScene.rotation.y = Math.PI;
-      metroScene.rotation.y = Math.PI;
+      // All road GLBs have inverted X axis — rotate 180° around Y to correct
+      roadsScene.rotation.y   = Math.PI;
+      metroScene.rotation.y   = Math.PI;
+      bordersScene.rotation.y = Math.PI;
 
+      const roadColor   = readThemeColor('--overlay-road-color',        '#504b41');
+      const borderColor = readThemeColor('--overlay-road-border-color', '#1ec3c8');
+      const metroColor  = readThemeColor('--overlay-metro-color',       '#dcaa28');
 
+      // Normal depth-tested pass — surface roads/borders sit correctly in scene
+      normalRoadsMat   = new THREE.MeshBasicMaterial({ color: roadColor,   transparent: true, opacity: 0.8 });
+      normalBordersMat = new THREE.MeshBasicMaterial({ color: borderColor, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending, depthWrite: false });
 
+      applyMaterial(roadsScene,   normalRoadsMat);
+      applyMaterial(bordersScene, normalBordersMat);
 
-      const roadColor  = readThemeColor('--overlay-road-color',  '#504b41');
-      const metroColor = readThemeColor('--overlay-metro-color', '#dcaa28');
+      // Metro: normal depth-tested, renderOrder=1 so it renders above roads
+      metroMat = new THREE.MeshBasicMaterial({ color: metroColor, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false });
+      metroMat.onBeforeCompile = shader => {
+        metroShader = shader;
+        shader.uniforms.uMetroZoom    = { value: camera.zoom };
+        shader.uniforms.uMetroLODMed  = { value: NCZ.METRO_LOD_ZOOM_MED };
+        shader.uniforms.uMetroLODNear = { value: NCZ.METRO_LOD_ZOOM_NEAR };
+        shader.vertexShader = `
+          attribute vec3 color;
+          varying vec3 vLODColor;
+        ` + shader.vertexShader.replace(
+          '#include <color_vertex>',
+          '#include <color_vertex>\nvLODColor = color;'
+        );
+        shader.fragmentShader = `
+          uniform float uMetroZoom;
+          uniform float uMetroLODMed;
+          uniform float uMetroLODNear;
+          varying vec3 vLODColor;
+        ` + shader.fragmentShader.replace(
+          'void main() {',
+          `void main() {
+          // B=bold base line (always visible), G=regular (medium zoom), R=dashed detail (close only)
+          // B=wide solid: far zoom only (zoom < LOD_MED)
+          // G=thin solid: medium zoom only (LOD_MED < zoom < LOD_NEAR)
+          // R=dotted:     close zoom only (zoom > LOD_NEAR)
+          if (vLODColor.b > 0.5 && uMetroZoom > uMetroLODMed) discard;
+          if (vLODColor.g > 0.5 && (uMetroZoom < uMetroLODMed || uMetroZoom > uMetroLODNear)) discard;
+          if (vLODColor.r > 0.5 && uMetroZoom < uMetroLODNear) discard;`
+        );
+      };
 
-      roadsMat = new THREE.MeshBasicMaterial({ color: roadColor,  transparent: true, opacity: 0.8 });
-      metroMat = new THREE.MeshBasicMaterial({ color: metroColor, transparent: true, opacity: 0.9 });
-      applyMaterial(roadsScene, roadsMat);
+      function makeSeeThrough(source, mat) {
+        const group = new THREE.Group();
+        group.rotation.y = Math.PI;
+        source.traverse(child => {
+          if (!child.isMesh) return;
+          const m = new THREE.Mesh(child.geometry, mat);
+          m.position.copy(child.position);
+          m.rotation.copy(child.rotation);
+          m.scale.copy(child.scale);
+          group.add(m);
+        });
+        return group;
+      }
+
+      // SeeThrough pass: depthTest:false + stencil=EQUAL(2) → only renders where water is above road
+      // Pacifica tunnel: water writes stencil=2 → tunnel visible ✓
+      // Mountain roads: terrain has no stencil=2 → hidden ✓
+      // Buildings: stencil=1 ≠ 2 → hidden ✓
+      const stBase = {
+        transparent: true, depthTest: false, depthWrite: false,
+        stencilWrite: true, stencilWriteMask: 0x00,
+        stencilFunc: THREE.EqualStencilFunc, stencilRef: 2, stencilFuncMask: 0xff,
+        stencilFail: THREE.KeepStencilOp, stencilZFail: THREE.KeepStencilOp, stencilZPass: THREE.KeepStencilOp,
+      };
+      roadsMat   = new THREE.MeshBasicMaterial({ ...stBase, color: roadColor,   opacity: 0.8 });
+      bordersMat = new THREE.MeshBasicMaterial({ ...stBase, color: borderColor, opacity: 0.6, blending: THREE.AdditiveBlending });
+
       applyMaterial(metroScene, metroMat);
 
+      const stRoads   = makeSeeThrough(roadsScene,  roadsMat);
+      const stBorders = makeSeeThrough(bordersScene, bordersMat);
+      stRoads.traverse(o => { if (o.isMesh) o.renderOrder = 1; });
+      stBorders.traverse(o => { if (o.isMesh) o.renderOrder = 1; });
+
       const roadsGroup = new THREE.Group();
-      roadsGroup.add(roadsScene);
+      roadsGroup.add(roadsScene, bordersScene, stRoads, stBorders);
+      metroScene.traverse(o => { if (o.isMesh) o.renderOrder = 2; });
+
       const metroGroup = new THREE.Group();
       metroGroup.add(metroScene);
 
@@ -390,12 +478,14 @@ const ThreeScene = (() => {
       layers.metro = metroGroup;
 
       scene.add(roadsGroup, metroGroup);
+      stepProgress(); // roads done
     } catch (err) {
       console.error('[NCZ] Roads/metro GLB load failed:', err);
     }
   }
 
   async function loadDistricts() {
+    registerLoadStep(); // districts
     try {
       const data = await fetch('data/subdistricts.json').then(r => r.json());
       const outerGroup  = new THREE.Group(); // districts with subs — zoom-out only
@@ -432,6 +522,7 @@ const ThreeScene = (() => {
       _districtSub   = subGroup;
       layers.districts = parent;
       scene.add(parent);
+      stepProgress(); // districts done
     } catch (err) {
       console.error('[NCZ] District lines load failed:', err);
     }
@@ -443,6 +534,7 @@ const ThreeScene = (() => {
   // Shadow casting/receiving handled automatically by Three.js.
 
   async function loadBuildings() {
+    registerLoadStep(DISTRICT_META.length); // one step per district
     try {
       const baseGeo = new THREE.BoxGeometry(1, 1, 1);
       const group   = new THREE.Group();
@@ -501,7 +593,14 @@ const ThreeScene = (() => {
 
         group.add(mesh);
         buildingMeshes.push(mesh);
+        // Write stencil=1 so SeeThrough roads are blocked where buildings are
+        mat.stencilWrite = true;
+        mat.stencilRef   = 1;
+        mat.stencilFunc  = THREE.AlwaysStencilFunc;
+        mat.stencilZPass = THREE.ReplaceStencilOp;
+        mat.needsUpdate  = true;
         buildingMaterials.push(mat);
+        stepProgress(); // one building district done
         console.log(`[NCZ] Buildings [${meta.name}]: ${validCount.toLocaleString()} instances`);
       }
 
@@ -530,9 +629,10 @@ const ThreeScene = (() => {
       shader.uniforms.uTransMax      = { value: new THREE.Vector2(meta.transMax[0], meta.transMax[1]) };
       shader.uniforms.uOffset        = { value: new THREE.Vector2(...meta.offset) };
       shader.uniforms.uMTex          = { value: mTex };
-      shader.uniforms.uEdgeColor     = { value: lightenColor(readThemeColor('--scene-buildings', '#7a8fa0'), 0.4) };
+      shader.uniforms.uEdgeColor     = { value: readThemeColor('--scene-buildings-edge', '#ffffff') };
       shader.uniforms.uEdgeThickness = { value: NCZ.BUILDING_EDGE_THICKNESS };
       shader.uniforms.uEdgeSharpness = { value: NCZ.BUILDING_EDGE_SHARPNESS };
+      shader.uniforms.uEdgeIntensity = { value: NCZ.BUILDING_EDGE_INTENSITY };
 
       // ── Vertex shader — inject varyings + world-space UV ──────────────
       shader.vertexShader = `
@@ -566,6 +666,7 @@ const ThreeScene = (() => {
         uniform vec3  uEdgeColor;
         uniform float uEdgeThickness;
         uniform float uEdgeSharpness;
+        uniform float uEdgeIntensity;
         varying vec2 vMUv;
         varying vec2 vLocalUv;
       ` + shader.fragmentShader
@@ -576,11 +677,11 @@ const ThreeScene = (() => {
           diffuseColor.rgb *= ${NCZ.BUILDING_TEX_FLOOR} + mVal * ${NCZ.BUILDING_TEX_RANGE};`
         )
         .replace(
-          '#include <output_fragment>',
-          `#include <output_fragment>
+          'vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + totalEmissiveRadiance;',
+          `vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + totalEmissiveRadiance;
           float _ed = min( min( vLocalUv.x, 1.0 - vLocalUv.x ), min( vLocalUv.y, 1.0 - vLocalUv.y ) );
-          float _ef = 1.0 - pow( clamp( _ed / uEdgeThickness, 0.0, 1.0 ), uEdgeSharpness );
-          gl_FragColor.rgb = mix( gl_FragColor.rgb, uEdgeColor, _ef );`
+          float _ef = (1.0 - pow( clamp( _ed / uEdgeThickness, 0.0, 1.0 ), uEdgeSharpness )) * uEdgeIntensity;
+          outgoingLight = mix( outgoingLight, uEdgeColor, _ef );`
         );
     };
 
@@ -712,13 +813,16 @@ const ThreeScene = (() => {
     if (terrainMat) terrainMat.color.copy(readThemeColor('--scene-terrain',      '#566c88'));
     if (waterMat)   waterMat.color.copy(readThemeColor('--scene-water',           '#2a3f57'));
     if (cliffsMat)  cliffsMat.color.copy(readThemeColor('--scene-cliffs',         '#566c88'));
-    if (roadsMat)   roadsMat.color.copy(readThemeColor('--overlay-road-color',    '#504b41'));
-    if (metroMat)   metroMat.color.copy(readThemeColor('--overlay-metro-color',   '#dcaa28'));
+    if (roadsMat)         roadsMat.color.copy(readThemeColor('--overlay-road-color',         '#504b41'));
+    if (normalRoadsMat)   normalRoadsMat.color.copy(readThemeColor('--overlay-road-color',    '#504b41'));
+    if (bordersMat)       bordersMat.color.copy(readThemeColor('--overlay-road-border-color', '#1ec3c8'));
+    if (normalBordersMat) normalBordersMat.color.copy(readThemeColor('--overlay-road-border-color', '#1ec3c8'));
+    if (metroMat)   metroMat.color.copy(readThemeColor('--overlay-metro-color',        '#dcaa28'));
 
     // Update building materials — MeshLambertMaterial.color + onBeforeCompile edge uniform
     if (buildingMaterials.length) {
       const base = readThemeColor('--scene-buildings', '#7a8fa0');
-      const edge = lightenColor(base, 0.4);
+      const edge = readThemeColor('--scene-buildings-edge', '#ffffff');
       for (const mat of buildingMaterials) {
         mat.color.copy(base);
         const sh = mat.userData.shader;
@@ -730,14 +834,16 @@ const ThreeScene = (() => {
   // Snapshot current material colors — call before applyTheme so the old
   // values are captured for use as the "from" end of a transition lerp.
   function captureColors() {
+    const sh = buildingMaterials[0]?.userData.shader;
     return {
-      bg:        scene?.background?.clone()          ?? null,
-      terrain:   terrainMat?.color.clone()           ?? null,
-      water:     waterMat?.color.clone()             ?? null,
-      cliffs:    cliffsMat?.color.clone()            ?? null,
-      roads:     roadsMat?.color.clone()             ?? null,
-      metro:     metroMat?.color.clone()             ?? null,
-      buildings: buildingMaterials[0]?.color.clone() ?? null,
+      bg:            scene?.background?.clone()          ?? null,
+      terrain:       terrainMat?.color.clone()           ?? null,
+      water:         waterMat?.color.clone()             ?? null,
+      cliffs:        cliffsMat?.color.clone()            ?? null,
+      roads:         roadsMat?.color.clone()             ?? null,
+      metro:         metroMat?.color.clone()             ?? null,
+      buildings:     buildingMaterials[0]?.color.clone() ?? null,
+      buildingsEdge: sh?.uniforms.uEdgeColor.value.clone() ?? null,
     };
   }
 
@@ -752,6 +858,7 @@ const ThreeScene = (() => {
     if (from.roads   && roadsMat)     roadsMat.color.copy(from.roads);
     if (from.metro   && metroMat)     metroMat.color.copy(from.metro);
     if (from.buildings) buildingMaterials.forEach(m => m.color.copy(from.buildings));
+    if (from.buildingsEdge) buildingMaterials.forEach(m => { const sh = m.userData.shader; if (sh) sh.uniforms.uEdgeColor.value.copy(from.buildingsEdge); });
 
     const start = performance.now();
     function step() {
@@ -764,6 +871,7 @@ const ThreeScene = (() => {
       if (roadsMat   && from.roads   && to.roads)   roadsMat.color.lerpColors(from.roads,   to.roads,   t);
       if (metroMat   && from.metro   && to.metro)   metroMat.color.lerpColors(from.metro,   to.metro,   t);
       if (from.buildings && to.buildings) buildingMaterials.forEach(m => m.color.lerpColors(from.buildings, to.buildings, t));
+      if (from.buildingsEdge && to.buildingsEdge) buildingMaterials.forEach(m => { const sh = m.userData.shader; if (sh) sh.uniforms.uEdgeColor.value.lerpColors(from.buildingsEdge, to.buildingsEdge, t); });
       if (rawT < 1) requestAnimationFrame(step);
     }
     requestAnimationFrame(step);
@@ -885,7 +993,11 @@ const ThreeScene = (() => {
     }
   }
 
+  function getShadowsEnabled() { return _shadowsOn; }
+  function getSunElevation() { return _sunEl; }
+
   function getLayerVisibility(name) {
+    if (name === 'shadows') return _shadowsOn;
     return layers[name]?.visible ?? null;
   }
 
@@ -918,7 +1030,7 @@ const ThreeScene = (() => {
     }
   }
 
-  return { init, startRenderLoop, stopRenderLoop, resetCamera, setLayerVisibility, getLayerVisibility, updateMaterials, renderFrame, setControlsEnabled, getCanvasElement, captureColors, transitionMaterials, transitionToColors, setSunPosition, setShadowsEnabled, setSunSphereVisible, getCameraState, setCameraState };
+  return { init, startRenderLoop, stopRenderLoop, resetCamera, setLayerVisibility, getLayerVisibility, updateMaterials, renderFrame, setControlsEnabled, getCanvasElement, captureColors, transitionMaterials, transitionToColors, setSunPosition, setShadowsEnabled, getShadowsEnabled, getSunElevation, setSunSphereVisible, getCameraState, setCameraState };
 })();
 
 window.NCZ.ThreeScene = ThreeScene;

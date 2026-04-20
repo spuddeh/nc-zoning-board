@@ -201,10 +201,18 @@ NCZ.DDS_ALPHA_THRESH  = 655;      // 0.01 × UINT16_MAX — position alpha below
 
 // Building shader — onBeforeCompile patches to MeshLambertMaterial
 // EdgeThickness and EdgeSharpness match the game's 3d_map_cubes.mt shader parameters.
-NCZ.BUILDING_EDGE_THICKNESS =  0.0005; // UV-space glow width per box face (game 3d_map_cubes.mt default: 0.0001)
-NCZ.BUILDING_EDGE_SHARPNESS =  30.0;  // power falloff — higher = sharper edge (game 3d_map_cubes.mt default: 30)
+NCZ.BUILDING_EDGE_THICKNESS =  0.005;  // UV-space glow width — game default 0.0001 is sub-pixel and flickers; widened for stability
+NCZ.BUILDING_EDGE_SHARPNESS =  4.0;   // power falloff — lower = softer gradient (game default: 30)
+NCZ.BUILDING_EDGE_INTENSITY =  0.05;  // max mix weight — keeps effect subtle; game equivalent is full strength at tiny thickness
 NCZ.BUILDING_TEX_FLOOR      =   0.3;  // minimum _m.dds brightness — prevents faces going pitch-black
 NCZ.BUILDING_TEX_RANGE      =   0.7;  // brightness range above the floor (floor + range = max)
 
 // Three.js orthographic camera.zoom threshold for district→subdistrict label switch
 NCZ.SUBDISTRICT_ZOOM_3D = 2.5;
+
+// Metro LOD zoom thresholds — vertex COLOR_0 channels are mutually exclusive tiers:
+// B = wide solid line (far zoom only,    zoom < LOD_MED)   — VisibilityDistanceBold=30000
+// G = thin solid line (medium zoom only, LOD_MED < zoom < LOD_NEAR) — VisibilityDistanceRegular=18000
+// R = dotted line     (close zoom only,  zoom > LOD_NEAR)  — VisibilityDistanceDashed=5000
+NCZ.METRO_LOD_ZOOM_MED  = 8.0;   // G→B transition zoom threshold
+NCZ.METRO_LOD_ZOOM_NEAR = 20.0;  // B→R transition zoom threshold

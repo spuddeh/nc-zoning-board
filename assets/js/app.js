@@ -717,12 +717,38 @@ async function initMap() {
   // Runs at 200ms so console commands (setLayerVisibility, setCameraState etc.)
   // are reflected immediately in the UI. Cost: negligible (boolean reads + DOM writes
   // that short-circuit when unchanged).
+  let _lastPolledSunEl = null;
   setInterval(() => {
     if (!NCZ.ThreeScene?.getLayerVisibility) return;
+
+    // Overlay checkboxes
     document.querySelectorAll("[data-overlay]").forEach(cb => {
       const vis = NCZ.ThreeScene.getLayerVisibility(cb.dataset.overlay);
       if (vis !== null && cb.checked !== vis) cb.checked = vis;
     });
+
+    // Sun slider — reverse-map scene elevation back to morroMinutes via SunCalc scan
+    if (sunSlider && typeof SunCalc !== 'undefined') {
+      const el = NCZ.ThreeScene.getSunElevation?.();
+      if (el !== undefined && el !== _lastPolledSunEl) {
+        _lastPolledSunEl = el;
+        let bestMin = 0, bestDiff = Infinity;
+        for (let m = 0; m < 1440; m++) {
+          const d = new Date(SOLSTICE);
+          d.setUTCHours((Math.floor(m / 60) - PDT_OFFSET + 24) % 24, m % 60, 0, 0);
+          const diff = Math.abs(SunCalc.getPosition(d, SUN_LAT, SUN_LNG).altitude - el);
+          if (diff < bestDiff) { bestDiff = diff; bestMin = m; }
+        }
+        if (Number(sunSlider.value) !== bestMin) {
+          sunSlider.value = bestMin;
+          if (sunTimeDisplay) {
+            const h = String(Math.floor(bestMin / 60)).padStart(2, '0');
+            const m = String(bestMin % 60).padStart(2, '0');
+            sunTimeDisplay.textContent = `${h}:${m}`;
+          }
+        }
+      }
+    }
   }, 200);
 
   switchView("schema");

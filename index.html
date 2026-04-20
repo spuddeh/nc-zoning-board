@@ -239,7 +239,7 @@
             <label class="overlay-toggle schema-only"><input type="checkbox" data-overlay="roads" checked> Roads</label>
             <label class="overlay-toggle schema-only"><input type="checkbox" data-overlay="metro" checked> Metro</label>
             <label class="overlay-toggle schema-only"><input type="checkbox" data-overlay="buildings" checked> Buildings</label>
-            <label class="overlay-toggle schema-only" title="Real-time shadow mapping — always active during Showcase. May reduce performance on lower-end hardware."><input type="checkbox" id="overlay-shadows"> Shadows <span class="overlay-perf-warn">⚠</span></label>
+            <label class="overlay-toggle schema-only" title="Real-time shadow mapping — always active during Showcase. May reduce performance on lower-end hardware."><input type="checkbox" id="overlay-shadows" data-overlay="shadows"> Shadows <span class="overlay-perf-warn">⚠</span></label>
         </div>
         <div id="map-view-toggle">
             <button class="map-view-btn active" data-view="schema" title="3D schematic view">SCHEMA</button>
@@ -247,7 +247,10 @@
         </div>
         <div id="map" style="display: none;"></div>
         <div id="map-3d">
-            <div class="scene-loading">Loading terrain...</div>
+            <div class="scene-loading">
+                <div class="scene-loading__text">Loading terrain...</div>
+                <div class="scene-loading__track"><div class="scene-loading__fill"></div></div>
+            </div>
             <div id="flyover-start-screen" class="hidden">
                 <span class="flyover-title">NC ZONING BOARD</span>
                 <span class="flyover-subtitle">NIGHT CITY · 2077</span>

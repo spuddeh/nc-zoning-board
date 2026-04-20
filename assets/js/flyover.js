@@ -151,7 +151,8 @@ const Flyover = (() => {
       terrain:   c('--scene-terrain'),
       water:     c('--scene-water'),
       cliffs:    c('--scene-cliffs'),
-      buildings: c('--scene-buildings'),
+      buildings:     c('--scene-buildings'),
+      buildingsEdge: c('--scene-buildings-edge'),
       roads:     c('--overlay-road-color'),
       metro:     c('--overlay-metro-color'),
     };
