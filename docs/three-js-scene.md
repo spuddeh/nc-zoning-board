@@ -159,15 +159,32 @@ Stored in `assets/glb/`. Loaded in tiers so the scene is interactive as quickly 
 
 | File | Size | Tier | Notes |
 |------|------|------|-------|
-| `3dmap_terrain.glb` | 18 MB | 1 (required) | Terrain surface, 247k verts |
-| `3dmap_water.glb` | 16 KB | 1 (required) | Water plane with land cutouts; writes stencil=2 |
-| `3dmap_cliffs.glb` | 9.5 MB | 1 (with terrain) | Dogtown cliff faces |
-| `3dmap_roads.glb` | 6.4 MB | 2 (idle) | Road surfaces — loaded twice (see Roads section) |
-| `3dmap_roads_borders.glb` | 32 MB | 2 (idle) | Road border outlines — loaded twice |
-| `3dmap_metro.glb` | 1.2 MB | 2 (idle) | Metro tracks with vertex-color LOD |
-| Landmark GLBs (×8) | ~3 MB total | 3 (on demand) | Obelisk, ferris wheel, etc. |
+| `3dmap_terrain.glb` | 3.4 MB | 1 (required) | Terrain surface, 247k verts |
+| `3dmap_water.glb` | ~1 KB | 1 (required) | Water plane with land cutouts; writes stencil=2 |
+| `3dmap_cliffs.glb` | 1.8 MB | 1 (with terrain) | Dogtown cliff faces |
+| `3dmap_roads.glb` | 1.3 MB | 2 (idle) | Road surfaces — loaded twice (see Roads section) |
+| `3dmap_roads_borders.glb` | 5.8 MB | 2 (idle) | Road border outlines — loaded twice |
+| `3dmap_metro.glb` | 0.5 MB | 2 (idle) | Metro tracks with vertex-color LOD |
+| Landmark GLBs (×8) | TBD | 3 (on demand) | Strip before committing — see below |
 
 Tier 1 loads in parallel on scene init. Tier 2 loads after Tier 1 resolves, during idle. Tier 3 loads after Tier 2.
+
+### GLB attribute stripping — required pipeline step
+
+WolvenKit exports 6 vertex attributes per GLB: `POSITION`, `NORMAL`, `TANGENT`, `COLOR_0`, `TEXCOORD_0`, `TEXCOORD_1`. Most are unused by our materials. **Run `scripts/strip_glb_attributes.js` on every new GLB before committing.**
+
+```bash
+node scripts/strip_glb_attributes.js input.glb output.glb
+```
+
+| Material | Keep | Reason |
+| --- | --- | --- |
+| `MeshBasicMaterial` | `POSITION` only | No lighting, no UVs used |
+| `MeshLambertMaterial` + `flatShading:true` | `POSITION` only | flatShading computes normals via `dFdx/dFdy` in shader — stored normals unused |
+| Metro LOD shader | `POSITION` + `COLOR_0` | `COLOR_0` encodes LOD tier (B/G/R) |
+| Building DDS pipeline | N/A — no GLB | Geometry is `BoxGeometry(1,1,1)` generated in JS |
+
+Applying this reduced total GLB size from **66 MB → 13 MB (81%)**, staying well under Cloudflare Pages' 25 MB per-file limit.
 
 ### Roads axis inversion
 
