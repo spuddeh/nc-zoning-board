@@ -180,17 +180,24 @@ Tier 1 loads in parallel on scene init. Tier 2 loads after Tier 1 resolves, duri
 WolvenKit exports 6 vertex attributes per GLB: `POSITION`, `NORMAL`, `TANGENT`, `COLOR_0`, `TEXCOORD_0`, `TEXCOORD_1`. Most are unused by our materials. **Run `scripts/strip_glb_attributes.js` on every new GLB before committing.**
 
 ```bash
+# POSITION only (default)
 node scripts/strip_glb_attributes.js input.glb output.glb
+
+# Keep multiple attributes
+node scripts/strip_glb_attributes.js input.glb output.glb POSITION,NORMAL
+node scripts/strip_glb_attributes.js input.glb output.glb POSITION,COLOR_0
 ```
 
 | Material | Keep | Reason |
 | --- | --- | --- |
-| `MeshBasicMaterial` | `POSITION` only | No lighting, no UVs used |
-| `MeshLambertMaterial` + `flatShading:true` | `POSITION` only | flatShading computes normals via `dFdx/dFdy` in shader — stored normals unused |
-| Metro LOD shader | `POSITION` + `COLOR_0` | `COLOR_0` encodes LOD tier (B/G/R) |
+| `MeshBasicMaterial` | `POSITION` only | No lighting, no UVs |
+| `MeshLambertMaterial` + `flatShading:true` — **terrain, water, cliffs, landmarks** | `POSITION,NORMAL` | NORMAL required for `shadow.normalBias` — stripping it causes shadow acne |
+| Metro LOD shader | `POSITION,COLOR_0` | `COLOR_0` encodes LOD tier (B/G/R) |
 | Building DDS pipeline | N/A — no GLB | Geometry is `BoxGeometry(1,1,1)` generated in JS |
 
 Applying this reduced total GLB size from **66 MB → 13 MB (81%)**, staying well under Cloudflare Pages' 25 MB per-file limit.
+
+**Bug fixed:** The remap loop previously only remapped `POSITION`. With a multi-attribute keep-list, other attributes (e.g. `NORMAL`, `COLOR_0`) were left with their original large accessor indices, causing GLTFLoader to fail with `bufferView undefined`. Fixed in the current script.
 
 ### Roads axis inversion
 
