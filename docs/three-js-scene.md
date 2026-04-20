@@ -165,7 +165,13 @@ Stored in `assets/glb/`. Loaded in tiers so the scene is interactive as quickly 
 | `3dmap_roads.glb` | 1.3 MB | 2 (idle) | Road surfaces — loaded twice (see Roads section) |
 | `3dmap_roads_borders.glb` | 5.8 MB | 2 (idle) | Road border outlines — loaded twice |
 | `3dmap_metro.glb` | 0.5 MB | 2 (idle) | Metro tracks with vertex-color LOD |
-| Landmark GLBs (×8) | TBD | 3 (on demand) | Strip before committing — see below |
+| `3dmap_obelisk.glb` | 0.1 MB | 3 (with buildings) | The Needle — Dogtown |
+| `monument_ave_pyramid.glb` | ~0 MB | 3 (with buildings) | Heavy Hearts Club — Dogtown |
+| `3dmap_statue_splash_a.glb` | 0.3 MB | 3 (with buildings) | De-votion statue — Dogtown |
+| `3dmap_ext_monument_av_building_b.glb` | 0.2 MB | 3 (with buildings) | Brainporium — Dogtown |
+| `northoak_sign_a.glb` | 0.1 MB | 3 (with buildings) | North Oak arch gate — Westbrook |
+| `cz_cz_building_h_icosphere.glb` | ~0 MB | 3 (with buildings) | Brave Atlas — Dogtown |
+| `rcr_park_ferris_wheel.glb` | ~0 MB | 3 (with buildings) | Used twice: upright (Pacifica) + collapsed (Santo Domingo border) |
 
 Tier 1 loads in parallel on scene init. Tier 2 loads after Tier 1 resolves, during idle. Tier 3 loads after Tier 2.
 
@@ -174,17 +180,43 @@ Tier 1 loads in parallel on scene init. Tier 2 loads after Tier 1 resolves, duri
 WolvenKit exports 6 vertex attributes per GLB: `POSITION`, `NORMAL`, `TANGENT`, `COLOR_0`, `TEXCOORD_0`, `TEXCOORD_1`. Most are unused by our materials. **Run `scripts/strip_glb_attributes.js` on every new GLB before committing.**
 
 ```bash
+# POSITION only (default)
 node scripts/strip_glb_attributes.js input.glb output.glb
+
+# Keep multiple attributes
+node scripts/strip_glb_attributes.js input.glb output.glb POSITION,NORMAL
+node scripts/strip_glb_attributes.js input.glb output.glb POSITION,COLOR_0
 ```
 
 | Material | Keep | Reason |
 | --- | --- | --- |
-| `MeshBasicMaterial` | `POSITION` only | No lighting, no UVs used |
-| `MeshLambertMaterial` + `flatShading:true` | `POSITION` only | flatShading computes normals via `dFdx/dFdy` in shader — stored normals unused |
-| Metro LOD shader | `POSITION` + `COLOR_0` | `COLOR_0` encodes LOD tier (B/G/R) |
+| `MeshBasicMaterial` | `POSITION` only | No lighting, no UVs |
+| `MeshLambertMaterial` + `flatShading:true` — **terrain, water, cliffs, landmarks** | `POSITION,NORMAL` | NORMAL required for `shadow.normalBias` — stripping it causes shadow acne |
+| Metro LOD shader | `POSITION,COLOR_0` | `COLOR_0` encodes LOD tier (B/G/R) |
 | Building DDS pipeline | N/A — no GLB | Geometry is `BoxGeometry(1,1,1)` generated in JS |
 
-Applying this reduced total GLB size from **66 MB → 13 MB (81%)**, staying well under Cloudflare Pages' 25 MB per-file limit.
+**Bug fixed:** The remap loop previously only remapped `POSITION`. With a multi-attribute keep-list, other attributes (e.g. `NORMAL`, `COLOR_0`) were left with their original large accessor indices, causing GLTFLoader to fail with `bufferView undefined`. Fixed in the current script.
+
+#### Size savings per file
+
+| File | WolvenKit export | After strip | Keep |
+| --- | --- | --- | --- |
+| `3dmap_terrain.glb` | 17.6 MB | 6.2 MB | POSITION,NORMAL |
+| `3dmap_cliffs.glb` | 9.5 MB | 3.3 MB | POSITION,NORMAL |
+| `3dmap_roads_borders.glb` | 32.0 MB | 5.8 MB | POSITION |
+| `3dmap_roads.glb` | 6.3 MB | 1.3 MB | POSITION |
+| `3dmap_metro.glb` | 1.2 MB | 0.5 MB | POSITION,COLOR_0 |
+| `3dmap_statue_splash_a.glb` | 1.3 MB | 0.5 MB | POSITION,NORMAL |
+| `3dmap_ext_monument_av_building_b.glb` | 1.0 MB | 0.4 MB | POSITION,NORMAL |
+| `3dmap_obelisk.glb` | 0.5 MB | 0.2 MB | POSITION,NORMAL |
+| `northoak_sign_a.glb` | 0.3 MB | 0.1 MB | POSITION,NORMAL |
+| `cz_cz_building_h_icosphere.glb` | 0.2 MB | 0.1 MB | POSITION,NORMAL |
+| `rcr_park_ferris_wheel.glb` | 0.1 MB | 0.1 MB | POSITION,NORMAL |
+| `3dmap_water.glb` | ~0 MB | ~0 MB | POSITION,NORMAL |
+| `monument_ave_pyramid.glb` | ~0 MB | ~0 MB | POSITION,NORMAL |
+| **Total** | **~70 MB** | **~18.5 MB (74%)** | |
+
+All files stay well under Cloudflare Pages' 25 MB per-file limit. Terrain/cliffs/landmarks keep NORMAL (required for shadow normal-bias); roads/borders keep POSITION only (MeshBasicMaterial, no lighting).
 
 ### Roads axis inversion
 
@@ -207,6 +239,45 @@ mesh.rotation.y = Math.PI;
 | Borders (SeeThrough) | `MeshBasicMaterial` (depthTest:false, additive, stencil=2) | `--overlay-road-border-color` CSS var |
 | Metro | `MeshBasicMaterial` (additive, LOD shader) | `--overlay-metro-color` CSS var |
 | Buildings | `MeshLambertMaterial` (stencil=1) | `--scene-buildings` CSS var, per-instance brightness |
+
+---
+
+## Landmarks
+
+7 GLBs, 8 instances (ferris wheel shared). Added to `layers.buildings` group — toggles with the buildings checkbox. Uses `--scene-buildings` colour, `MeshLambertMaterial` with `flatShading:true`.
+
+### Coordinate system — critical difference from roads/terrain
+
+Landmark GLBs are in **local model space** (vertices centred near origin), not world CET space like roads/terrain. This means:
+
+- **No** `rotation.y = Math.PI` (X-flip) needed — unlike roads/terrain
+- World position comes from two sources in the ent file:
+  - **XY**: resolved by `cp2077_extract_footprints.py --list-landmarks` (walks the full parent transform chain)
+  - **Z (height)**: from `localTransform.Position.z` field (`Bits / 131072.0`) — the 2D extraction script discards this
+- Three.js placement: `position.set(cetX, cetZ, -cetY)` — note cetZ as the Y (height) axis
+
+### Quaternion conversion
+
+CET space is Z-up; Three.js is Y-up. Ent quaternion `[i, j, k, r]` → Three.js `Quaternion(x=i, y=k, z=-j, w=r)`.
+
+Note: `cp2077_extract_footprints.py` applies `CET_X = -GLB_X` when projecting to Leaflet 2D space. This negation is **not** needed in Three.js 3D rendering — the model-local vertices render correctly without the X-flip.
+
+### World positions (from ent + extraction script)
+
+| Landmark | CET X | CET Y | CET Z | Notes |
+| --- | --- | --- | --- | --- |
+| Obelisk (The Needle) | -1714.5 | -2331.3 | 35.68 | Near-180° yaw |
+| Monument Ave Pyramid | -1595.2 | -2344.3 | 55.74 | Identity rotation |
+| De-votion statue | -1673.8 | -2466.1 | 43.20 | -143° yaw |
+| Brainporium AV building | -1717.3 | -2412.0 | -8.02 | -53° yaw |
+| North Oak sign | 196.9 | 873.7 | 152.76 | High elevation on cliffs |
+| Brave Atlas icosphere | -1974.8 | -2701.0 | 102.70 | Complex pitch+roll |
+| Ferris wheel (Pacifica) | -2442.4 | -2178.0 | 34.26 | Upright |
+| Ferris wheel (collapsed) | 445.2 | -1672.2 | 10.87 | Lying on side — full pitch+roll quaternion |
+
+### GLB stripping gotcha
+
+The `strip_glb_attributes.js` script had a bug with the `byteOffset` field: use `bv.byteOffset || 0` not `bv.byteOffset` (the field is optional in GLTF and defaults to 0 — missing field caused incorrect slice).
 
 ---
 

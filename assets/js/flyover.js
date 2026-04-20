@@ -146,16 +146,12 @@ const Flyover = (() => {
     html.classList.add(`theme-${themeId}`);
     const s = getComputedStyle(html);
     const c = v => new THREE.Color(s.getPropertyValue(v).trim());
-    const colors = {
-      bg:        c('--primary'),
-      terrain:   c('--scene-terrain'),
-      water:     c('--scene-water'),
-      cliffs:    c('--scene-cliffs'),
-      buildings:     c('--scene-buildings'),
-      buildingsEdge: c('--scene-buildings-edge'),
-      roads:     c('--overlay-road-color'),
-      metro:     c('--overlay-metro-color'),
-    };
+    // Auto-derive from ThreeScene registry — no manual updates needed when materials change
+    const colors = {};
+    for (const { key, cssVar, fallback } of (NCZ.ThreeScene?.getSceneColorVars() ?? [])) {
+      const raw = s.getPropertyValue(cssVar).trim();
+      colors[key] = new THREE.Color(raw || fallback);
+    }
     html.classList.remove(`theme-${themeId}`);
     prevCls.forEach(c => html.classList.add(c));
     return colors;

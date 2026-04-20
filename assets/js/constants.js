@@ -174,12 +174,13 @@ NCZ.CAMERA_ROTATE_SPEED = 0.6;            // rotateSpeed     (Three.js default: 
 
 // Shadow map — PCFSoftShadowMap, orthographic frustum centred on Night City
 // The shadow camera sits at the sun position (NCZ.SUN_DIST away) and looks down.
-NCZ.SHADOW_MAP_SIZE    = 4096;  // px² — 4096² gives ~3.4 CET units/texel over the 14 000-unit city
-NCZ.SHADOW_FRUSTUM     = 7000;  // ±7000 units on each axis — covers the full map plus margin
+NCZ.SHADOW_MAP_SIZE    = 4096;  // px² — dynamically concentrated by zoom; ~0.07 CET units/texel at zoom=50
+NCZ.SHADOW_FRUSTUM     = 7000;  // ±7000 units at full zoom-out; scaled down by camera.zoom for sharper shadows when zoomed in
+NCZ.SHADOW_FRUSTUM_MIN =  400;  // minimum frustum radius — prevents over-concentration at extreme zoom+tilt
 NCZ.SHADOW_CAM_NEAR    =   10;  // near clip — 10 units from the light; avoids near-plane artefacts
 NCZ.SHADOW_CAM_FAR     = 25000; // far clip — must reach the terrain from the sun's position (~8000 units away) with headroom
-NCZ.SHADOW_BIAS        = -0.001; // depth bias — small negative value reduces shadow acne (self-shadowing artefacts)
-NCZ.SHADOW_NORMAL_BIAS =  0.02;  // offset along surface normal — prevents acne on sloped faces
+NCZ.SHADOW_BIAS        = -0.0005; // depth bias — small negative value reduces shadow acne (self-shadowing artefacts)
+NCZ.SHADOW_NORMAL_BIAS =  0.01;  // offset along surface normal — prevents acne on sloped faces
 NCZ.SHADOW_MIN_ELEV    =    5;   // degrees — shadow casting disabled below this sun elevation
                                   // (avoids infinitely long degenerate projections near sunrise/sunset)
 
